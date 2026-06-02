@@ -1,0 +1,26 @@
+dashboard
+--if admin ang user(nasakanya na lahat ng view XD)
+--can view active user
+
+
+if doctor ang user ang dashboard kay
+--Manage Patient (Patient List/ View/View Medical Record(add issue))only
+--Manage Service (can view/add) only
+--Generate report (makapaprint siya sa )
+--can view active user
+
+if nurse ang user
+--Manage Patient ONly
+(Patient List/ View) only
+--can view active user
+
+Sidebar
+--User Image
+--Profile (Mudirect sa User View)
+--Help (Info on How to help user)
+
+Navbar
+--Home (Direct sa dashboard)
+--About (User Manual/Brief Description about MSU iit CLinic/ EMR/ EMR LOgo)
+--Doctor (List of Staff sa Clinic)
+--Contact (Developers Info)
