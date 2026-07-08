@@ -27,6 +27,13 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
+        'remember_token',
+    ];
+
+    protected $dates = [
+        'deleted_at',
+        'last_activity',
+        'last_login_at',
     ];
 
     protected $with = [
@@ -36,6 +43,21 @@ class User extends Authenticatable
     public function fullName()
     {
         return "$this->first_name $this->middle_name $this->last_name";
+    }
+
+    public function getAvatarAttribute($value)
+    {
+        if (! $value) {
+            return null;
+        }
+
+        $path = parse_url($value, PHP_URL_PATH);
+
+        if ($path && strpos($path, '/storage/') === 0) {
+            return $path;
+        }
+
+        return $value;
     }
     
     public function license()
@@ -83,5 +105,25 @@ class User extends Authenticatable
     public function services()
     {
         return $this->hasMany('App\Service', 'added_by');
+    }
+
+    public function archivedBy()
+    {
+        return $this->belongsTo(self::class, 'archived_by');
+    }
+
+    public function student()
+    {
+        return $this->hasOne(Student::class);
+    }
+
+    public function isStudent()
+    {
+        return $this->role && strcasecmp($this->role->name, 'Student') === 0;
+    }
+
+    public function isActive()
+    {
+        return strcasecmp($this->status ?: 'Active', 'Active') === 0;
     }
 }

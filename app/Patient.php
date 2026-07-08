@@ -10,6 +10,12 @@ class Patient extends Model
 {
 	use SoftDeletes, SoftCascadeTrait;
 
+	protected $dates = [
+		'date_registered',
+		'last_reviewed_at',
+		'deleted_at',
+	];
+
 	/**
 	 * Fields that get deleted with.
 	 * 
@@ -40,6 +46,21 @@ class Patient extends Model
 		'healthExaminationRecord',
 	];
 
+	public function getAvatarAttribute($value)
+	{
+		if (! $value) {
+			return null;
+		}
+
+		$path = parse_url($value, PHP_URL_PATH);
+
+		if ($path && strpos($path, '/storage/') === 0) {
+			return $path;
+		}
+
+		return $value;
+	}
+
 	/**
 	 * This patient was added by this user.
 	 * 
@@ -66,6 +87,11 @@ class Patient extends Model
 		return $this->belongsTo('App\User', 'updated_by');
 	}
 
+	public function archivedBy()
+	{
+		return $this->belongsTo('App\User', 'archived_by');
+	}
+
 	/**
 	 * A patient has many medical records / consultations.
 	 * 
@@ -74,6 +100,11 @@ class Patient extends Model
 	public function medicalRecords()
 	{
 		return $this->hasMany('App\MedicalRecord');
+	}
+
+	public function studentComplaints()
+	{
+		return $this->hasMany(StudentComplaint::class);
 	}
 	
 	/**
@@ -88,11 +119,11 @@ class Patient extends Model
 
 	public function getPastMedicalHistory()
 	{
-		return isset($this->healthExaminationRecord
-		->past_medical_history['pastmedical_history']) ?
-		$this->healthExaminationRecord
-			->past_medical_history['pastmedical_history']
-			: [];
+		$history = $this->normalizeStructuredValue(optional($this->healthExaminationRecord)->past_medical_history);
+
+		return $this->normalizeListValue(
+			$history['pastmedical_history'] ?? []
+		);
 	}
 	
 	/**
@@ -144,7 +175,7 @@ class Patient extends Model
 	 */
 	public function getFamilyHistory()
 	{
-		return $this->healthExaminationRecord->family_history;
+		return $this->normalizeStructuredValue(optional($this->healthExaminationRecord)->family_history);
 	}
 	
 	/**
@@ -154,7 +185,7 @@ class Patient extends Model
 	 */
 	public function getSocialHistory()
 	{
-		return $this->healthExaminationRecord->social_history;
+		return $this->normalizeStructuredValue(optional($this->healthExaminationRecord)->social_history);
 	}
 
 	/**
@@ -164,7 +195,7 @@ class Patient extends Model
 	 */
 	public function getPhysicalExamination()
 	{
-		return $this->healthExaminationRecord->phyiscal_examination;
+		return $this->normalizeStructuredValue(optional($this->healthExaminationRecord)->phyiscal_examination);
 	}
 
 	/**
@@ -174,7 +205,7 @@ class Patient extends Model
 	 */
 	public function getVitalSigns()
 	{
-		return $this->healthExaminationRecord->vital_signs;
+		return $this->normalizeStructuredValue(optional($this->healthExaminationRecord)->vital_signs);
 	}
 
 	/**
@@ -184,7 +215,7 @@ class Patient extends Model
 	 */
 	public function getAssessment()
 	{
-		return $this->healthExaminationRecord->assessment;
+		return $this->normalizeStructuredValue(optional($this->healthExaminationRecord)->assessment);
 	}
 
 	/**
@@ -194,8 +225,13 @@ class Patient extends Model
 	 */
 	public function getNursingInterventions()
 	{
-		return isset($this->healthExaminationRecord->nursing_interventions['nursing_interventions'])
-			? $this->healthExaminationRecord->nursing_interventions['nursing_interventions'] : [];
+		$interventions = $this->normalizeStructuredValue(
+			optional($this->healthExaminationRecord)->nursing_interventions
+		);
+
+		return $this->normalizeListValue(
+			$interventions['nursing_interventions'] ?? []
+		);
 	}
 
 	/**
@@ -206,8 +242,9 @@ class Patient extends Model
 	 */
 	public function getPastMedicalHistoryAttr($key) 
 	{
-		return isset($this->healthExaminationRecord->past_medical_history[$key]) ?
-			($this->healthExaminationRecord->past_medical_history[$key]) : '';
+		$history = $this->normalizeStructuredValue(optional($this->healthExaminationRecord)->past_medical_history);
+
+		return $history[$key] ?? '';
 	}
 	
 	/**
@@ -254,8 +291,13 @@ class Patient extends Model
 	 */
 	public function getSocialHistoryAttr($key) 
 	{
-		return isset($this->getSocialHistory()[$key]) ?
-			($this->getSocialHistory()[$key]) : '';
+		$value = $this->getSocialHistory()[$key] ?? null;
+
+		if (in_array($key, ['medications', 'allergies'], true)) {
+			return $this->normalizeListValue($value);
+		}
+
+		return $value ?? '';
 	}
 
 	/**
@@ -266,7 +308,42 @@ class Patient extends Model
 	 */
 	public function getFamilyHistoryAttr($key) 
 	{
-		return isset($this->getFamilyHistory()[$key]) ?
-			($this->getFamilyHistory()[$key]) : [];
+		return $this->normalizeListValue($this->getFamilyHistory()[$key] ?? []);
+	}
+
+	private function normalizeStructuredValue($value)
+	{
+		if ($value instanceof \Illuminate\Support\Collection) {
+			return $value->toArray();
+		}
+
+		if (is_array($value)) {
+			return $value;
+		}
+
+		if (is_string($value)) {
+			$trimmed = trim($value);
+			if ($trimmed === '') {
+				return [];
+			}
+
+			$decoded = json_decode($trimmed, true);
+			if (json_last_error() === JSON_ERROR_NONE) {
+				return is_array($decoded) ? $decoded : [$decoded];
+			}
+
+			return strpos($trimmed, ',') !== false
+				? array_values(array_filter(array_map('trim', explode(',', $trimmed)), 'strlen'))
+				: [$trimmed];
+		}
+
+		return $value === null ? [] : [$value];
+	}
+
+	private function normalizeListValue($value)
+	{
+		$normalized = $this->normalizeStructuredValue($value);
+
+		return array_values($normalized);
 	}
 }

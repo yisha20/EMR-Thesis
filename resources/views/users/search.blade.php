@@ -1,10 +1,13 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+  $activeUserIds = \App\User::getActive()->pluck('id')->filter()->all();
+@endphp
 
 
-<div class="card text-center border-info">
-    <div class="card-header border-info">
+<div class="card text-center border-info user-table-card">
+    <div class="card-header border-info user-table-header">
         <ul class="nav nav-tabs card-header-tabs">
           <li class="nav-item">
             <a class="nav-link active" href="/users">Users</a>
@@ -33,14 +36,16 @@
       {{--<i class="fa fa-search"></i>--}}
         
       </div>
-        <table class="table table-bordered table-responsive-md table-hover">
+        <div class="user-table-wrap table-responsive-shell">
+          <table class="table table-bordered table-hover user-data-table data-table is-wide">
             <thead class="text-center thead-light">
               
               <tr>
                 <th scope="col">Role</th>
-                <th scope="col">Last Name</th>
-                <th scope="col">First Name</th>
-                <th scope="col">Middle Name</th>
+                <th scope="col">Username</th>
+                <th scope="col">Full Name</th>
+                <th scope="col">Email Address</th>
+                <th scope="col">Account Status</th>
                 <th scope="col">Action</th>
               </tr>
             </thead>
@@ -48,7 +53,7 @@
             <tbody class="p2 text-center" id="myTable">
 	          	@foreach ($users as $user)
 	          	<tr>
-                	<td>
+                  <td>
                         <div class="badge 
                         @if($user->role->name == 'Administrator') 
                           badge-danger 
@@ -60,25 +65,32 @@
                           {{ $user->role->name }}
                         </div>
                       </td>
-               		<td>{{ $user->last_name }}</td>
-                	<td>{{ $user->first_name }}</td>
-                	<td>{{ $user->middle_name }}</td>
-                	<td>
-                  		
-                      <form action="{{ route('users.destroy', $user->id) }}" id="deleteForm" onsubmit="confirmDelete()" method="post">
+                  <td>{{ $user->username }}</td>
+                  <td>{{ $user->first_name }} {{ $user->middle_name }} {{ $user->last_name }}</td>
+                  <td>{{ $user->email }}</td>
+                  <td>
+                    @if(in_array($user->id, $activeUserIds))
+                      <span class="user-status-pill is-online"><i class="fa fa-circle"></i> Online</span>
+                    @else
+                      <span class="user-status-pill is-offline"><i class="fa fa-circle"></i> Offline</span>
+                    @endif
+                  </td>
+                  <td class="action-cell">
+                      <form action="{{ route('users.destroy', $user->id) }}" method="post" class="table-action-group">
                         @csrf
                         @method('DELETE')
-                        <a href="{{ route('users.show', $user->id) }}"><i class="fa fa-eye" data-toggle="tooltip" data-placement="top" title="view" style="padding-right:20px"aria-hidden="true"></a></i>
-                        <a href="{{ route('users.edit', $user->id) }}"><i class="fa fa-edit" data-toggle="tooltip" data-placement="top" title="edit" style="padding-right:20px" aria-hidden="true"></a></i>
-                        <button class="btn" type="submit">
-                          <i class="fa fa-archive" data-toggle="tooltip" data-placement="top" title="archive" style="padding-right:15px"aria-hidden="true"></i> 
+                        <a href="{{ route('users.show', $user->id) }}" class="table-action-button" title="View User"><i class="fa fa-eye" data-toggle="tooltip" data-placement="top" title="view" aria-hidden="true"></i></a>
+                        <a href="{{ route('users.edit', $user->id) }}" class="table-action-button" title="Edit User"><i class="fa fa-edit" data-toggle="tooltip" data-placement="top" title="edit" aria-hidden="true"></i></a>
+                        <button class="table-action-button table-action-danger btn" type="submit" title="Archive User" data-confirm="Archive {{ $user->fullName() }}?" data-confirm-title="Archive user">
+                          <i class="fa fa-archive" data-toggle="tooltip" data-placement="top" title="archive" aria-hidden="true"></i>
                         </button>{{--archive nalang daw instead of deleting the files of user--}}
                       </form>
                 	</td>
 	      	      </tr>
             @endforeach
             </tbody>
-          </table><br>
+          </table>
+        </div><br>
           <div class="pagination justify-content-center">
             {{$users->links()}}
             </div>
@@ -94,16 +106,6 @@
       });
     });
     </script>
-
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to archive this user?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
 
 <script>
   $(document).ready(function(){

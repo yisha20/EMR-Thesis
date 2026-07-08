@@ -3,8 +3,8 @@
 @section('content')
 
 
-<div class="card text-center border-info">
-    <div class="card-header border-info">
+<div class="card text-center border-info patient-table-card">
+    <div class="card-header border-info patient-table-header">
       <ul class="nav nav-tabs card-header-tabs">
         <li class="nav-item">
           <a class="nav-link" href="{{ route('patients.index') }}">Patients</a>
@@ -33,7 +33,8 @@
       {{--<i class="fa fa-search"></i>--}}
         
       </div>
-        <table class="table table-bordered table-responsive-md table-hover">
+        <div class="table-responsive-shell patient-table-wrap">
+        <table class="table table-bordered table-hover patient-data-table data-table">
             <thead class="text-center thead-light">
               <tr>
                 <th scope="col">OPD/Id Number</th>
@@ -52,13 +53,13 @@
                   <td>{{ $patient->last_name }}</td>
                   <td>{{ $patient->first_name }}</td>
                   <td>{{ $patient->middle_name }}</td>
-                  <td>
-                    <form action="{{ route('patients.delete', $patient->id) }}" id="deleteForm" onsubmit="return confirmDelete()" method="post">
+                  <td class="action-cell">
+                    <form action="{{ route('patients.delete', $patient->id) }}" class="table-action-group" method="post">
                       @csrf
                       @method('DELETE')
-                      <a href="{{ route('patients.restore', $patient->id) }}"><i class="fa fa-refresh" style="padding-right:20px"aria-hidden="true"></a></i>
-                      <button type="submit" class="btn">
-                        <i class="fa fa-trash" style="padding-right:15px"aria-hidden="true"></i> 
+                      <a href="{{ route('patients.restore', $patient->id) }}" class="table-action-button" data-toggle="tooltip" data-placement="top" title="Restore"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                      <button type="submit" class="btn table-action-button" data-toggle="tooltip" data-placement="top" title="Delete" data-confirm="Permanently delete {{ $patient->first_name }} {{ $patient->last_name }}? This cannot be undone." data-confirm-title="Delete patient">
+                        <i class="fa fa-trash" aria-hidden="true"></i>
                       </button>{{--archive nalang daw instead of deleting the files of patient--}}
                     </form>
                   </td>
@@ -66,7 +67,8 @@
                 @endif
               @endforeach
             </tbody>
-          </table><br>
+          </table>
+        </div><br>
           <div class="pagination justify-content-center">
             {{$patients->links()}}
             </div>
@@ -82,16 +84,6 @@
       });
     });
     </script>
-
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to delete this patient?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
 
 <script>
   $(document).ready(function(){

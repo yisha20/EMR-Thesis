@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img" aria-labelledby="title desc">
+  <title id="title">Clinic services and medical tools</title>
+  <desc id="desc">A clean blue medical flatlay with stethoscope and clinic service tools.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f7fcff"/>
+      <stop offset="1" stop-color="#dff2fb"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="360" fill="url(#bg)"/>
+  <circle cx="122" cy="90" r="94" fill="#cdebf8" opacity=".55"/>
+  <circle cx="650" cy="285" r="126" fill="#c7efe9" opacity=".4"/>
+  <rect x="92" y="76" width="536" height="236" rx="36" fill="#ffffff" opacity=".76"/>
+  <rect x="150" y="118" width="190" height="120" rx="22" fill="#eaf8ff" stroke="#9fd3ee" stroke-width="3"/>
+  <path d="M208 178h74M245 141v74" stroke="#3d96c3" stroke-linecap="round" stroke-width="14"/>
+  <path d="M424 112v70c0 38-56 38-56 0v-52" fill="none" stroke="#2f78a0" stroke-linecap="round" stroke-width="12"/>
+  <circle cx="368" cy="130" r="13" fill="#2f78a0"/>
+  <circle cx="424" cy="112" r="13" fill="#2f78a0"/>
+  <path d="M396 209c0 48 82 48 82 0" fill="none" stroke="#0f8277" stroke-linecap="round" stroke-width="12"/>
+  <circle cx="478" cy="208" r="22" fill="#0f8277"/>
+  <rect x="448" y="256" width="118" height="18" rx="9" fill="#b7d9ee"/>
+  <rect x="398" y="282" width="168" height="14" rx="7" fill="#d5e8f3"/>
+</svg>

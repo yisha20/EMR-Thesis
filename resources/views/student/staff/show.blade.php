@@ -1,0 +1,379 @@
+@extends('layouts.app')
+
+@section('content')
+@php
+    $roleName = auth()->user()->role->name;
+    $canTriage = in_array($roleName, ['Administrator', 'Nurse', 'Staff'], true);
+    $canConsult = in_array($roleName, ['Administrator', 'Doctor'], true);
+    $isDoctorReview = $canConsult && $complaint->consultation;
+    $isResolved = in_array($complaint->status, ['Counter Resolved', 'Completed'], true);
+    $patient = $complaint->patient ?: $matchingPatients->first();
+    $previousRecords = $complaint->patient
+        ? $complaint->patient->medicalRecords
+            ->where('id', '!=', $complaint->medical_record_id)
+            ->sortByDesc('date_of_consultation')
+            ->take(5)
+        : collect();
+    $statusLogNames = $complaint->statusLogs->pluck('to_status')->all();
+    $hasPatientLink = (bool) $complaint->patient;
+    $hasForwarded = $complaint->consultation || in_array($complaint->status, ['Forwarded', 'In Consultation', 'Completed'], true);
+    $timelineSteps = [
+        ['label' => 'Complaint Submitted', 'done' => true, 'current' => $complaint->status === 'Pending'],
+        ['label' => 'Reviewed', 'done' => (bool) $complaint->reviewed_at || in_array('Reviewed', $statusLogNames, true) || $complaint->status !== 'Pending', 'current' => $complaint->status === 'Reviewed'],
+        ['label' => 'Patient Linked', 'done' => $hasPatientLink, 'current' => !$hasPatientLink && $complaint->status === 'Reviewed'],
+    ];
+
+    if ($complaint->counterService || $complaint->status === 'Counter Resolved') {
+        $timelineSteps[] = ['label' => 'Counter Resolved', 'done' => true, 'current' => $complaint->status === 'Counter Resolved'];
+    } else {
+        $timelineSteps[] = ['label' => 'Forwarded to Doctor', 'done' => $hasForwarded, 'current' => $complaint->status === 'Forwarded'];
+        $timelineSteps[] = ['label' => 'In Consultation', 'done' => in_array($complaint->status, ['In Consultation', 'Completed'], true), 'current' => $complaint->status === 'In Consultation'];
+        $timelineSteps[] = ['label' => 'Completed', 'done' => $complaint->status === 'Completed', 'current' => $complaint->status === 'Completed'];
+    }
+    $selectedAction = old('remedy_given') || old('outcome')
+        ? 'counter'
+        : (old('service_needed') || old('priority') || old('nurse_notes') ? 'consultation' : null);
+    $issuedPrescription = $complaint->consultation ? $complaint->consultation->prescription()->with(['patient', 'doctor'])->first() : null;
+    $issuedPrescriptionPanelId = $issuedPrescription ? 'complaint-prescription-' . $issuedPrescription->id : null;
+    $openPrescriptionId = session('open_prescription_id');
+    $printPrescriptionId = session('print_prescription_id');
+    $shouldOpenIssuedPrescription = $issuedPrescription && (int) $openPrescriptionId === (int) $issuedPrescription->id;
+    $shouldPrintIssuedPrescription = $issuedPrescription && (int) $printPrescriptionId === (int) $issuedPrescription->id;
+@endphp
+
+<div class="dashboard-wrap complaint-workflow-page {{ $isDoctorReview ? 'doctor-consultation-review' : '' }}">
+    @if ($message = Session::get('success'))<div class="alert alert-success">{{ $message }}</div>@endif
+
+    <section class="complaint-review-header {{ $isDoctorReview ? 'doctor-case-header' : '' }}">
+        <div>
+            <p class="eyebrow">{{ $isDoctorReview ? 'Doctor consultation' : 'Student digital intake' }}</p>
+            <h1>Complaint Review</h1>
+            <div class="complaint-review-identity">
+                <strong>{{ $complaint->student_name }}</strong>
+                <span>{{ $complaint->student_id_number }}</span>
+            </div>
+            <div class="complaint-review-meta">
+                <span>{{ $complaint->complaint_category ?: 'Uncategorized' }}</span>
+                <span class="urgency-badge urgency-{{ strtolower($complaint->urgency_level) }}">{{ $isDoctorReview && $complaint->consultation ? $complaint->consultation->priority : $complaint->urgency_level }}</span>
+                <span class="complaint-status status-{{ \Illuminate\Support\Str::slug($complaint->status) }}">{{ $complaint->status }}</span>
+                <span>Submitted: {{ $complaint->submitted_at->format('M j, Y') }} &bull; {{ $complaint->submitted_at->format('g:i A') }}</span>
+            </div>
+        </div>
+        <a href="{{ route('student-complaints.index') }}" class="btn btn-light"><i class="fa fa-arrow-left"></i> Back to Queue</a>
+    </section>
+
+    @if ($isDoctorReview)
+        <div class="doctor-consultation-layout">
+            <main class="doctor-consultation-main">
+                @include('student.staff.partials.concern-card', ['complaint' => $complaint])
+
+                <section class="dashboard-panel consultation-detail-card folder-panel">
+                    <button type="button" class="folder-panel-toggle" data-folder-toggle aria-expanded="false" aria-controls="consultation-details-folder">
+                        <span class="folder-panel-icon"><i class="fa fa-folder-o"></i></span>
+                        <span class="folder-panel-title"><small>Nurse-forwarded details</small><strong>Consultation Details</strong></span>
+                        <span class="complaint-status status-{{ \Illuminate\Support\Str::slug($complaint->consultation->status) }}">{{ $complaint->consultation->status }}</span>
+                        <i class="fa fa-chevron-down folder-panel-chevron"></i>
+                    </button>
+                    <div id="consultation-details-folder" class="folder-panel-content" hidden>
+                        <div class="summary-detail-list consultation-readonly-list">
+                            <div><span>Service Needed</span><strong>{{ $complaint->consultation->service_needed }}</strong></div>
+                            <div><span>Priority</span><strong>{{ $complaint->consultation->priority }}</strong></div>
+                            <div><span>Forwarded By</span><strong>{{ optional($complaint->consultation->forwarder)->fullName() ?: 'Clinic staff' }}</strong></div>
+                            <div><span>Forwarded At</span><strong>{{ $complaint->consultation->forwarded_at->format('M j, Y g:i A') }}</strong></div>
+                            <div class="summary-wide"><span>Nurse Notes</span><p>{{ $complaint->consultation->nurse_notes ?: 'No notes provided.' }}</p></div>
+                        </div>
+                    </div>
+                </section>
+
+                @if ($complaint->consultation->status === 'Completed')
+                    <section class="dashboard-panel consultation-summary-card folder-panel {{ $shouldOpenIssuedPrescription ? 'is-open' : '' }}">
+                        <button type="button" class="folder-panel-toggle" data-folder-toggle aria-expanded="{{ $shouldOpenIssuedPrescription ? 'true' : 'false' }}" aria-controls="consultation-summary-folder">
+                            <span class="folder-panel-icon"><i class="fa fa-folder-o"></i></span>
+                            <span class="folder-panel-title"><small>Completed consultation</small><strong>Consultation Summary</strong></span>
+                            <span class="complaint-status status-completed">Completed</span>
+                            <i class="fa fa-chevron-down folder-panel-chevron"></i>
+                        </button>
+                        <div id="consultation-summary-folder" class="folder-panel-content" {{ $shouldOpenIssuedPrescription ? '' : 'hidden' }}>
+                            <div class="summary-detail-list">
+                                <div><span>Service Needed</span><strong>{{ $complaint->consultation->service_needed }}</strong></div>
+                                <div><span>Priority</span><strong>{{ $complaint->consultation->priority }}</strong></div>
+                                <div class="summary-wide"><span>Diagnosis</span><p>{{ $complaint->consultation->diagnosis ?: $complaint->diagnosis ?: 'No diagnosis recorded.' }}</p></div>
+                                <div class="summary-wide"><span>Treatment</span><p>{{ $complaint->consultation->treatment ?: $complaint->treatment ?: 'No treatment recorded.' }}</p></div>
+                                <div class="summary-wide"><span>Prescription Summary</span><p>{{ $issuedPrescription ? $issuedPrescription->summary : ($complaint->consultation->prescription ?: 'No prescription issued.') }}</p></div>
+                                <div class="summary-wide"><span>Doctor Notes</span><p>{{ $complaint->consultation->doctor_notes ?: 'No doctor notes recorded.' }}</p></div>
+                                <div><span>Completed By</span><strong>{{ optional($complaint->consultation->doctor)->fullName() ?: 'Clinic doctor' }}</strong></div>
+                                <div><span>Completed At</span><strong>{{ optional($complaint->consultation->completed_at)->format('M j, Y g:i A') ?: 'Not recorded' }}</strong></div>
+                            </div>
+                            @if ($issuedPrescription)
+                                <div class="prescription-action-bar">
+                                    <button type="button" class="btn btn-primary" data-prescription-toggle="{{ $issuedPrescriptionPanelId }}" aria-expanded="{{ $shouldOpenIssuedPrescription ? 'true' : 'false' }}" aria-controls="{{ $issuedPrescriptionPanelId }}"><i class="fa fa-eye"></i> View Prescription</button>
+                                    <button type="button" class="btn btn-light" data-prescription-print="{{ $issuedPrescriptionPanelId }}"><i class="fa fa-print"></i> Print Prescription</button>
+                                    <a href="{{ route('prescriptions.download', $issuedPrescription) }}" class="btn btn-light"><i class="fa fa-download"></i> Download PDF</a>
+                                </div>
+                                @include('prescriptions.inline-panel', ['prescription' => $issuedPrescription, 'panelId' => $issuedPrescriptionPanelId, 'isOpen' => $shouldOpenIssuedPrescription, 'autoPrint' => $shouldPrintIssuedPrescription])
+                            @endif
+                        </div>
+                    </section>
+                @elseif (in_array($complaint->consultation->status, ['Pending Consultation', 'Called'], true))
+                    <section class="dashboard-panel doctor-findings-card">
+                        <div class="dashboard-panel-header"><div><p class="eyebrow">Ready for consultation</p><h2>Doctor Findings</h2></div></div>
+                        <form method="POST" action="{{ route('student-complaints.start-consultation', $complaint) }}" class="workflow-form compact-workflow-form">
+                            @csrf
+                            <span class="doctor-start-note">Start the consultation before entering clinical findings.</span>
+                            <button class="btn btn-primary"><i class="fa fa-stethoscope"></i> Start Consultation</button>
+                        </form>
+                    </section>
+                @elseif ($complaint->consultation->status === 'In Consultation')
+                    <section class="dashboard-panel doctor-findings-card">
+                        <div class="dashboard-panel-header"><div><p class="eyebrow">Clinical documentation</p><h2>Doctor Findings</h2></div></div>
+                        <form method="POST" action="{{ route('student-complaints.complete-consultation', $complaint) }}" enctype="multipart/form-data" class="doctor-consultation-form" data-draft-key="doctor-consultation-{{ $complaint->id }}">
+                            @csrf
+                            <div class="doctor-findings-grid">
+                                <div class="form-group"><label for="diagnosis">Diagnosis</label><textarea name="diagnosis" id="diagnosis" rows="4" class="form-control" required>{{ old('diagnosis') }}</textarea></div>
+                                <div class="form-group"><label for="treatment">Treatment</label><textarea name="treatment" id="treatment" rows="4" class="form-control" required>{{ old('treatment') }}</textarea></div>
+                                <div class="form-group form-group-wide"><label for="doctor_notes">Doctor Notes</label><textarea name="doctor_notes" id="doctor_notes" rows="3" class="form-control">{{ old('doctor_notes') }}</textarea></div>
+                                <div class="form-group"><label for="follow_up_date">Follow-up Date</label><input type="date" name="follow_up_date" id="follow_up_date" class="form-control" value="{{ old('follow_up_date') }}"></div>
+                                <div class="form-group"><label for="consultation_attachment">Attachment</label><input type="file" name="attachment" id="consultation_attachment" class="form-control-file"></div>
+                            </div>
+
+                            <section class="prescription-module" data-prescription-section>
+                                <div class="prescription-module-header"><div><p class="eyebrow">Optional document</p><h3>Prescription</h3></div><span>Generate a printable PDF when medication, labs, or a certificate is needed.</span></div>
+                                <div class="form-group"><label for="prescription_type">Prescription Type</label><select name="prescription_type" id="prescription_type" class="form-control" data-prescription-type><option value="">No prescription required</option>@foreach (['Medication', 'Laboratory Request', 'Medical Certificate', 'Other'] as $type)<option value="{{ $type }}" {{ old('prescription_type') === $type ? 'selected' : '' }}>{{ $type }}</option>@endforeach</select></div>
+                                <div class="prescription-medications" data-medication-list data-medication-fields>
+                                    <div class="prescription-medications-header"><strong>Medication Rows</strong><button type="button" class="btn btn-light btn-sm" data-add-medication><i class="fa fa-plus"></i> Add Medication</button></div>
+                                    @foreach (old('medications', [['medication' => '', 'dosage' => '', 'frequency' => '', 'duration' => '', 'instruction' => '']]) as $index => $medication)
+                                        <div class="medication-row" data-medication-row>
+                                            <input name="medications[{{ $index }}][medication]" class="form-control" placeholder="Medication name" value="{{ $medication['medication'] ?? '' }}">
+                                            <input name="medications[{{ $index }}][dosage]" class="form-control" placeholder="Dosage" value="{{ $medication['dosage'] ?? '' }}">
+                                            <input name="medications[{{ $index }}][frequency]" class="form-control" placeholder="Frequency" value="{{ $medication['frequency'] ?? '' }}">
+                                            <input name="medications[{{ $index }}][duration]" class="form-control" placeholder="Duration" value="{{ $medication['duration'] ?? '' }}">
+                                            <input name="medications[{{ $index }}][instruction]" class="form-control" placeholder="Instructions" value="{{ $medication['instruction'] ?? '' }}">
+                                            <button type="button" class="btn table-action-button table-action-danger" data-remove-medication aria-label="Remove medication"><i class="fa fa-trash"></i></button>
+                                        </div>
+                                    @endforeach
+                                </div>
+                                @error('medications')<span class="invalid-feedback d-block">{{ $message }}</span>@enderror
+                                <div class="form-group"><label for="additional_instructions">Additional Instructions</label><textarea name="additional_instructions" id="additional_instructions" rows="3" class="form-control" placeholder="Hydration, rest, warning signs, or other advice">{{ old('additional_instructions') }}</textarea></div>
+                            </section>
+
+                            <div class="doctor-action-bar">
+                                <button type="button" class="btn btn-light" data-save-draft><i class="fa fa-save"></i> Save Draft</button>
+                                <button class="btn btn-primary" name="print_after" value="0"><i class="fa fa-check-circle"></i> Complete Consultation</button>
+                                <button class="btn btn-primary" name="print_after" value="1"><i class="fa fa-print"></i> Complete &amp; Print Prescription</button>
+                                <span class="draft-save-status" data-draft-status role="status"></span>
+                            </div>
+                        </form>
+                    </section>
+                @endif
+            </main>
+
+            <aside class="doctor-consultation-sidebar">
+                @include('student.staff.partials.history-card', ['complaint' => $complaint, 'matchingPatients' => $matchingPatients, 'patient' => $patient, 'previousRecords' => $previousRecords])
+                @include('student.staff.partials.status-timeline', ['timelineSteps' => $timelineSteps, 'complaint' => $complaint])
+            </aside>
+        </div>
+    @else
+        <div class="complaint-review-grid">
+            @include('student.staff.partials.concern-card', ['complaint' => $complaint])
+            @include('student.staff.partials.history-card', ['complaint' => $complaint, 'matchingPatients' => $matchingPatients, 'patient' => $patient, 'previousRecords' => $previousRecords])
+        </div>
+
+        @if ($canTriage && $complaint->status === 'Pending')
+            <section class="dashboard-panel workflow-action-panel">
+                <div class="dashboard-panel-header"><div><p class="eyebrow">Nurse review</p><h2>Review Complaint</h2></div></div>
+                <form method="POST" action="{{ route('student-complaints.status', $complaint) }}" class="workflow-form compact-workflow-form">
+                    @csrf @method('PATCH')
+                    <input type="hidden" name="status" value="Reviewed">
+                    <div class="form-group"><label for="review_notes">Review notes</label><textarea name="notes" id="review_notes" rows="3" class="form-control" placeholder="Optional initial assessment"></textarea></div>
+                    <button class="btn btn-primary"><i class="fa fa-check"></i> Mark as Reviewed</button>
+                </form>
+            </section>
+        @endif
+
+        @if ($canTriage && $complaint->status === 'Reviewed' && !$isResolved)
+            <section class="dashboard-panel complaint-decision-panel">
+                <div class="dashboard-panel-header"><div><p class="eyebrow">Choose action</p><h2>What action should I take next?</h2></div></div>
+                <div class="workflow-decision-grid" data-action-chooser>
+                    <article class="workflow-decision-card {{ $selectedAction === 'counter' ? 'is-selected' : '' }}">
+                        <div><i class="fa fa-medkit"></i><h3>Resolve at Counter</h3><p>For warm compress, basic medication, wound cleaning, BP monitoring, or health advice.</p></div>
+                        <button type="button" class="btn btn-primary" data-workflow-action="counter">Resolve at Counter</button>
+                    </article>
+                    <article class="workflow-decision-card {{ $selectedAction === 'consultation' ? 'is-selected' : '' }}">
+                        <div><i class="fa fa-user-md"></i><h3>Forward to Doctor</h3><p>For checkup, consultation, dental care, physical examination, laboratory request, or clinic service.</p></div>
+                        <button type="button" class="btn btn-primary" data-workflow-action="consultation">Forward to Consultation</button>
+                    </article>
+                </div>
+            </section>
+
+            <section class="selected-action-shell" data-selected-action-shell {{ $selectedAction ? '' : 'hidden' }}>
+                <article class="dashboard-panel workflow-action-panel" data-workflow-form="counter" {{ $selectedAction === 'counter' ? '' : 'hidden' }}>
+                    <div class="dashboard-panel-header"><div><p class="eyebrow">Selected action</p><h2>Resolve at Counter</h2></div></div>
+                    <form method="POST" action="{{ route('student-complaints.resolve-counter', $complaint) }}" class="workflow-form workflow-form-grid">
+                        @csrf
+                        <div class="form-group form-group-wide"><label for="remedy_given">Remedy/action given</label><textarea name="remedy_given" id="remedy_given" rows="3" class="form-control" required placeholder="e.g. Warm compress, wound cleaning, health advice">{{ old('remedy_given') }}</textarea></div>
+                        <div class="form-group"><label for="quantity">Quantity, if applicable</label><input name="quantity" id="quantity" class="form-control" value="{{ old('quantity') }}"></div>
+                        <div class="form-group"><label for="outcome">Outcome</label><select name="outcome" id="outcome" class="form-control" required>@foreach (['Resolved', 'Advised to return if symptoms persist', 'Referred for consultation'] as $outcome)<option value="{{ $outcome }}" {{ old('outcome', 'Resolved') === $outcome ? 'selected' : '' }}>{{ $outcome }}</option>@endforeach</select></div>
+                        <div class="form-group form-group-wide"><label for="counter_notes">Notes</label><textarea name="notes" id="counter_notes" rows="3" class="form-control">{{ old('notes') }}</textarea></div>
+                        <button class="btn btn-primary"><i class="fa fa-medkit"></i> Save Counter Remedy</button>
+                    </form>
+                </article>
+
+                <article class="dashboard-panel workflow-action-panel" data-workflow-form="consultation" {{ $selectedAction === 'consultation' ? '' : 'hidden' }}>
+                    <div class="dashboard-panel-header"><div><p class="eyebrow">Selected action</p><h2>Forward to Consultation</h2></div></div>
+                    <form method="POST" action="{{ route('student-complaints.forward', $complaint) }}" class="workflow-form workflow-form-grid">
+                        @csrf
+                        <div class="form-group"><label for="service_needed">Service needed</label><select name="service_needed" id="service_needed" class="form-control" required>@foreach (['Checkup', 'Medical Consultation', 'Dental Consultation', 'Physical Examination', 'Laboratory Request', 'Other service'] as $service)<option value="{{ $service }}" {{ old('service_needed') === $service ? 'selected' : '' }}>{{ $service === 'Other service' ? 'Other' : $service }}</option>@endforeach</select></div>
+                        <div class="form-group"><label for="priority">Priority</label><select name="priority" id="priority" class="form-control" required>@foreach (['Low', 'Moderate', 'High'] as $priority)<option value="{{ $priority }}" {{ old('priority', $complaint->urgency_level) === $priority ? 'selected' : '' }}>{{ $priority }}</option>@endforeach</select></div>
+                        <div class="form-group form-group-wide"><label for="nurse_notes">Nurse notes</label><textarea name="nurse_notes" id="nurse_notes" rows="4" class="form-control">{{ old('nurse_notes') }}</textarea></div>
+                        <button class="btn btn-primary"><i class="fa fa-share"></i> Forward to Doctor</button>
+                    </form>
+                </article>
+            </section>
+        @endif
+
+        <div class="complaint-lower-grid">
+            <div class="complaint-summary-column">
+                @if ($complaint->counterService)
+                    <section class="dashboard-panel workflow-summary-panel">
+                        <div class="dashboard-panel-header"><div><p class="eyebrow">Counter service completed</p><h2>Remedy Summary</h2></div></div>
+                        <div class="summary-detail-list">
+                            <div><span>Remedy Given</span><strong>{{ $complaint->counterService->remedy_given }}</strong></div>
+                            <div><span>Quantity</span><strong>{{ $complaint->counterService->quantity ?: 'Not applicable' }}</strong></div>
+                            <div><span>Outcome</span><strong>{{ $complaint->counterService->outcome }}</strong></div>
+                            <div><span>Handled By</span><strong>{{ optional($complaint->counterService->handler)->fullName() ?: 'Clinic staff' }}</strong></div>
+                            <div><span>Handled At</span><strong>{{ $complaint->counterService->handled_at->format('M j, Y g:i A') }}</strong></div>
+                        </div>
+                    </section>
+                @endif
+
+                @if ($complaint->consultation)
+                    <section class="dashboard-panel consultation-summary-card folder-panel {{ $shouldOpenIssuedPrescription ? 'is-open' : '' }}">
+                        <button type="button" class="folder-panel-toggle" data-folder-toggle aria-expanded="{{ $shouldOpenIssuedPrescription ? 'true' : 'false' }}" aria-controls="nurse-consultation-summary-folder">
+                            <span class="folder-panel-icon"><i class="fa fa-folder-o"></i></span>
+                            <span class="folder-panel-title"><small>Doctor consultation</small><strong>Consultation Summary</strong></span>
+                            <span class="complaint-status status-{{ \Illuminate\Support\Str::slug($complaint->consultation->status) }}">{{ $complaint->consultation->status }}</span>
+                            <i class="fa fa-chevron-down folder-panel-chevron"></i>
+                        </button>
+                        <div id="nurse-consultation-summary-folder" class="folder-panel-content" {{ $shouldOpenIssuedPrescription ? '' : 'hidden' }}>
+                            <div class="summary-detail-list">
+                                <div><span>Service Needed</span><strong>{{ $complaint->consultation->service_needed }}</strong></div>
+                                <div><span>Priority</span><strong>{{ $complaint->consultation->priority }}</strong></div>
+                                <div><span>Forwarded By</span><strong>{{ optional($complaint->consultation->forwarder)->fullName() ?: 'Clinic staff' }}</strong></div>
+                                <div><span>Doctor</span><strong>{{ optional($complaint->consultation->doctor)->fullName() ?: 'Not assigned' }}</strong></div>
+                                <div class="summary-wide"><span>Nurse Notes</span><p>{{ $complaint->consultation->nurse_notes ?: 'No notes provided.' }}</p></div>
+                                <div class="summary-wide"><span>Diagnosis</span><p>{{ $complaint->consultation->diagnosis ?: $complaint->diagnosis ?: 'No diagnosis recorded.' }}</p></div>
+                                <div class="summary-wide"><span>Treatment</span><p>{{ $complaint->consultation->treatment ?: $complaint->treatment ?: 'No treatment recorded.' }}</p></div>
+                                <div class="summary-wide"><span>Prescription Summary</span><p>{{ $issuedPrescription ? $issuedPrescription->summary : ($complaint->consultation->prescription ?: 'No prescription issued.') }}</p></div>
+                            </div>
+                            @if ($issuedPrescription)
+                                <div class="prescription-action-bar">
+                                    <button type="button" class="btn btn-primary" data-prescription-toggle="{{ $issuedPrescriptionPanelId }}" aria-expanded="{{ $shouldOpenIssuedPrescription ? 'true' : 'false' }}" aria-controls="{{ $issuedPrescriptionPanelId }}"><i class="fa fa-eye"></i> View Prescription</button>
+                                    <button type="button" class="btn btn-light" data-prescription-print="{{ $issuedPrescriptionPanelId }}"><i class="fa fa-print"></i> Print Prescription</button>
+                                    <a href="{{ route('prescriptions.download', $issuedPrescription) }}" class="btn btn-light"><i class="fa fa-download"></i> Download PDF</a>
+                                </div>
+                                @include('prescriptions.inline-panel', ['prescription' => $issuedPrescription, 'panelId' => $issuedPrescriptionPanelId, 'isOpen' => $shouldOpenIssuedPrescription, 'autoPrint' => $shouldPrintIssuedPrescription])
+                            @endif
+                        </div>
+                    </section>
+                @endif
+            </div>
+            @include('student.staff.partials.status-timeline', ['timelineSteps' => $timelineSteps, 'complaint' => $complaint])
+        </div>
+    @endif
+</div>
+@endsection
+
+@push('js')
+<script>
+(function () {
+    var chooser = document.querySelector('[data-action-chooser]');
+    var shell = document.querySelector('[data-selected-action-shell]');
+    if (chooser && shell) {
+        chooser.addEventListener('click', function (event) {
+            var button = event.target.closest('[data-workflow-action]');
+            if (!button) return;
+            var selected = button.dataset.workflowAction;
+            shell.hidden = false;
+            chooser.querySelectorAll('.workflow-decision-card').forEach(function (card) {
+                card.classList.toggle('is-selected', card.contains(button));
+            });
+            shell.querySelectorAll('[data-workflow-form]').forEach(function (form) {
+                form.hidden = form.dataset.workflowForm !== selected;
+            });
+        });
+    }
+
+    document.querySelectorAll('[data-folder-toggle]').forEach(function (toggle) {
+        toggle.addEventListener('click', function () {
+            var content = document.getElementById(toggle.getAttribute('aria-controls'));
+            if (!content) return;
+            var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+            toggle.setAttribute('aria-expanded', String(!isOpen));
+            content.hidden = isOpen;
+            toggle.closest('.folder-panel').classList.toggle('is-open', !isOpen);
+        });
+    });
+
+    var prescriptionType = document.querySelector('[data-prescription-type]');
+    var medicationFields = document.querySelector('[data-medication-fields]');
+    function syncPrescriptionFields() {
+        if (!prescriptionType || !medicationFields) return;
+        medicationFields.hidden = prescriptionType.value === '';
+    }
+    if (prescriptionType) {
+        prescriptionType.addEventListener('change', syncPrescriptionFields);
+        syncPrescriptionFields();
+    }
+
+    var draftForm = document.querySelector('[data-draft-key]');
+    if (draftForm) {
+        var draftKey = draftForm.dataset.draftKey;
+        var status = draftForm.querySelector('[data-draft-status]');
+        try {
+            var savedDraft = JSON.parse(localStorage.getItem(draftKey) || '{}');
+            draftForm.querySelectorAll('input:not([type=file]), textarea, select').forEach(function (field) {
+                if (field.name && savedDraft[field.name] && !field.value) field.value = savedDraft[field.name];
+            });
+            syncPrescriptionFields();
+        } catch (error) {}
+        draftForm.querySelector('[data-save-draft]').addEventListener('click', function () {
+            var data = {};
+            draftForm.querySelectorAll('input:not([type=file]), textarea, select').forEach(function (field) {
+                if (field.name) data[field.name] = field.value;
+            });
+            localStorage.setItem(draftKey, JSON.stringify(data));
+            if (status) status.textContent = 'Draft saved in this browser.';
+        });
+    }
+
+    var list = document.querySelector('[data-medication-list]');
+    if (!list) return;
+    var nextIndex = list.querySelectorAll('[data-medication-row]').length;
+
+    document.querySelector('[data-add-medication]').addEventListener('click', function () {
+        var row = document.createElement('div');
+        row.className = 'medication-row';
+        row.setAttribute('data-medication-row', '');
+        row.innerHTML = '<input name="medications[' + nextIndex + '][medication]" class="form-control" placeholder="Medication name">' +
+            '<input name="medications[' + nextIndex + '][dosage]" class="form-control" placeholder="Dosage">' +
+            '<input name="medications[' + nextIndex + '][frequency]" class="form-control" placeholder="Frequency">' +
+            '<input name="medications[' + nextIndex + '][duration]" class="form-control" placeholder="Duration">' +
+            '<input name="medications[' + nextIndex + '][instruction]" class="form-control" placeholder="Instructions">' +
+            '<button type="button" class="btn table-action-button table-action-danger" data-remove-medication aria-label="Remove medication"><i class="fa fa-trash"></i></button>';
+        list.appendChild(row);
+        nextIndex++;
+    });
+
+    list.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-remove-medication]');
+        if (!button) return;
+        var rows = list.querySelectorAll('[data-medication-row]');
+        if (rows.length === 1) {
+            rows[0].querySelectorAll('input').forEach(function (input) { input.value = ''; });
+            return;
+        }
+        button.closest('[data-medication-row]').remove();
+    });
+})();
+</script>
+@endpush

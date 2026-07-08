@@ -3,7 +3,7 @@
 
 @section('content')
 
-<div class="card border-info">
+<div class="card border-info patient-workspace-card">
     <div class="card-header border">
       <ul class="nav nav-tabs card-header-tabs">
         <li class="nav-item">
@@ -27,52 +27,63 @@
       </ul>
     </div>
     <div class="card-body">
-         <div class="form-group text-center">
-            <div class="col" style=" margin-top: 3%">
-                <img src="{{ $patient->avatar ?? '/img/no_avatar.jpg' }}"  alt="create_avatar" class="create_avatar "><br>{{--PRofile pic upload (Restrict user thaht only img/png file can be uploaded--}}
-            </div>
+        @php
+            $patientFullName = trim($patient->first_name . ' ' . $patient->middle_name . ' ' . $patient->last_name);
+            $patientValue = function ($value) {
+                $value = trim((string) $value);
+                return $value !== '' ? e($value) : '<em>Not Provided</em>';
+            };
+            $patientDetails = [
+                ['label' => 'Home Address', 'value' => $patient->home_address],
+                ['label' => 'Present Address', 'value' => $patient->present_address],
+                ['label' => 'Civil Status', 'value' => $patient->civil_status],
+                ['label' => 'Gender', 'value' => $patient->gender],
+                ['label' => 'Age', 'value' => $patient->age],
+                ['label' => 'Birth Date', 'value' => $patient->birthdate ? \Carbon\Carbon::parse($patient->birthdate)->format('F j, Y') : null],
+                ['label' => 'College / Department', 'value' => $patient->college_department],
+                ['label' => 'Phone Number', 'value' => $patient->phone_number],
+                ['label' => 'Email Address', 'value' => $patient->email],
+            ];
+        @endphp
+
+        <div class="patient-overview-layout">
+            <aside class="patient-overview-card">
+                <div class="profile-card-accent"></div>
+                <div class="profile-avatar-wrap">
+                    <img src="{{ $patient->avatar ?? '/img/no_avatar.jpg' }}" alt="{{ $patientFullName }}" class="profile-avatar" onerror="this.onerror=null;this.src='{{ asset('img/no_avatar.jpg') }}';">
+                </div>
+                <h2>{{ $patientFullName }}</h2>
+                <strong>ID No. {{ $patient->id_number }}</strong>
+                <a href="{{ route('medical-records.show', $patient->id) }}" class="btn btn-info patient-record-button">
+                    <i class="fa fa-folder-open"></i>
+                    <span>View Medical Record</span>
+                </a>
+            </aside>
+
+            <section class="patient-overview-details">
+                <div class="profile-details-header">
+                    <div>
+                        <p class="eyebrow">Patient folder</p>
+                        <h2>Patient Overview</h2>
+                    </div>
+                </div>
+
+                <div class="patient-overview-grid">
+                    @foreach ($patientDetails as $detail)
+                        <div class="profile-data-item">
+                            <span>{{ strtoupper($detail['label']) }}</span>
+                            <strong>{!! $patientValue($detail['value']) !!}</strong>
+                        </div>
+                    @endforeach
+                </div>
+            </section>
         </div>
-        <div class="form-group text-center">
-            <div class="col">
-                <h4 >{{ "$patient->first_name $patient->middle_name $patient->last_name" }}</h4>
-                <h6>ID No. {{ $patient->id_number }}</h6> 
-                
-                <a href="{{ route('medical-records.show', $patient->id) }}" class="btn btn-info">View Medical Record</a>
-                <br><br>
-            </div>
-        </div>
-        <div class="container">
-                                {{--row1--}}
-                                <div class="row ">
-                                    <div class="col-2">
-                                    </div>
-                                    <div class="col">
-                                        <h6 class><i>Home Address:</h6></i>
-                                        <p>{{ $patient->home_address }}</p>
-                                    <h6><i>Present Address:</h6></i>
-                                    <p>{{ $patient->present_address }}</p>
-                                        <h6><i>Civil Status:</i></h6>
-                                        <p>{{ $patient->status }}</p>
-                                        <h6><i>Gender:</i></h6>
-                                        <p>{{ $patient->gender }}</p>
-                                    </div>
-                                    <div class="col">
-                                        <h6><i>Age:</i></h6>
-                                        <p>{{ $patient->age }}</p>
-                                        <h6><i>Birth Date/Month/Year:</i></h6>
-                                        <p>{{ $patient->birthdate }}</p>
-                                        <h6><i>College/ Department:</i></h6>
-                                        <p>{{ $patient->college_department }}</p>
-                                        <h6><i>Phone Number:</i></h6>
-                                        <p>{{ $patient->phone_number }}</p>   
-                                    </div>
-                                </div>
 
                             {{--row2--}}
                             <div class="row justify-content-center align-items-center">
-                                <div class="border border-info mt-3 tab-card mr-10" >
-                                    <div class=" border-info card-header tab-card-header">
-                                        <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                                <div class="border border-info mt-3 tab-card medical-history-layout mr-10">
+                                    <div class="border-info card-header tab-card-header medical-history-nav">
+                                        <ul class="nav nav-tabs card-header-tabs medical-history-tabs" id="myTab" role="tablist">
                                             <li class="nav-item">
                                                 <a class="nav-link active" id="one-tab" data-toggle="tab" href="#one" role="tab" aria-controls="One" aria-selected="true">Past Medical History</a>
                                             </li>
@@ -83,22 +94,22 @@
                                                 <a class="nav-link" id="three-tab" data-toggle="tab" href="#three" role="tab" aria-controls="Three" aria-selected="false">Social History</a>
                                             </li>
                                             <li class="nav-item">
-                                            <a class="nav-link" id="three-tab" data-toggle="tab" href="#four" role="tab" aria-controls="Four" aria-selected="false">Physical Examination</a>
+                                            <a class="nav-link" id="four-tab" data-toggle="tab" href="#four" role="tab" aria-controls="Four" aria-selected="false">Physical Examination</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-link" id="three-tab" data-toggle="tab" href="#five" role="tab" aria-controls="Five" aria-selected="false">Vital Signs</a>
+                                                <a class="nav-link" id="five-tab" data-toggle="tab" href="#five" role="tab" aria-controls="Five" aria-selected="false">Vital Signs</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-link" id="three-tab" data-toggle="tab" href="#six" role="tab" aria-controls="Six" aria-selected="false">Nursing Intervention</a>
+                                                <a class="nav-link" id="six-tab" data-toggle="tab" href="#six" role="tab" aria-controls="Six" aria-selected="false">Nursing Intervention</a>
                                             </li>
                                             <li class="nav-item">
-                                                <a class="nav-link" id="three-tab" data-toggle="tab" href="#seven" role="tab" aria-controls="Seven" aria-selected="false">Assessment</a>
+                                                <a class="nav-link" id="seven-tab" data-toggle="tab" href="#seven" role="tab" aria-controls="Seven" aria-selected="false">Assessment</a>
                                             </li>
                                         </ul>
                                     </div>
 
-                                <fieldset disabled>
-                                    <div class="tab-content" id="myTabContent">
+                                <fieldset disabled class="medical-history-content-shell">
+                                    <div class="tab-content medical-history-content" id="myTabContent">
                                         {{--tab1--}}
                                         <div class="tab-pane fade show active p-3" id="one" role="tabpanel" aria-labelledby="one-tab">
                                             <div class="row">
@@ -288,12 +299,12 @@
 
                                         
                                                 {{--tab4--}}
-                                                <div class="tab-pane fade p-3" id="four" role="tabpanel" aria-labelledby="three-tab">
-                                                    <div class="table-responsive-md">
+                                                <div class="tab-pane fade p-3" id="four" role="tabpanel" aria-labelledby="four-tab">
+                                                    <div class="table-responsive-md table-responsive-shell">
                                                         <div class="row">
                                                             <div class="col text-left table-responsive-md">
                                                                 <p class="register-heading text-center">(To be accomplished by physician)</p>
-                                                                <table class="table table-bordered ">
+                                                                <table class="table table-bordered data-table medical-history-table">
                                                                     <thead>
                                                                         <tr>
                                                                             <th></th>
@@ -478,7 +489,7 @@
 
 
                                                  {{--tab5--}}
-                                                 <div class="tab-pane fade p-3" id="five" role="tabpanel" aria-labelledby="three-tab">
+                                                 <div class="tab-pane fade p-3" id="five" role="tabpanel" aria-labelledby="five-tab">
                                                     <div class="row justify-content-center ">
                                                         <div class="form-inline ">
                                                             
@@ -514,11 +525,12 @@
 
 
                                                 {{--tab6--}}
-                                                <div class="tab-pane fade p-3" id="six" role="tabpanel" aria-labelledby="three-tab">
+                                                <div class="tab-pane fade p-3" id="six" role="tabpanel" aria-labelledby="six-tab">
                                                             
                                                     <div class="row justify-content-center">
                                                          <div class="form-group ">
-                                                            <table>
+                                                            <div class="table-responsive-shell">
+                                                            <table class="data-table medical-history-table">
                                                                 <thead>
                                                                     <tr>
                                                                         <th>Nurse Intervention:</th>
@@ -536,14 +548,15 @@
                                                                     </tr>
                                                                     @endforeach
                                                                 </tbody>
-                                                            </table><br>
+                                                            </table>
+                                                            </div><br>
                                                         </div>
                                                     </div>            
                                                  </div> {{--end /div tab6--}}
 
 
                                                   {{--tab7--}}
-                                                <div class="tab-pane fade p-3" id="seven" role="tabpanel" aria-labelledby="three-tab">
+                                                <div class="tab-pane fade p-3" id="seven" role="tabpanel" aria-labelledby="seven-tab">
                                                     <div class="row justify-content-center">
                                                         <div class="form-group">
                                                             <p class="register-heading text-center"><b>ASSESSMENT AND RECOMMENDATION</b></p>

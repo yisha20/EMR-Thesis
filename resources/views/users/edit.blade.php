@@ -13,7 +13,7 @@
         </div>
     @endif
 
-<div class="card border-info">
+<div class="card border-info user-form-card">
     <div class="card-header border">
         <ul class="nav nav-tabs card-header-tabs">
         <li class="nav-item">
@@ -46,12 +46,12 @@
                 </div>
             @endif
         
-            <form action="{{ route('users.update', $user->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('users.update', $user->id) }}" method="POST" enctype="multipart/form-data" class="user-edit-form">
                 @csrf
                 @method('PUT')
                 <div class="form-group text-center">
                     <div class="col" style=" margin-top: 3%">
-                        <img src="{{ $user->avatar ?? '/img/no_avatar.jpg' }}" alt="create_avatar" class="create_avatar"> {{--Update Profile Uploaded (Restrict user thaht only img/png file can be uploaded )--}}
+                        <img src="{{ $user->avatar ?? asset('img/no_avatar.jpg') }}" alt="create_avatar" class="create_avatar" onerror="this.onerror=null;this.src='{{ asset('img/no_avatar.jpg') }}';"> {{--Update Profile Uploaded (Restrict user thaht only img/png file can be uploaded )--}}
                     </div>
                 </div>
                 <div class="form-group text-center">
@@ -165,7 +165,7 @@
                                 <input id="password_confirmation" name="password_confirmation" type="password" 
                                 class="form-control @error('password_confirmation') is-invalid @enderror" 
                                 placeholder="Confirm New Password *" 
-                                value="{{ old('password') }}" />
+                                value="" />
         
                                 @error('password_confirmation')
                                     <span class="invalid-feedback" role="alert">

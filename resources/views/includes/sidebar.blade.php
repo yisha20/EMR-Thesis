@@ -1,167 +1,172 @@
 @php
 $auth = Auth::user(); 
-$activeUsers = \App\User::getActive();
+$sidebarUserName = $auth ? trim($auth->fullName()) : 'IIT Clinic';
+$sidebarUserName = $sidebarUserName !== '' ? $sidebarUserName : ($auth->username ?? 'IIT Clinic');
+$sidebarGivenName = $auth ? trim(($auth->first_name ?? '') . ' ' . ($auth->middle_name ?? '')) : 'IIT Clinic';
+$sidebarLastName = $auth ? trim($auth->last_name ?? '') : '';
+$sidebarGivenName = $sidebarGivenName !== '' ? $sidebarGivenName : $sidebarUserName;
+$sidebarRoleName = optional(optional($auth)->role)->name ?? 'EMR';
+$isStudent = $sidebarRoleName === 'Student';
+$homeRoute = $isStudent ? route('student.dashboard') : route('dashboard');
+$sidebarRoleClass = 'role-badge role-' . \Illuminate\Support\Str::slug($sidebarRoleName);
+if ($sidebarRoleName === 'Administrator') {
+    $sidebarRoleClass .= ' badge-danger';
+} elseif ($sidebarRoleName === 'Doctor') {
+    $sidebarRoleClass .= ' badge-success';
+} elseif ($sidebarRoleName === 'Nurse') {
+    $sidebarRoleClass .= ' badge-primary';
+}
 @endphp
-<nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm sticky-top">
-    <div class="container">
-        <div id="main">
-            <span class="open-slide d-none d-sm-block"style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776; </span>
-            </div>
-        <a class="navbar-brand" href="{{ url('/dashboard') }}">
-            {{ config('app.name', ' EMR') }}
-        </a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse " id="navbarSupportedContent">
-            <ul class="navbar-nav mr-auto">
-              <li class="nav-item">
-                <a class="nav-link" href="/dashboard">Home <span class="sr-only">(current)</span></a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/about">About</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/doctors">Clinic Staff</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="/contact">Contact</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link d-xl-none d-block d-sm-none" href="#">Active Users</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link d-xl-none d-md-none d-lg-none " href="#">Help</a>
-              </li>
-            </ul>
-
-            <!-- Right Side Of Navbar -->
-            <ul class="navbar-nav ml-auto">
-                <img src="{{ Auth::user()->avatar ?? '/img/no_avatar.jpg' }}" alt="Avatar" class="avatar">
-                <!-- Authentication Links -->
-                @guest
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
-                    </li>
-                @else
-                    <li class="nav-item dropdown">
-                        <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                            {{ Auth::user()->first_name . " " . Auth::user()->last_name }} <span class="caret"></span>
-                        </a>
-
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-                            <a class="dropdown-item" href="{{ route('logout') }}"
-                                onclick="event.preventDefault();
-                                                document.getElementById('logout-form').submit();">
-                                {{ __('Logout') }}
-                            </a>
-
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                                @csrf
-                            </form>
-                        </div>
-                    </li>
-                @endguest
-            </ul>
-        </div>
-    </div>
-
-    <div id="mySidepanel" class="sidepanel">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
-        <div class="prof">
-            <a href="{{ route('profile.show', auth()->user()->id) }}" style="text-decoration: none">
-                <img src="{{Auth::user()->avatar ?? '/img/no_avatar.jpg' }}" alt="Avatar" class="user-panel"><br>
-                <h4 class="text-wrap" style="color:white; width: 14rem">{{Auth::user()->first_name . " " . Auth::user()->middle_name . " " . Auth::user()->last_name}}</h4>
-                <p class="role" style="color:gray">
-                    <div class="badge 
-                        @if(Auth::user()->role->name == 'Administrator') 
-                          badge-danger 
-                        @elseif(Auth::user()->role->name == 'Doctor')  
-                          badge-success
-                        @elseif(Auth::user()->role->name == 'Nurse')
-                          badge-primary
-                        @endif">
-                          {{ Auth::user()->role->name }}
-                        </div>
-                </p>
+<aside id="mySidepanel" class="sidepanel sidebar collapsed">
+        <div class="sidepanel-header">
+            <a class="sidepanel-brand" href="{{ $homeRoute }}">
+                <span class="sidepanel-logo">
+                    <img src="{{ $auth->avatar ?? asset('img/no_avatar.jpg') }}" alt="{{ $sidebarUserName }}" onerror="this.onerror=null;this.src='{{ asset('img/no_avatar.jpg') }}';">
+                </span>
+                <span class="sidepanel-brand-copy">
+                    <strong class="sidebar-user-name">
+                        <span>{{ $sidebarGivenName }}</span>
+                        @if ($sidebarLastName !== '')
+                            <span>{{ $sidebarLastName }}</span>
+                        @endif
+                    </strong>
+                    <small class="{{ $sidebarRoleClass }}">{{ $sidebarRoleName }}</small>
+                </span>
             </a>
         </div>
-        {{--{{ route('users.show', $user->id) }}--}}
-        <div class="row">
-            <div class="col text-left">
-                <a href="{{ route('dashboard') }}"><i class="fa fa-dashboard" style="padding-right:27px"></i>Dashboard</a>
-                <a href="{{ route('profile.show', auth()->user()->id) }}"><i class="fa fa-user" style="padding-right:32px"></i>Profile</a> {{--User Profile Must Be Redirected to Users View (show)--}}
-                <a href="/patients"><i class="fa fa-tasks" style="padding-right:27px"></i>Manage Patients</a>
-                <a href="/users"><i class="fa fa-tasks"style="padding-right:27px"></i>Manage Users</a>
-                <a href="/services"><i class="fa fa-tasks" style="padding-right:27px"></i>Manage Services</a>
-                
-                <a href="{{ route('logout') }}" onclick="event.preventDefault();
-                 document.getElementById('logout-form').submit();">
-                 <i class="fa fa-power-off" style="padding-right:29px"></i>{{ __('Logout') }}</a>
 
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
-                
+        <button type="button" class="sidebar-edge-toggle" onclick="toggleSidebar()" aria-label="Expand sidebar" aria-expanded="false">
+            <span class="toggle-arrow" aria-hidden="true">
+                <i class="fa fa-angle-right"></i>
+            </span>
+        </button>
 
-                <!--   <a href="{{ route('help') }}"><i class="fa fa-question"></i> Help</a> -->
+        @unless ($isStudent)
+            <div class="sidepanel-search">
+                <i class="fa fa-search"></i>
+                <input type="search" placeholder="Search...">
             </div>
+        @endunless
+
+        <div class="sidepanel-menu">
+            @if ($isStudent)
+            <div class="sidepanel-section-label">Student Portal</div>
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.dashboard') ? 'active' : '' }}" href="{{ route('student.dashboard') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Student Dashboard" aria-label="Student Dashboard">
+                <i class="fa fa-home"></i><span>Student Dashboard</span>
+            </a>
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.complaints.*') ? 'active' : '' }}" href="{{ route('student.complaints.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="My Complaints" aria-label="My Complaints">
+                <i class="fa fa-file-text-o"></i><span>My Complaints</span>
+            </a>
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.medical-history') ? 'active' : '' }}" href="{{ route('student.medical-history') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Health History" aria-label="Health History">
+                <i class="fa fa-heartbeat"></i><span>Health History</span>
+            </a>
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.profile') ? 'active' : '' }}" href="{{ route('student.profile') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Profile" aria-label="Profile">
+                <i class="fa fa-user-o"></i><span>Profile</span>
+            </a>
+            @else
+            <div class="sidepanel-section-label">Core Workspace</div>
+            <a class="sidebar-tooltip-trigger {{ request()->is('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Dashboard" aria-label="Dashboard">
+                <i class="fa fa-line-chart"></i><span>Dashboard</span>
+            </a>
+            <a class="sidebar-tooltip-trigger {{ request()->is('profile/*') ? 'active' : '' }}" href="{{ route('profile.show', auth()->user()->id) }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Profile" aria-label="Profile">
+                <i class="fa fa-user-o"></i><span>Profile</span>
+            </a>
+
+            <div class="sidepanel-section-label">Management</div>
+            <a class="sidebar-tooltip-trigger {{ request()->is('patients*') ? 'active' : '' }}" href="/patients" data-toggle="tooltip" data-placement="right" data-container="body" title="Manage Patients" aria-label="Manage Patients">
+                <i class="fa fa-address-card-o"></i><span>Manage Patients</span>
+            </a>
+            <a class="sidebar-tooltip-trigger {{ request()->is('student-complaints*') ? 'active' : '' }}" href="{{ route('student-complaints.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="{{ $sidebarRoleName === 'Doctor' ? 'Consultation Queue' : 'Student Intake Queue' }}" aria-label="{{ $sidebarRoleName === 'Doctor' ? 'Consultation Queue' : 'Student Intake Queue' }}">
+                <i class="fa fa-inbox"></i><span>{{ $sidebarRoleName === 'Doctor' ? 'Consultation Queue' : 'Student Intake Queue' }}</span>
+            </a>
+            @if ($sidebarRoleName === 'Administrator')
+            <a class="sidebar-tooltip-trigger {{ request()->is('users*') ? 'active' : '' }}" href="/users" data-toggle="tooltip" data-placement="right" data-container="body" title="Manage Users" aria-label="Manage Users">
+                <i class="fa fa-id-badge"></i><span>Manage Users</span>
+            </a>
+            @endif
+            @if ($sidebarRoleName === 'Doctor')
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('medical-records.*') ? 'active' : '' }}" href="{{ route('medical-records.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Medical Records" aria-label="Medical Records">
+                <i class="fa fa-file-text-o"></i><span>Medical Records</span>
+            </a>
+            @else
+            <a class="sidebar-tooltip-trigger {{ request()->is('services*') ? 'active' : '' }}" href="/services" data-toggle="tooltip" data-placement="right" data-container="body" title="Manage Services" aria-label="Manage Services">
+                <i class="fa fa-briefcase"></i><span>Manage Services</span>
+            </a>
+            @endif
+
+            <div class="sidepanel-section-label">Support</div>
+            <a class="sidebar-tooltip-trigger {{ request()->is('doctors') ? 'active' : '' }}" href="/doctors" data-toggle="tooltip" data-placement="right" data-container="body" title="Clinic Staff" aria-label="Clinic Staff">
+                <i class="fa fa-stethoscope"></i><span>Clinic Staff</span>
+            </a>
+            <a class="sidebar-tooltip-trigger {{ request()->is('about') ? 'active' : '' }}" href="/about" data-toggle="tooltip" data-placement="right" data-container="body" title="About" aria-label="About">
+                <i class="fa fa-info-circle"></i><span>About</span>
+            </a>
+            <a class="sidebar-tooltip-trigger {{ request()->is('contact') ? 'active' : '' }}" href="/contact" data-toggle="tooltip" data-placement="right" data-container="body" title="Contact" aria-label="Contact">
+                <i class="fa fa-envelope-o"></i><span>Contact</span>
+            </a>
+            @endif
         </div>
-    </div>      
-    
 
-
-    <!--end of side bar content-->
-    
-    <!--Active Users-->
-    
-    
-    <button class="open-button" onclick="openForm()">Online</button>
-
-        <div class="chat-popup" id="myForm">
-        <form action="/#" class="form-container">
-            <h6 style="text-align: center">Active Users</h6>
-            <table class="table  table-responsive-sm">
-                <thead class="a">
-                    <tr>
-                        
-                    </tr>
-                    <tr>
-                    </tr>
-                </thead>
-                <tbody class="b">
-                    @foreach($activeUsers as $user)
-                    <tr>
-                        <td class="col-sm-4">{{ $user->first_name . " " . $user->last_name }}</td>
-                        <td><i class="fa fa-circle" style="color: green" aria-hidden="true"></i></td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
-        </form>
+        <div class="sidepanel-footer">
+            <a class="sidebar-tooltip-trigger" href="{{ route('logout') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Logout" aria-label="Logout" data-confirm="Are you sure you want to log out?" data-confirm-title="Confirm logout" data-confirm-form="logout-form">
+                <i class="fa fa-sign-out"></i><span>Logout</span>
+            </a>
+            <div class="theme-mode-row">
+                <span class="theme-mode-label"><i class="fa fa-moon-o"></i><span>Dark Mode</span></span>
+                <button type="button" class="theme-toggle" onclick="toggleThemeMode(this)" aria-label="Toggle dark mode">
+                    <span></span>
+                </button>
+            </div>
+            @unless ($isStudent)
+                <small class="sidebar-copyright">Electronic Medical Record &copy; 2026</small>
+            @endunless
         </div>
-    <!--End for Active Users-->
-</nav>
+    </aside>
+
     <script>
 
-        /*Sidebar*/
-    function openNav() {
-      document.getElementById("mySidepanel").style.width = "270px";
-    }
-    
-    function closeNav() {
-      document.getElementById("mySidepanel").style.width = "0";
+    function toggleSidebar() {
+      const sidepanel = document.getElementById("mySidepanel");
+      $('.sidebar-tooltip-trigger').tooltip('hide');
+      sidepanel.classList.toggle("collapsed");
+      document.body.classList.toggle("sidebar-collapsed", sidepanel.classList.contains("collapsed"));
+      syncSidebarToggle();
+      syncSidebarTooltips();
     }
 
-        /*OnlineButton*/
-    function openForm() {
-        document.getElementById("myForm").style.display = "block";
-        }
+    function syncSidebarToggle() {
+      const sidepanel = document.getElementById("mySidepanel");
+      const toggle = sidepanel.querySelector(".sidebar-edge-toggle");
+      const arrow = toggle.querySelector(".toggle-arrow i");
+      const isCollapsed = sidepanel.classList.contains("collapsed");
 
-        function closeForm() {
-        document.getElementById("myForm").style.display = "none";
-        }
+      toggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+      toggle.setAttribute("aria-label", isCollapsed ? "Expand sidebar" : "Collapse sidebar");
+      arrow.classList.toggle("fa-angle-right", isCollapsed);
+      arrow.classList.toggle("fa-angle-left", !isCollapsed);
+    }
+
+    function syncSidebarTooltips() {
+      const isCollapsed = document.getElementById("mySidepanel").classList.contains("collapsed");
+      $('.sidebar-tooltip-trigger').tooltip(isCollapsed ? 'enable' : 'disable');
+    }
+
+    function setThemeMode(isDark) {
+      const themeButton = document.querySelector(".theme-toggle");
+      document.body.classList.toggle("dark-mode", isDark);
+      localStorage.setItem("emr-theme", isDark ? "dark" : "light");
+
+      if (themeButton) {
+        themeButton.classList.toggle("is-active", isDark);
+        themeButton.setAttribute("aria-pressed", isDark ? "true" : "false");
+      }
+    }
+
+    function toggleThemeMode(button) {
+      setThemeMode(!button.classList.contains("is-active"));
+    }
+
+    setThemeMode(localStorage.getItem("emr-theme") === "dark");
+    syncSidebarToggle();
     
     </script>

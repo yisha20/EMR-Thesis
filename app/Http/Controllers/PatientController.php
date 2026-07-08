@@ -8,6 +8,7 @@ use App\Patient;
 use Illuminate\Http\Request;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class PatientController extends Controller
 {
@@ -16,11 +17,38 @@ class PatientController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $patients = Patient::orderBy('last_name','asc')->paginate(20);
+        $patients = Patient::query()
+            ->when($request->filled('search'), function ($query) use ($request) {
+                $search = $request->search;
+                $query->where(function ($query) use ($search) {
+                    $query->where('first_name', 'LIKE', "%{$search}%")
+                        ->orWhere('middle_name', 'LIKE', "%{$search}%")
+                        ->orWhere('last_name', 'LIKE', "%{$search}%")
+                        ->orWhere('id_number', 'LIKE', "%{$search}%")
+                        ->orWhere('college_department', 'LIKE', "%{$search}%");
+                });
+            })
+            ->when($request->filled('gender'), function ($query) use ($request) {
+                $query->where('gender', $request->gender);
+            })
+            ->when($request->filled('department'), function ($query) use ($request) {
+                $query->where('college_department', $request->department);
+            })
+            ->when($request->filled('status'), function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->orderBy('last_name', 'asc')
+            ->paginate(20)
+            ->appends($request->query());
 
-        return view('patients.index', compact('patients'));
+        $departments = Patient::whereNotNull('college_department')
+            ->distinct()
+            ->orderBy('college_department')
+            ->pluck('college_department');
+
+        return view('patients.index', compact('patients', 'departments'));
     }
 
     /**
@@ -92,20 +120,21 @@ class PatientController extends Controller
         ]);
         
         $patients = Patient::onlyTrashed()
-            ->where('first_name', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('id_number', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('first_name', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('middle_name', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('last_name', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('gender', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('phone_number', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('college_department', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('type', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('status', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('home_address', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('present_address', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('age', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('birthdate', 'LIKE', '%' . $data['search'] . '%')
+            ->where(function ($query) use ($data) {
+                $query->where('first_name', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('id_number', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('middle_name', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('last_name', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('gender', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('phone_number', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('college_department', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('type', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('status', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('home_address', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('present_address', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('age', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('birthdate', 'LIKE', '%' . $data['search'] . '%');
+            })
             ->paginate(20);
 
         return view('patients.archive_search', [
@@ -123,6 +152,7 @@ class PatientController extends Controller
     {
         // return dd($request->all());
         $request->validate([
+            'id_number' => 'nullable|string|max:255|unique:patients,id_number',
             'first_name' => 'required',
             'last_name' => 'required',
             'gender' => 'required',
@@ -135,20 +165,19 @@ class PatientController extends Controller
         ]);
         
         $imagePath = null;
-        
-        if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
-            $request->validate([
-                'avatar' => 'image|max:2048|mimes: jpg,jpeg,png',
-            ]);
 
+        $request->validate([
+            'avatar' => 'nullable|image|max:2048|mimes:jpg,jpeg,png',
+        ]);
+
+        if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
             /** Variables. */
             $avatar = $request->file('avatar');
-            $host = $request->getSchemeAndHttpHost();
 
             /** Uploading the image. */
             $storage = Storage::disk('public');
             $filePath = $storage->putFile('avatars', new File($avatar), 'public');
-            $imagePath = $host.'/storage/'.$filePath;
+            $imagePath = Storage::url($filePath);
         }
         
         $data = $request->only([
@@ -159,9 +188,10 @@ class PatientController extends Controller
             'gender',
             'address',
             'phone_number',
+            'email',
             'college_department',
             'type',
-            'status',
+            'civil_status',
             'home_address',
             'present_address',
             'age',
@@ -169,6 +199,9 @@ class PatientController extends Controller
         ]);
 
         $data['added_by'] = auth()->user()->id;
+        $data['updated_by'] = auth()->user()->id;
+        $data['status'] = 'Active';
+        $data['date_registered'] = now();
         $data['avatar'] = $imagePath;
         
         $patient = Patient::create($data);
@@ -272,9 +305,153 @@ class PatientController extends Controller
      */
     public function show($id)
     {
-        $patient = Patient::findOrFail($id); // gi edit ko muna para makita ko output pag e click ang view hihi
+        $patient = Patient::findOrFail($id);
+        $this->normalizeHealthExaminationRecord($patient);
          
         return view('patients.show', compact('patient'));
+    }
+
+    private function normalizeHealthExaminationRecord(Patient $patient)
+    {
+        $record = $patient->healthExaminationRecord;
+        if (!$record) {
+            return;
+        }
+
+        $normalized = $this->normalizedHealthRecordData($record);
+
+        foreach ($normalized as $field => $value) {
+            $record->setAttribute($field, $value);
+        }
+    }
+
+    private function normalizedHealthRecordData(HealthExaminationRecord $record)
+    {
+        $defaults = $this->healthRecordDefaults();
+        $normalized = [];
+
+        foreach ($defaults as $field => $fieldDefaults) {
+            $normalized[$field] = array_merge(
+                $fieldDefaults,
+                $this->normalizeArrayValue($record->{$field})
+            );
+        }
+
+        $normalized['past_medical_history']['pastmedical_history'] = $this->normalizeListValue(
+            $normalized['past_medical_history']['pastmedical_history']
+        );
+        $normalized['family_history']['family_history'] = $this->normalizeListValue(
+            $normalized['family_history']['family_history']
+        );
+        $normalized['social_history']['medications'] = $this->normalizeListValue(
+            $normalized['social_history']['medications']
+        );
+        $normalized['social_history']['allergies'] = $this->normalizeListValue(
+            $normalized['social_history']['allergies']
+        );
+        $normalized['nursing_interventions']['nursing_interventions'] = array_map(
+            function ($intervention) {
+                if (!is_array($intervention)) {
+                    $intervention = ['intervention' => $intervention];
+                }
+
+                return array_merge([
+                    'intervention' => '',
+                    'time' => '',
+                    'by' => '',
+                ], $intervention);
+            },
+            $this->normalizeListValue($normalized['nursing_interventions']['nursing_interventions'])
+        );
+
+        return $normalized;
+    }
+
+    private function healthRecordDefaults()
+    {
+        $physicalExamination = [];
+        foreach ([
+            'skin', 'head', 'eyes', 'ears', 'nose', 'mouth', 'neck', 'chest',
+            'lungs', 'heart', 'abdomen', 'back', 'anus', 'gu_system',
+            'genitals', 'reflexes', 'extremities', 'neurologic', 'endocrine',
+            'others',
+        ] as $section) {
+            $physicalExamination[$section . '_status'] = '';
+            $physicalExamination[$section . '_remarks'] = '';
+        }
+
+        return [
+            'past_medical_history' => [
+                'pastmedical_history' => [],
+                'last_menstrual_period' => '',
+                'menstrual_pattern' => '',
+            ],
+            'family_history' => [
+                'family_history' => [],
+            ],
+            'social_history' => [
+                'is_smoking' => '',
+                'packs_smoked' => '',
+                'is_drinking_beer' => '',
+                'drinking_frequency' => '',
+                'is_taking_medication' => '',
+                'medications' => [],
+                'allergies' => [],
+                'exercise' => '',
+                'diet' => '',
+            ],
+            'phyiscal_examination' => $physicalExamination,
+            'vital_signs' => [
+                'temperature' => '',
+                'pulse_rate' => '',
+                'respiratory_rate' => '',
+                'blood_pressure' => '',
+                'weight' => '',
+            ],
+            'assessment' => [
+                'physically_fit' => '',
+                'physically_fit_description' => '',
+                'date_examined' => '',
+                'by' => '',
+                'license_no' => '',
+            ],
+            'nursing_interventions' => [
+                'nursing_interventions' => [],
+            ],
+        ];
+    }
+
+    private function normalizeArrayValue($value)
+    {
+        if ($value instanceof \Illuminate\Support\Collection) {
+            return $value->toArray();
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return is_array($decoded) ? $decoded : [$decoded];
+            }
+
+            return strpos($value, ',') !== false
+                ? array_values(array_filter(array_map('trim', explode(',', $value)), 'strlen'))
+                : [$value];
+        }
+
+        return [$value];
+    }
+
+    private function normalizeListValue($value)
+    {
+        return array_values($this->normalizeArrayValue($value));
     }
 
     /**
@@ -286,8 +463,24 @@ class PatientController extends Controller
     public function edit($id)
     {
         $patient = Patient::findOrFail($id);
-        
-        return view('patients.edit', compact('patient'));
+        $record = HealthExaminationRecord::firstOrCreate(
+            ['patient_id' => $patient->id],
+            array_merge($this->healthRecordDefaults(), [
+                'added_by' => auth()->id(),
+            ])
+        );
+        $record->update($this->normalizedHealthRecordData($record));
+        $patient->load('healthExaminationRecord');
+        $this->normalizeHealthExaminationRecord($patient);
+
+        $socialHistory = $patient->getSocialHistory();
+        $physicalExamination = $patient->getPhysicalExamination();
+
+        return view('patients.edit', compact(
+            'patient',
+            'socialHistory',
+            'physicalExamination'
+        ));
     }
 
     /**
@@ -300,20 +493,25 @@ class PatientController extends Controller
     public function update(Request $request, $id)
     {
         $imagePath = null;
-        
-        if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
-            $request->validate([
-                'avatar' => 'image|max:2048|mimes: jpg,jpeg,png',
-            ]);
 
+        $request->validate([
+            'id_number' => [
+                'nullable',
+                'string',
+                'max:255',
+                Rule::unique('patients', 'id_number')->ignore($id),
+            ],
+            'avatar' => 'nullable|image|max:2048|mimes:jpg,jpeg,png',
+        ]);
+
+        if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
             /** Variables. */
             $avatar = $request->file('avatar');
-            $host = $request->getSchemeAndHttpHost();
 
             /** Uploading the image. */
             $storage = Storage::disk('public');
             $filePath = $storage->putFile('avatars', new File($avatar), 'public');
-            $imagePath = $host.'/storage/'.$filePath;
+            $imagePath = Storage::url($filePath);
         }
         
         $data = $request->only([
@@ -324,9 +522,10 @@ class PatientController extends Controller
             'gender',
             'address',
             'phone_number',
+            'email',
             'college_department',
             'type',
-            'status',
+            'civil_status',
             'home_address',
             'present_address',
             'age',
@@ -334,7 +533,11 @@ class PatientController extends Controller
         ]);
 
         $data['updated_by'] = auth()->user()->id;
-        $data['avatar'] = $imagePath;
+        $data['status'] = $request->input('patient_status', 'Active');
+
+        if ($imagePath) {
+            $data['avatar'] = $imagePath;
+        }
         
         $patient = Patient::find($id);
         $patient->update($data);
@@ -413,18 +616,46 @@ class PatientController extends Controller
             'license_no',
         ]);
         
-        $examination = HealthExaminationRecord::where('patient_id', $id)->first();
+        $examination = HealthExaminationRecord::firstOrCreate(
+            ['patient_id' => $id],
+            array_merge($this->healthRecordDefaults(), [
+                'added_by' => auth()->user()->id,
+            ])
+        );
+        $existingHealthData = $this->normalizedHealthRecordData($examination);
         $examination->update([
             'patient_id' => $patient->id,
             'past_medical_history_others' => $request->past_medical_history_others,
             'family_history_others' => $request->family_history_others,
-            'past_medical_history' => $pastMedicalHistory,
-            'family_history' => $familyHistory,
-            'social_history' => $socialHistory,
-            'phyiscal_examination' => $physicalExamination,
-            'vital_signs' => $vitalSigns,
-            'assessment' => $assesment,
-            'nursing_interventions' => $nursingIntervention,
+            'past_medical_history' => array_merge(
+                $this->healthRecordDefaults()['past_medical_history'],
+                $pastMedicalHistory
+            ),
+            'family_history' => array_merge(
+                $this->healthRecordDefaults()['family_history'],
+                $familyHistory
+            ),
+            'social_history' => array_merge(
+                $this->healthRecordDefaults()['social_history'],
+                ['allergies' => $existingHealthData['social_history']['allergies']],
+                $socialHistory
+            ),
+            'phyiscal_examination' => array_merge(
+                $this->healthRecordDefaults()['phyiscal_examination'],
+                $physicalExamination
+            ),
+            'vital_signs' => array_merge(
+                $this->healthRecordDefaults()['vital_signs'],
+                $vitalSigns
+            ),
+            'assessment' => array_merge(
+                $this->healthRecordDefaults()['assessment'],
+                $assesment
+            ),
+            'nursing_interventions' => array_merge(
+                $this->healthRecordDefaults()['nursing_interventions'],
+                $nursingIntervention
+            ),
             'added_by' => auth()->user()->id,
         ]);
         
@@ -440,6 +671,8 @@ class PatientController extends Controller
     public function destroy($id)
     {
         $patient = Patient::findOrFail($id);
+        $patient->archived_by = auth()->id();
+        $patient->save();
         $patient->delete();
 
         ActivityLogger::log(auth()->user()->name . ' archived patient (' . $patient->first_name . ' ' . $patient->last_name . ')');
@@ -471,6 +704,8 @@ class PatientController extends Controller
         }
 
         $patient->restore();
+        $patient->archived_by = null;
+        $patient->save();
 
         ActivityLogger::log(auth()->user()->name . ' restored patient (' . $patient->first_name . ' ' . $patient->last_name . ')');
         

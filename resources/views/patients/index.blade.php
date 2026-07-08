@@ -1,107 +1,87 @@
 @extends('layouts.app')
 
 @section('content')
-
-
-<div class="card text-center border-info">
-    <div class="card-header border-info">
-      <ul class="nav nav-tabs card-header-tabs">
-        <li class="nav-item">
-          <a class="nav-link active" href="{{ route('patients.index') }}">Patients</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ route('patients.create') }}">Add New Patient</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="{{ route('patients.archive') }}">Archive</a>{{-- sir erik sudgested na walang delete. those student nga nag left sa school kay mabutang diri ilang medical records para maretrieve nila if kailanganin--}}
-        </li>
-      </ul>
-      
-</div>
+<div class="card border-info patient-table-card">
+    <div class="card-header border-info patient-table-header">
+        <ul class="nav nav-tabs card-header-tabs">
+            <li class="nav-item"><a class="nav-link active" href="{{ route('patients.index') }}">Patients</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ route('patients.create') }}">Add New Patient</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ route('patients.archive') }}">Archive</a></li>
+        </ul>
+    </div>
     <div class="card-body">
-      <div class="input-group mb-4" style="margin:auto;max-width:250px">
-        <form action="{{ route('patients.search') }}" method="POST">
-          @csrf
-            <div class="row">
-                <div class="input-group-prepend">
-                  <input type="search" autocomplete="off" name="search" placeholder="Search for Patient " class="form-control">
-                  <button type="submit" class="form-control col-sm-2"><i class="fa fa-search"></i></button>
-                </div>
-            </div>  
-        </form>
-      {{--<i class="fa fa-search"></i>--}}
-        
-      </div>
-      <div class="pagination justify-content-center">
-        {{$patients->links()}}
-        </div>
-        <table class="table table-bordered table-responsive-md table-hover">
-            <thead class="text-center thead-light">
-              <tr>
-                <th>Picture</th>
-                <th scope="col">OPD/Id Number</th>
-                <th scope="col">Last Name</th>
-                <th scope="col">First Name</th>
-                <th scope="col">Middle Name</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-
-            <tbody class="p2 text-center" id="myTable">
-	          	@foreach ($patients as $patient)
-	          	<tr>
-                  <td>
-                    <img src="{{ $patient->avatar ?? 'img/no_avatar.jpg' }}" style="height: 50px; width: 50px; border-radius: 50%" />
-                  </td>
-                	<td>{{ $patient->id_number }}</td>
-               		<td>{{ $patient->last_name }}</td>
-                	<td>{{ $patient->first_name }}</td>
-                	<td>{{ $patient->middle_name }}</td>
-                	<td>
-                  		
-                      <form action="{{ route('patients.destroy', $patient->id) }}" id="deleteForm" onsubmit="return confirmDelete()" method="post">
-                        @csrf
-                        @method('DELETE')
-                        <a href="{{ route('patients.show', $patient->id) }}"><i class="fa fa-eye" data-toggle="tooltip" data-placement="top" title="view" style="padding-right:20px"aria-hidden="true"></a></i>
-                        <a href="{{ route('patients.edit', $patient->id) }}"><i class="fa fa-edit" data-toggle="tooltip" data-placement="top" title="edit" style="padding-right:20px" aria-hidden="true"></a></i>
-                        <button class="btn" type="submit">
-                          <i class="fa fa-archive" data-toggle="tooltip" data-placement="top" title="archive" style="padding-right:15px"aria-hidden="true"></i> 
-                        </button>{{--archive nalang daw instead of deleting the files of user--}}
-                      </form>
-                	</td>
-	      	      </tr>
-            @endforeach
-            </tbody>
-          </table><br>
-          <div class="pagination justify-content-center">
-            {{$patients->links()}}
+        <form method="GET" action="{{ route('patients.index') }}" class="emr-filter-bar filter-toolbar">
+            <div class="emr-filter-search filter-search">
+                <i class="fa fa-search"></i>
+                <input type="search" name="search" value="{{ request('search') }}" placeholder="Search by name, ID number, or department" aria-label="Search patients">
             </div>
-  </div>
+            <select name="gender" class="form-control filter-select" aria-label="Filter by gender">
+                <option value="">All genders</option>
+                @foreach (['Male', 'Female'] as $gender)
+                    <option value="{{ $gender }}" {{ request('gender') === $gender ? 'selected' : '' }}>{{ $gender }}</option>
+                @endforeach
+            </select>
+            <select name="department" class="form-control filter-select" aria-label="Filter by college or department">
+                <option value="">All departments</option>
+                @foreach ($departments as $department)
+                    <option value="{{ $department }}" {{ request('department') === $department ? 'selected' : '' }}>{{ $department }}</option>
+                @endforeach
+            </select>
+            <select name="status" class="form-control filter-select" aria-label="Filter by status">
+                <option value="">All statuses</option>
+                @foreach (['Active', 'Inactive'] as $status)
+                    <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>{{ $status }}</option>
+                @endforeach
+            </select>
+            <div class="filter-actions">
+                <button class="btn btn-primary" type="submit">Apply</button>
+                <a class="btn btn-light" href="{{ route('patients.index') }}">Reset</a>
+            </div>
+        </form>
 
-  <script>
-    $(document).ready(function(){
-      $("#myInput").on("keyup", function() {
-        var value = $(this).val().toLowerCase();
-        $("#myTable tr").filter(function() {
-          $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-        });
-      });
-    });
-    </script>
-
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to archive this patient?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
-
-<script>
-  $(document).ready(function(){
-    $('[data-toggle="tooltip"]').tooltip();   
-  });
-  </script>
+        <div class="table-responsive-shell emr-data-table-wrap">
+            <table class="table table-hover patient-data-table emr-data-table data-table is-wide">
+                <thead>
+                    <tr>
+                        <th>Patient</th>
+                        <th>ID Number</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Date Registered</th>
+                        <th>Last Updated</th>
+                        <th class="text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($patients as $patient)
+                        <tr>
+                            <td>
+                                <div class="patient-table-identity">
+                                    <img src="{{ $patient->avatar ?? asset('img/no_avatar.jpg') }}" alt="" class="patient-table-avatar" onerror="this.onerror=null;this.src='{{ asset('img/no_avatar.jpg') }}';">
+                                    <div><strong>{{ $patient->last_name }}, {{ $patient->first_name }}</strong><span>{{ $patient->gender ?: 'Gender not set' }}</span></div>
+                                </div>
+                            </td>
+                            <td>{{ $patient->id_number ?: 'Not assigned' }}</td>
+                            <td>{{ $patient->college_department ?: 'Not specified' }}</td>
+                            <td><span class="emr-status-badge {{ strtolower($patient->status ?: 'active') }}">{{ $patient->status ?: 'Active' }}</span></td>
+                            <td>{{ optional($patient->date_registered ?: $patient->created_at)->format('M j, Y') }}</td>
+                            <td>{{ $patient->updated_at->format('M j, Y') }}</td>
+                            <td class="action-cell">
+                                <form action="{{ route('patients.destroy', $patient->id) }}" class="table-action-group" method="post">
+                                    @csrf @method('DELETE')
+                                    <a href="{{ route('patients.show', $patient->id) }}" class="table-action-button" aria-label="View patient" title="View patient" data-toggle="tooltip"><i class="fa fa-eye"></i></a>
+                                    <a href="{{ route('patients.edit', $patient->id) }}" class="table-action-button" aria-label="Edit patient" title="Edit patient" data-toggle="tooltip"><i class="fa fa-edit"></i></a>
+                                    <button class="table-action-button table-action-danger btn" type="submit" aria-label="Archive patient" title="Archive patient" data-toggle="tooltip" data-confirm="Archive {{ $patient->first_name }} {{ $patient->last_name }}?" data-confirm-title="Archive patient"><i class="fa fa-archive"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7">@include('includes.empty-state', ['title' => 'No patients found.', 'message' => 'Adjust the search or filters and try again.', 'icon' => 'fa-user-o'])</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="pagination justify-content-center">{{ $patients->links() }}</div>
+    </div>
+</div>
 @stop

@@ -3,8 +3,8 @@
 @section('content')
 
 
-<div class="card text-center border-info">
-    <div class="card-header border-info">
+<div class="card text-center border-info user-table-card">
+    <div class="card-header border-info user-table-header">
         <ul class="nav nav-tabs card-header-tabs">
           <li class="nav-item">
             <a class="nav-link" href="/users">Users</a>
@@ -33,14 +33,15 @@
       {{--<i class="fa fa-search"></i>--}}
         
       </div>
-        <table class="table table-bordered table-responsive-md table-hover">
+        <div class="user-table-wrap table-responsive-shell">
+          <table class="table table-bordered table-hover user-data-table data-table is-wide">
             <thead class="text-center thead-light">
               
               <tr>
                 <th scope="col">Role</th>
-                <th scope="col">Last Name</th>
-                <th scope="col">First Name</th>
-                <th scope="col">Middle Name</th>
+                <th scope="col">Username</th>
+                <th scope="col">Full Name</th>
+                <th scope="col">Email Address</th>
                 <th scope="col">Action</th>
               </tr>
             </thead>
@@ -61,16 +62,16 @@
                       {{ $user->role->name }}
                     </div>
                   </td>
-                  <td>{{ $user->last_name }}</td>
-                  <td>{{ $user->first_name }}</td>
-                  <td>{{ $user->middle_name }}</td>
-                  <td>
-                    <form action="{{ route('users.delete', $user->id) }}" id="deleteForm" onsubmit="return confirmDelete()" method="post">
+                  <td>{{ $user->username }}</td>
+                  <td>{{ $user->first_name }} {{ $user->middle_name }} {{ $user->last_name }}</td>
+                  <td>{{ $user->email }}</td>
+                  <td class="action-cell">
+                    <form action="{{ route('users.delete', $user->id) }}" method="post" class="table-action-group">
                       @csrf
                       @method('DELETE')
-                      <a href="{{ route('users.restore', $user->id) }}"><i class="fa fa-refresh" style="padding-right:20px"aria-hidden="true"></a></i>
-                      <button type="submit" class="btn">
-                        <i class="fa fa-trash" style="padding-right:15px"aria-hidden="true"></i> 
+                      <a href="{{ route('users.restore', $user->id) }}" class="table-action-button" title="Restore User"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                      <button type="submit" class="table-action-button table-action-danger btn" title="Delete User" data-confirm="Permanently delete {{ $user->fullName() }}? This cannot be undone." data-confirm-title="Delete user">
+                        <i class="fa fa-trash" aria-hidden="true"></i>
                       </button>{{--archive nalang daw instead of deleting the files of user--}}
                     </form>
                   </td>
@@ -78,7 +79,8 @@
                 @endif
               @endforeach
             </tbody>
-          </table><br>
+          </table>
+        </div><br>
           <div class="pagination justify-content-center">
             {{$users->links()}}
             </div>
@@ -94,16 +96,6 @@
       });
     });
     </script>
-
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to delete this user?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
 
 <script>
   $(document).ready(function(){

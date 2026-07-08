@@ -1,107 +1,34 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $staff = [
+        ['name' => 'MUHAMMAD M. PUTING, M.D.', 'role' => 'Chief Administrative Officer', 'initials' => 'MP'],
+        ['name' => 'MIKKA ANGELA S. AYTONA', 'role' => 'Admin Assistant I', 'initials' => 'MA'],
+        ['name' => 'OMADLE, ADONIS M.', 'role' => 'Admin Assistant I', 'initials' => 'AO'],
+        ['name' => 'CEPE, CECILIA C.', 'role' => 'Nurse I', 'initials' => 'CC'],
+        ['name' => 'CASTILLO, LOURDES MAE G.', 'role' => 'Nurse II', 'initials' => 'LC'],
+        ['name' => 'GORECHO, IRENE B.', 'role' => 'Admin Aide VI', 'initials' => 'IG'],
+        ['name' => 'MACKNO, PINAMILI R.', 'role' => 'Laboratory Technician III', 'initials' => 'PM'],
+        ['name' => 'MACOTE, ASRIFAH S.', 'role' => 'Medical Technician II', 'initials' => 'AM'],
+    ];
+@endphp
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<section class="section-heading">
+    <p class="eyebrow">Clinic staff</p>
+    <h1>MSU-IIT Office Clinic Team</h1>
+    <span>Professional staff directory for medical, administrative, and laboratory support.</span>
+</section>
 
-
-<div class="text-center">
-<h2 style="font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; font-size: 50px;">MSU-IIT Office Clinic Staff</h2><br>
-<ul class="people-list">
-  <div class="row">
-  <div class="clinic">
-    <li>
-    <img src="img/z1.png" alt="Avatar" class="staff">
-    <div class="people-hover vertical-centered">
-      <div class="people-detail"><br><br><br><br>
-        <h3>MUHAMMAD M. PUTING, M.D.</h3>
-        <p>Chief Administrative Officer Medical and Health Services Division</p>
-      </div>
-    </div>
-    </li>
-  </div>
-  <div class="clinic">
-    <li>
-      <img src="img/z2.png" alt="Avatar" class="staff">
-      <div class="people-hover vertical-centered">
-        <div class="people-detail"><br><br><br><br><br>
-          <h3>MIKKA ANGELA S. AYTONA</h3>
-          <p>ADMIN ASST I</p>
-        </div>
-      </div>
-    </li>
-  </div>
-  <div class="clinic">
-    <li>
-      <img src="img/z3.png" alt="Avatar" class="staff">
-      <div class="people-hover vertical-centered">
-        <div class="people-detail"><br><br><br><br><br>
-          <h3>OMADLE, ADONIS M.</h3>
-          <p>ADMIN ASST I</p>
-        </div>
-      </div>
-    </li>
-  </div>
-  <div class="clinic">
-    <li>
-      <img src="img/z4.png" alt="Avatar" class="staff">
-      <div class="people-hover vertical-centered">
-        <div class="people-detail"><br><br><br><br><br>
-          <h3>CEPE, CECILIA C.</h3>
-          <p>NURSE I</p>
-        </div>
-      </div>
-    </li>
-  </div>
-</ul>
-<ul class="people-list">
-  <div class="row">
-  <div class="clinic">
-    <li>
-    <img src="img/z6.png" alt="Avatar" class="staff">
-    <div class="people-hover vertical-centered">
-      <div class="people-detail"><br><br><br><br><br>
-        <h3>CASTILLO, LOURDES MAE G.</h3>
-        <p>NURSE II</p>
-      </div>
-    </div>
-    </li>
-  </div>
-  <div class="clinic">
-    <li>
-      <img src="img/z7.png" alt="Avatar" class="staff">
-      <div class="people-hover vertical-centered">
-        <div class="people-detail"><br><br><br><br><br>
-          <h3>GORECHO, IRENE B.</h3>
-          <p>ADMIN AIDE VI</p>
-        </div>
-      </div>
-    </li>
-  </div>
-  <div class="clinic">
-    <li>
-      <img src="img/z8.png" alt="Avatar" class="staff">
-      <div class="people-hover vertical-centered">
-        <div class="people-detail overflow-hidden"><br><br><br><br><br>
-          <h3>MACKNO, PINAMILI R.</h3>
-          <p>LAB. TECH. III</p>
-        </div>
-      </div>
-    </li>
-  </div>
-  <div class="clinic">
-    <li>
-      <img src="img/z9.png" alt="Avatar" class="staff">
-      <div class="people-hover vertical-centered">
-        <div class="people-detail overflow-hidden" ><br><br><br><br><br>
-          <h3>MACOTE, ASRIFAH S.</h3>
-          <p>MED. TECH. II</p>
-        </div>
-      </div>
-    </li>
-  </div>
-</ul>
-</div>
-</div>
-
+<section class="staff-grid">
+    @foreach($staff as $member)
+        <article class="staff-card">
+            <div class="staff-avatar">{{ $member['initials'] }}</div>
+            <div>
+                <h2>{{ $member['name'] }}</h2>
+                <p>{{ $member['role'] }}</p>
+            </div>
+        </article>
+    @endforeach
+</section>
 @stop

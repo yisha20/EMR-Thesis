@@ -8,8 +8,8 @@
   </div>
 @endif
 
-<div class="card text-center border-info">
-  <div class="card-header border-info">
+<div class="card text-center border-info user-table-card">
+  <div class="card-header border-info user-table-header">
     <ul class="nav nav-tabs card-header-tabs">
       <li class="nav-item">
         <a class="nav-link" href="{{ route('users.index') }}">Users</a>
@@ -31,13 +31,16 @@
       </div>
     </div>
 
-    <table class="table table-responsive-md">
+    <div class="user-table-wrap table-responsive-shell">
+      <table class="table user-data-table data-table is-wide">
       <thead class="text-center thead-light">
         <tr>
           <th>Role</th>
           <th>Username</th>
           <th>Full Name</th>
           <th>Email Address</th>
+          <th>Archive Date</th>
+          <th>Archived By</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -56,8 +59,10 @@
               <td>{{ $user->username }}</td>
               <td>{{ $user->first_name }} {{ $user->middle_name }} {{ $user->last_name }}</td>
               <td>{{ $user->email }}</td>
-              <td>
-                <a href="{{ route('users.restore', $user->id) }}" class="btn btn-success btn-sm" title="Restore User">
+              <td>{{ optional($user->deleted_at)->format('M j, Y g:i A') }}</td>
+              <td>{{ optional($user->archivedBy)->fullName() ?: 'Unknown' }}</td>
+              <td class="action-cell">
+                <a href="{{ route('users.restore', $user->id) }}" class="table-action-button btn btn-success btn-sm" title="Restore user" aria-label="Restore user" data-toggle="tooltip" data-confirm="Restore {{ $user->fullName() }}?" data-confirm-title="Restore user">
                   <i class="fa fa-refresh"></i>
                 </a>
               </td>
@@ -65,7 +70,8 @@
           @endif
         @endforeach
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
 </div>
 
@@ -80,16 +86,3 @@
   });
 </script>
 @stop
-
-@push('js')
-
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to delete this user?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
-@endpush

@@ -28,8 +28,9 @@
 
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
                             <a class="dropdown-item" href="{{ route('logout') }}"
-                                onclick="event.preventDefault();
-                                                document.getElementById('logout-form').submit();">
+                                data-confirm="Are you sure you want to log out?"
+                                data-confirm-title="Confirm logout"
+                                data-confirm-form="logout-form">
                                 {{ __('Logout') }}
                             </a>
 

@@ -9,27 +9,27 @@ use Illuminate\Support\Facades\Hash;
 
 class PasswordChangeController extends Controller
 {
-    // ✅ Match the route name: showChangePasswordForm
     public function showChangePasswordForm()
     {
         return view('auth.change_password');
     }
 
-    // ✅ Handle password change submission
     public function updatePassword(Request $request)
-{
-    $request->validate([
-        'password' => 'required|string|min:8|confirmed',
-    ]);
+    {
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
 
-    $user = Auth::user();
-    $user->password = Hash::make($request->password);
-    $user->first_login = false; // mark as changed
-    $user->save();
+        $user = Auth::user();
+        $user->password = Hash::make($request->password);
+        $user->first_login = false;
+        $user->must_change_password = false;
+        $user->save();
 
-    Auth::logout(); // ✅ End current session to prevent CSRF issues
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-    return redirect('/login')->with('success', 'Password changed successfully. Please log in with your new password.');
-}
-
+        return redirect('/login')->with('success', 'Password changed successfully. Please log in with your new password.');
+    }
 }

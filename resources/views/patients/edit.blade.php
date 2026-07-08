@@ -3,7 +3,7 @@
 @section('content')
     
 
-    <div class="card border-info">
+    <div class="card border-info patient-form-card">
         <div class="card-header border">
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
@@ -28,7 +28,7 @@
           </div>
 
         <div class="card-body">
-            <div class="container px-10">
+            <div class="patient-workspace-container">
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <ul>
@@ -49,23 +49,20 @@
                     @csrf
                     @method('PUT')
 
-                    {{--Profile--}}
-                    <div class="form-group text-center">
-                        <div class="col" style=" margin-top: 3%">
-                            <img src="{{ $patient->avatar ?? '/img/no_avatar.jpg' }}"  alt="create_avatar" class="create_avatar "><br>{{--PRofile pic upload (Restrict user thaht only img/png file can be uploaded--}}
-                        </div>
-                        </div>
-                            <div class="form-group text-center">
-                            <div class="col"><br>
-                            <input name="avatar" type="file" style="width: 30%" class="form-control-file border ml-auto mr-auto" accept="image/*">
-                        </div>
-                    </div> 
-                    {{--end of profile--}}
+                    <div class="patient-form-shell form-layout">
+                        <aside class="patient-photo-panel">
+                            <div class="patient-photo-frame">
+                                <img src="{{ $patient->avatar ?? '/img/no_avatar.jpg' }}" alt="Patient avatar preview" id="profileDisplay" class="patient-form-avatar">
+                            </div>
+                            <label for="profileImage" class="patient-photo-upload">
+                                <i class="fa fa-upload"></i>
+                                <span>Upload Patient Photo</span>
+                            </label>
+                            <input id="profileImage" name="avatar" type="file" class="patient-photo-input" accept="image/*" onchange="displayImage(this)">
+                        </aside>
 
-                        <div class="container"><br>
-                            {{--row1--}}
-                            <div class="row">
-                                <div class="col">
+                        <section class="patient-form-fields">
+                            <div class="patient-form-grid form-fields-grid">
                                     <div class="form-group">
                                         <label for="idnum">ID Number:</label>
                                         <input type="text" autocomplete="off" name="id_number" class="form-control" id="idnum" placeholder="ID Number *" value="{{ $patient->id_number }}" />
@@ -90,13 +87,9 @@
                                         <label for="padd">Present Address:</label>
                                         <input id="present_address" autocomplete="off" name="present_address" type="text" class="form-control"  placeholder="Present Address *" value="{{ $patient->present_address }}" />
                                     </div>
-                                    
-                                </div>
-
-                                <div class="col">
                                     <div class="form-group">
                                         <label class="mt-3">Gender:</label>
-                                        <div class="form-check">
+                                        <div class="form-check patient-gender-options">
                                             <div class="custom-control custom-radio custom-control-inline">
                                                 <input type="radio" class="custom-control-input"  id="malegender" name="gender" {{ $patient->gender == 'male' ? 'checked' : '' }} value="male">
                                                 <label class="custom-control-label" for="malegender">Male</label>
@@ -118,16 +111,15 @@
                                         <input id="bdate" type="date" class="form-control" name="birthdate" placeholder="Birth Date *" value="{{ $patient->birthdate }}" />
                                     </div>
                                     <div class="form-group">
-                                        <label for="status">Civil Status:</label>
-                                        <select name="status" id="status" 
-                                            value="{{ $patient->status ? $patient->status : old('status') }}"
-                                            class="form-control @error('status') is-invalid @enderror">
-                                            <option class="hidden" @if(!$patient->status) selected @endif disabled>Civil Status</option>
-                                                <option value="Single" @if($patient->status == 'Single') selected @endif>Single</option>
-                                                <option value="Married" @if($patient->status == 'Married') selected @endif>Married</option>
-                                                <option value="Widowed" @if($patient->status == 'Widowed') selected @endif>Widowed</option>
-                                                <option value="Separated" @if($patient->status == 'Separated') selected @endif>Separated</option>
-                                                <option value="In certain cases" @if($patient->tatus == 'In certain cases') selected @endif>In certain cases</option>
+                                        <label for="civil_status">Civil Status:</label>
+                                        <select name="civil_status" id="civil_status"
+                                            class="form-control @error('civil_status') is-invalid @enderror">
+                                            <option class="hidden" @if(!$patient->civil_status) selected @endif disabled>Civil Status</option>
+                                                <option value="Single" @if($patient->civil_status == 'Single') selected @endif>Single</option>
+                                                <option value="Married" @if($patient->civil_status == 'Married') selected @endif>Married</option>
+                                                <option value="Widowed" @if($patient->civil_status == 'Widowed') selected @endif>Widowed</option>
+                                                <option value="Separated" @if($patient->civil_status == 'Separated') selected @endif>Separated</option>
+                                                <option value="In certain cases" @if($patient->civil_status == 'In certain cases') selected @endif>In certain cases</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -185,26 +177,17 @@
                                         <label for="phonenum">Phone Number:</label>
                                         <input id="phonenum" autocomplete="off" type="text"  class="form-control" name="phone_number" value="{{ $patient->phone_number }}" />
                                     </div>
-                                    <div class="form-group">
-                                    {{-- <label for="role">Role:</label> --}}
-                                    {{-- <select id="role" class="form-control">
-                                    <option class="hidden" name="role_id"  selected disabled>Role</option>
-                                    <option>Student</option>
-                                    <option>Faculty</option>
-                                    <option>Staff</option>
-                                    <option>OPD/Dependent</option>
-                                    </select> --}}
-                                    </div>
-                                </div>               
-                            </div>{{--end row1--}}
+                            </div>
+                        </section>
+                    </div>
 
 
                             {{--row2--}}
                             <div class="row justify-content-center align-items-center">
                                 <div class="form-group">
-                                    <div class="border border-info mt-3 tab-card mr-10" >
-                                        <div class=" border-info card-header tab-card-header">
-                                            <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                                    <div class="border border-info mt-3 tab-card medical-history-layout mr-10">
+                                        <div class="border-info card-header tab-card-header medical-history-nav">
+                                            <ul class="nav nav-tabs card-header-tabs medical-history-tabs" id="myTab" role="tablist">
                                                 <li class="nav-item">
                                                 <a class="nav-link active" id="one-tab" data-toggle="tab" href="#one" role="tab" aria-controls="One" aria-selected="true">Past Medical History</a>
                                                 </li>
@@ -215,21 +198,21 @@
                                                 <a class="nav-link" id="three-tab" data-toggle="tab" href="#three" role="tab" aria-controls="Three" aria-selected="false">Social History</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                <a class="nav-link" id="three-tab" data-toggle="tab" href="#four" role="tab" aria-controls="Four" aria-selected="false">Physical Examination</a>
+                                                <a class="nav-link" id="four-tab" data-toggle="tab" href="#four" role="tab" aria-controls="Four" aria-selected="false">Physical Examination</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                <a class="nav-link" id="three-tab" data-toggle="tab" href="#five" role="tab" aria-controls="Five" aria-selected="false">Vital Signs</a>
+                                                <a class="nav-link" id="five-tab" data-toggle="tab" href="#five" role="tab" aria-controls="Five" aria-selected="false">Vital Signs</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                <a class="nav-link" id="three-tab" data-toggle="tab" href="#six" role="tab" aria-controls="Six" aria-selected="false">Nursing Intervention</a>
+                                                <a class="nav-link" id="six-tab" data-toggle="tab" href="#six" role="tab" aria-controls="Six" aria-selected="false">Nursing Intervention</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                <a class="nav-link" id="three-tab" data-toggle="tab" href="#seven" role="tab" aria-controls="Seven" aria-selected="false">Assessment</a>
+                                                <a class="nav-link" id="seven-tab" data-toggle="tab" href="#seven" role="tab" aria-controls="Seven" aria-selected="false">Assessment</a>
                                                 </li>
                                             </ul>
                                         </div>
 
-                                        <div class="tab-content" id="myTabContent">
+                                        <div class="tab-content medical-history-content" id="myTabContent">
                                             {{--Tab1--}}
                                             <div class="tab-pane fade show active p-3" id="one" role="tabpanel" aria-labelledby="one-tab">
                                                 <div class="row">
@@ -355,8 +338,8 @@
                                                             <h6><br>1. Do you Smoke? </h6>
                                                             <div class="form-check">
                                                                 <div class="custom-control custom-radio ">
-                                                                    @if(isset($patient->getSocialHistory()['is_smoking']))
-                                                                    <input type="radio" class="custom-control-input" id="choice1" name="is_smoking" {{ $patient->getSocialHistory()['is_smoking'] == 'No' ? 'checked' : '' }} value="No">
+                                                                    @if(isset($socialHistory['is_smoking']))
+                                                                    <input type="radio" class="custom-control-input" id="choice1" name="is_smoking" {{ ($socialHistory['is_smoking'] ?? '') == 'No' ? 'checked' : '' }} value="No">
                                                                     @else
                                                                     <input type="radio" class="custom-control-input" id="choice1" name="is_smoking" value="No">
                                                                     @endif
@@ -365,8 +348,8 @@
                                                             </div>
                                                             <div class="form-check">   
                                                                 <div class="custom-control custom-radio ">
-                                                                    @if(isset($patient->getSocialHistory()['is_smoking']))
-                                                                    <input type="radio" class="custom-control-input" id="choice2" name="is_smoking" {{ $patient->getSocialHistory()['is_smoking'] == 'Yes' ? 'checked' : '' }} value="Yes">
+                                                                    @if(isset($socialHistory['is_smoking']))
+                                                                    <input type="radio" class="custom-control-input" id="choice2" name="is_smoking" {{ ($socialHistory['is_smoking'] ?? '') == 'Yes' ? 'checked' : '' }} value="Yes">
                                                                     @else
                                                                     <input type="radio" class="custom-control-input" id="choice2" name="is_smoking" value="Yes">
                                                                     @endif
@@ -377,12 +360,12 @@
 
 
                                                             <h6><br>If yes, how many packs?</h6>
-                                                            <input class="form-control mb-3 col-sm-8" autocomplete="off" type="number" value="{{ $patient->getSocialHistory()['packs_smoked'] }}"  name="packs_smoked">
+                                                            <input class="form-control mb-3 col-sm-8" autocomplete="off" type="number" value="{{ $socialHistory['packs_smoked'] ?? '' }}"  name="packs_smoked">
                                                             <h6> <br> 2. Do you drink alcohol (beer/liquer)? </h6>
                                                             <div class="form-check">
                                                                 <div class="custom-control custom-radio ">
-                                                                    @if(isset($patient->getSocialHistory()['is_drinking_beer']))
-                                                                    <input type="radio" class="custom-control-input" id="choice1a" name="is_drinking_beer" {{ $patient->getSocialHistory()['is_drinking_beer'] == 'No' ? 'checked' : '' }} value="No">
+                                                                    @if(isset($socialHistory['is_drinking_beer']))
+                                                                    <input type="radio" class="custom-control-input" id="choice1a" name="is_drinking_beer" {{ ($socialHistory['is_drinking_beer'] ?? '') == 'No' ? 'checked' : '' }} value="No">
                                                                     @else
                                                                     <input type="radio" class="custom-control-input" id="choice1a" name="is_drinking_beer" value="No">
                                                                     @endif
@@ -391,8 +374,8 @@
                                                             </div>
                                                             <div class="form-check">
                                                                 <div class="custom-control custom-radio ">
-                                                                    @if(isset($patient->getSocialHistory()['is_drinking_beer']))
-                                                                    <input type="radio" class="custom-control-input" id="choice2a" name="is_drinking_beer" {{ $patient->getSocialHistory()['is_drinking_beer'] == 'Yes' ? 'checked' : '' }} value="Yes">
+                                                                    @if(isset($socialHistory['is_drinking_beer']))
+                                                                    <input type="radio" class="custom-control-input" id="choice2a" name="is_drinking_beer" {{ ($socialHistory['is_drinking_beer'] ?? '') == 'Yes' ? 'checked' : '' }} value="Yes">
                                                                     @else
                                                                     <input type="radio" class="custom-control-input" id="choice2a" name="is_drinking_beer" value="Yes">
                                                                     @endif
@@ -404,9 +387,9 @@
                                                                 <label for="sel1"><h6><br>If yes, how frequent?</h6></label>
                                                                 <select class="form-control col-sm-8" id="sel1" name="drinking_frequency">
                                                                 <option class="hidden"  selected disabled>Please Choose:</option>
-                                                                @if(isset($patient->getSocialHistory()['drinking_frequency'])) 
-                                                                <option {{ $patient->getSocialHistory()['drinking_frequency'] == 'Seldom' ? 'selected' : '' }}>Seldom</option>
-                                                                <option {{ $patient->getSocialHistory()['drinking_frequency'] == 'Occasional' ? 'selected' : '' }}>Occasional</option>
+                                                                @if(isset($socialHistory['drinking_frequency']))
+                                                                <option {{ ($socialHistory['drinking_frequency'] ?? '') == 'Seldom' ? 'selected' : '' }}>Seldom</option>
+                                                                <option {{ ($socialHistory['drinking_frequency'] ?? '') == 'Occasional' ? 'selected' : '' }}>Occasional</option>
                                                                 @else
                                                                 <option>Seldom</option>
                                                                 <option>Occasional</option>
@@ -421,8 +404,8 @@
                                                             <h6> <br> 3. Do you take medication at present? </h6>
                                                             <div class="form-check">
                                                                 <div class="custom-control custom-radio ">
-                                                                    @if(isset($patient->getSocialHistory()['is_taking_medication']))
-                                                                    <input type="radio" class="custom-control-input" id="choice3a" name="is_taking_medication" {{ $patient->getSocialHistory()['is_taking_medication'] == 'No' ? 'checked' : '' }} value="No">
+                                                                    @if(isset($socialHistory['is_taking_medication']))
+                                                                    <input type="radio" class="custom-control-input" id="choice3a" name="is_taking_medication" {{ ($socialHistory['is_taking_medication'] ?? '') == 'No' ? 'checked' : '' }} value="No">
                                                                     @else
                                                                     <input type="radio" class="custom-control-input" id="choice3a" name="is_taking_medication" value="No">
                                                                     @endif
@@ -431,8 +414,8 @@
                                                             </div>
                                                             <div class="form-check">
                                                                 <div class="custom-control custom-radio ">
-                                                                    @if(isset($patient->getSocialHistory()['is_taking_medication']))
-                                                                    <input type="radio" class="custom-control-input" id="choice3b" name="is_taking_medication" {{ $patient->getSocialHistory()['is_taking_medication'] == 'Yes' ? 'checked' : '' }} value="Yes">
+                                                                    @if(isset($socialHistory['is_taking_medication']))
+                                                                    <input type="radio" class="custom-control-input" id="choice3b" name="is_taking_medication" {{ ($socialHistory['is_taking_medication'] ?? '') == 'Yes' ? 'checked' : '' }} value="Yes">
                                                                     @else
                                                                     <input type="radio" class="custom-control-input" id="choice3b" name="is_taking_medication" value="Yes">
                                                                     @endif
@@ -441,7 +424,7 @@
                                                             </div>
                                                             <h6> <br> If yes, please indicate below</h6>
 
-                                                            @foreach($patient->getSocialHistory()['medications'] as $key => $medication)
+                                                            @foreach(($socialHistory['medications'] ?? []) as $key => $medication)
                                                             {{ $key+1 }}. <input type="text" class="form-control col-sm-8" name="medications[]" autocomplete="off" value="{{ $medication }}"><br>
                                                             @endforeach
                                                             </ol>
@@ -452,12 +435,12 @@
                                             </div><br> {{--end /div3--}}
 
                                             {{--tab4--}}
-                                            <div class="tab-pane fade p-3" id="four" role="tabpanel" aria-labelledby="three-tab">
-                                                <div class="table-responsive-md">
+                                            <div class="tab-pane fade p-3" id="four" role="tabpanel" aria-labelledby="four-tab">
+                                                <div class="table-responsive-md table-responsive-shell">
                                                     <div class="row">
                                                         <div class="col text-left table-responsive-md">
                                                             <p class="register-heading text-center">(To be accomplished by physician)</p>
-                                                            <table class="table table-bordered ">
+                                                            <table class="table table-bordered data-table medical-history-table">
                                                                 <thead>
                                                                     <tr>
                                                                     <th></th>
@@ -472,33 +455,33 @@
                                                                         <tr>
                                                                             <td>
                                                                                 <td>Skin</td>
-                                                                                <td><input type="radio" name="skin_status" {{  isset($patient->getPhysicalExamination()['skin_status']) ? ($patient->getPhysicalExamination()['skin_status'] == 'normal' ? 'checked' : '') : '' }} value="normal"></td>
-                                                                                <td><input type="radio" name="skin_status" {{  isset($patient->getPhysicalExamination()['skin_status']) ? ($patient->getPhysicalExamination()['skin_status'] == 'abnormal' ? 'checked' : '') : '' }} value="abnormal"></td>
-                                                                                <td><input class="form-control  col-sm-10" autocomplete="off" type="text" value="{{  isset($patient->getPhysicalExamination()['skin_remarks']) ? ($patient->getPhysicalExamination()['skin_remarks']) : '' }}" name="skin_remarks"></td>
+                                                                                <td><input type="radio" name="skin_status" {{ ($physicalExamination['skin_status'] ?? '') == 'normal' ? 'checked' : '' }} value="normal"></td>
+                                                                                <td><input type="radio" name="skin_status" {{ ($physicalExamination['skin_status'] ?? '') == 'abnormal' ? 'checked' : '' }} value="abnormal"></td>
+                                                                                <td><input class="form-control  col-sm-10" autocomplete="off" type="text" value="{{ $physicalExamination['skin_remarks'] ?? '' }}" name="skin_remarks"></td>
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
                                                                             <td>
                                                                             <td>Head / Neck / Scalp</td>
-                                                                            <td><input  type="radio" name="head_status" {{ isset($patient->getPhysicalExamination()['head_status']) ? ($patient->getPhysicalExamination()['head_status'] == 'normal' ? 'checked' : '') : '' }} value="normal"></td>
-                                                                            <td><input type="radio" name="head_status" {{ isset($patient->getPhysicalExamination()['head_status']) ? ($patient->getPhysicalExamination()['head_status'] == 'abnormal' ? 'checked' : '') : '' }} value="abnormal"></td>
-                                                                            <td><input class="form-control  col-sm-10" autocomplete="off" type="text" value="{{ isset($patient->getPhysicalExamination()['head_remarks']) ? ($patient->getPhysicalExamination()['head_remarks']) : '' }}" name="head_remarks"></td>
+                                                                            <td><input  type="radio" name="head_status" {{ ($physicalExamination['head_status'] ?? '') == 'normal' ? 'checked' : '' }} value="normal"></td>
+                                                                            <td><input type="radio" name="head_status" {{ ($physicalExamination['head_status'] ?? '') == 'abnormal' ? 'checked' : '' }} value="abnormal"></td>
+                                                                            <td><input class="form-control  col-sm-10" autocomplete="off" type="text" value="{{ $physicalExamination['head_remarks'] ?? '' }}" name="head_remarks"></td>
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
                                                                             <td>
                                                                             <td>Eyes</td>
-                                                                            <td><input  type="radio" name="eyes_status" {{ isset($patient->getPhysicalExamination()['eyes_status']) ? ($patient->getPhysicalExamination()['eyes_status'] == 'normal' ? 'checked' : '') : '' }} value="normal"></td>
-                                                                            <td><input type="radio" name="eyes_status" {{ isset($patient->getPhysicalExamination()['eyes_status']) ? ($patient->getPhysicalExamination()['eyes_status'] == 'abnormal' ? 'checked' : '') : '' }} value="abnormal"></td>
-                                                                            <td><input class="form-control  col-sm-10" autocomplete="off" type="text" value="{{ isset($patient->getPhysicalExamination()['eyes_remarks']) ? ($patient->getPhysicalExamination()['eyes_remarks']) : '' }}" name="eyes_remarks"></td>
+                                                                            <td><input  type="radio" name="eyes_status" {{ ($physicalExamination['eyes_status'] ?? '') == 'normal' ? 'checked' : '' }} value="normal"></td>
+                                                                            <td><input type="radio" name="eyes_status" {{ ($physicalExamination['eyes_status'] ?? '') == 'abnormal' ? 'checked' : '' }} value="abnormal"></td>
+                                                                            <td><input class="form-control  col-sm-10" autocomplete="off" type="text" value="{{ $physicalExamination['eyes_remarks'] ?? '' }}" name="eyes_remarks"></td>
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
                                                                             <td>
                                                                             <td>Ears/Nose/Throat</td>
-                                                                            <td><input  type="radio" name="ears_status" {{ isset($patient->getPhysicalExamination()['ears_status']) ? ($patient->getPhysicalExamination()['ears_status'] == 'normal' ? 'checked' : '') : '' }} value="normal"></td>
-                                                                            <td><input type="radio" name="ears_status" {{ isset($patient->getPhysicalExamination()['ears_status']) ? ($patient->getPhysicalExamination()['ears_status'] == 'abnormal' ? 'checked' : '') : '' }} value="abnormal"></td>
-                                                                            <td><input class="form-control  col-sm-10" autocomplete="off" type="text" value="{{ isset($patient->getPhysicalExamination()['ears_remarks']) ? ($patient->getPhysicalExamination()['ears_remarks']) : '' }}" name="ears_remarks"></td>
+                                                                            <td><input  type="radio" name="ears_status" {{ ($physicalExamination['ears_status'] ?? '') == 'normal' ? 'checked' : '' }} value="normal"></td>
+                                                                            <td><input type="radio" name="ears_status" {{ ($physicalExamination['ears_status'] ?? '') == 'abnormal' ? 'checked' : '' }} value="abnormal"></td>
+                                                                            <td><input class="form-control  col-sm-10" autocomplete="off" type="text" value="{{ $physicalExamination['ears_remarks'] ?? '' }}" name="ears_remarks"></td>
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
@@ -638,7 +621,7 @@
                                             </div> {{--end /div tab4--}}
 
                                             {{--tab5--}}
-                                            <div class="tab-pane fade p-3" id="five" role="tabpanel" aria-labelledby="three-tab">
+                                            <div class="tab-pane fade p-3" id="five" role="tabpanel" aria-labelledby="five-tab">
                                                 <div class="row justify-content-center ">
                                                     <div class="form-inline ">
 
@@ -671,10 +654,11 @@
                                             </div> {{--end /div tab5--}}
 
                                             {{--tab6--}}
-                                            <div class="tab-pane fade p-3" id="six" role="tabpanel" aria-labelledby="three-tab">
+                                            <div class="tab-pane fade p-3" id="six" role="tabpanel" aria-labelledby="six-tab">
                                                 <div class="row justify-content-center">
                                                     <div class="form-group ">
-                                                        <table>
+                                                        <div class="table-responsive-shell">
+                                                        <table class="data-table medical-history-table">
                                                             <thead>
                                                                 <tr>
                                                                 <th>Nurse Intervention:</th>
@@ -686,19 +670,20 @@
                                                             <tbody>
                                                                 @foreach($patient->getNursingInterventions() as $key => $value)
                                                                 <tr>
-                                                                    <td><input class="form-control col-sm-15 mb-2 mt-2" autocomplete="off" type="text" name="nursing_interventions[{{ $key }}][intervention]" value="{{ $value['intervention'] }}"></td>
-                                                                    <td><input class="form-control col-sm-14 mb-2 ml-1 mt-2" type="time" name="nursing_interventions[{{ $key }}][time]" value="{{ $value['time'] }}"></td>
-                                                                    <td><input class="form-control col-sm-14 mb-2 ml-2 mt-2" autocomplete="off" type="text" name="nursing_interventions[{{ $key }}][by]" value="{{ $value['by'] }}"></td>
+                                                                    <td><input class="form-control col-sm-15 mb-2 mt-2" autocomplete="off" type="text" name="nursing_interventions[{{ $key }}][intervention]" value="{{ $value['intervention'] ?? '' }}"></td>
+                                                                    <td><input class="form-control col-sm-14 mb-2 ml-1 mt-2" type="time" name="nursing_interventions[{{ $key }}][time]" value="{{ $value['time'] ?? '' }}"></td>
+                                                                    <td><input class="form-control col-sm-14 mb-2 ml-2 mt-2" autocomplete="off" type="text" name="nursing_interventions[{{ $key }}][by]" value="{{ $value['by'] ?? '' }}"></td>
                                                                 </tr>
                                                                 @endforeach
                                                             </tbody>
-                                                        </table><br>
+                                                        </table>
+                                                        </div><br>
                                                     </div>
                                                 </div>            
                                             </div> {{--end /div tab6--}}
 
                                             {{--tab7--}}
-                                            <div class="tab-pane fade p-3" id="seven" role="tabpanel" aria-labelledby="three-tab">
+                                            <div class="tab-pane fade p-3" id="seven" role="tabpanel" aria-labelledby="seven-tab">
                                                 <div class="row justify-content-center">
                                                 <div class="form-group">
                                                 <p class="register-heading text-center"><b>ASSESSMENT AND RECOMMENDATION</b></p>

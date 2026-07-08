@@ -27,5 +27,9 @@ class RolesTableSeeder extends Seeder
         Role::create([
             'name' => 'OPD/Dependent',
         ]);
+
+        Role::firstOrCreate([
+            'name' => 'Student',
+        ]);
     }
 }

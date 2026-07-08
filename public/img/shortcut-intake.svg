@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img" aria-labelledby="title desc">
+  <title id="title">Student digital intake form</title>
+  <desc id="desc">A soft clinic illustration of a student intake form on a tablet.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fdff"/>
+      <stop offset="1" stop-color="#e0f4fb"/>
+    </linearGradient>
+    <linearGradient id="tablet" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#eaf8ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="360" fill="url(#bg)"/>
+  <circle cx="610" cy="80" r="96" fill="#cdebf8" opacity=".6"/>
+  <circle cx="120" cy="300" r="112" fill="#c7efe9" opacity=".38"/>
+  <rect x="120" y="56" width="480" height="260" rx="38" fill="#ffffff" opacity=".78"/>
+  <rect x="210" y="76" width="300" height="220" rx="28" fill="url(#tablet)" stroke="#9fd3ee" stroke-width="4"/>
+  <rect x="250" y="112" width="154" height="18" rx="9" fill="#2f78a0"/>
+  <rect x="250" y="154" width="220" height="14" rx="7" fill="#b7d9ee"/>
+  <rect x="250" y="188" width="194" height="14" rx="7" fill="#d5e8f3"/>
+  <rect x="250" y="222" width="126" height="14" rx="7" fill="#b7d9ee"/>
+  <circle cx="474" cy="248" r="22" fill="#0f8277"/>
+  <path d="M463 248h22M474 237v22" stroke="#fff" stroke-linecap="round" stroke-width="6"/>
+  <circle cx="170" cy="154" r="38" fill="#3d96c3"/>
+  <path d="M130 242c10-54 93-54 105 0" fill="#d8eef9"/>
+  <circle cx="170" cy="146" r="16" fill="#fff"/>
+</svg>

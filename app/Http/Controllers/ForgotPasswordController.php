@@ -2,35 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Mail\ForgotPasswordMail;
-use App\Mail\GeneratedPassword;
-use App\User;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 
 class ForgotPasswordController extends Controller
 {
     /**
      * Send forgot-password token to given email. 
      */
-    public function send()
+    public function send(Request $request)
     {
-        request()->validate([
+        $request->validate([
             'email' => ['required', 'email', 'exists:users,email']
         ]);
 
-        $email = request()->get('email');
-        
-        $user = User::whereEmail($email)->first();
-        
-        Mail::to($email)->later(
-            now()->addSeconds(15), new ForgotPasswordMail($user)
-        );
+        $status = Password::sendResetLink($request->only('email'));
 
-        return redirect()
-            ->back()
-            ->with('success', 'The email will be sent to you for confirmation shortly.');
+        if ($status !== Password::RESET_LINK_SENT) {
+            return redirect()->back()
+                ->withInput($request->only('email'))
+                ->withErrors(['email' => trans($status)]);
+        }
+
+        return redirect()->back()->with('success', trans($status));
     }
 
     /**
@@ -41,18 +35,6 @@ class ForgotPasswordController extends Controller
      */
     public function verify($email)
     {
-        $generatedPassword = Str::random(16);
-
-        $user = User::whereEmail($email)->first();
-
-        $user->update([
-            'password' => bcrypt($generatedPassword)
-        ]);
-
-        Mail::to($email)->later(
-            now()->addSeconds(15), new GeneratedPassword($user, $generatedPassword)
-        );
-        
-        return redirect(route('login'))->with('success', 'A generated password was sent to your email address.');
+        abort(404);
     }
 }

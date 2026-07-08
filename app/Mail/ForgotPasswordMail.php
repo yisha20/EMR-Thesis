@@ -31,7 +31,6 @@ class ForgotPasswordMail extends Mailable
     public function build()
     {
         return $this->markdown('emails.forgot_password')
-            ->from('msuiit.emr@gmail.com')
             ->with([
                 'user' => $this->user,
             ]);

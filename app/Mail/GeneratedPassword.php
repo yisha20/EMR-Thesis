@@ -33,7 +33,6 @@ class GeneratedPassword extends Mailable
     public function build()
     {
         return $this->markdown('emails.generated_password')
-            ->from('msuiit.emr@gmail.com')
             ->with([
                 'user' => $this->user,
                 'generatedPassword' => $this->generatedPassword

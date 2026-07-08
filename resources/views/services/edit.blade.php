@@ -54,9 +54,30 @@
         </div>
 
         <div class="form-group row">
+          <label for="category" class="col-sm-2 col-form-label"><b>Category:</b></label>
+          <div class="col-sm-10">
+            <select name="category" id="category" class="form-control">
+              @foreach (['Consultation', 'Immunization', 'Treatment', 'Laboratory', 'First Aid'] as $category)
+                <option value="{{ $category }}" {{ $service->category === $category ? 'selected' : '' }}>{{ $category }}</option>
+              @endforeach
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group row">
           <label for="definition" class="col-sm-2 col-form-label"><b>Description:</b></label>
           <div class="col-sm-10">
             <textarea class="form-control" id="definition" rows="3" name="description">{{ $service->description }}</textarea>
+          </div>
+        </div>
+
+        <div class="form-group row">
+          <label for="status" class="col-sm-2 col-form-label"><b>Status:</b></label>
+          <div class="col-sm-10">
+            <select name="status" id="status" class="form-control">
+              <option value="Active" {{ $service->status === 'Active' ? 'selected' : '' }}>Active</option>
+              <option value="Inactive" {{ $service->status === 'Inactive' ? 'selected' : '' }}>Inactive</option>
+            </select>
           </div>
         </div>
 
@@ -80,5 +101,4 @@
     </div>
   </div>
 @endsection
-
 

@@ -10,6 +10,7 @@
     "require": {
         "php": "^7.2 || ^8.0",
         "askedio/laravel-soft-cascade": "6.0.*",
+        "barryvdh/laravel-dompdf": "2.0.1",
         "fideloper/proxy": "^4.0",
         "joshrainwater/active-users": "^2.0",
         "laravel/framework": "^6.2",
@@ -27,7 +28,10 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "php": "7.4.33"
+        }
     },
     "extra": {
         "laravel": {

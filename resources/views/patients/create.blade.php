@@ -4,7 +4,7 @@
 @section('content')
     
 
- <div class="card border-info">
+ <div class="card border-info patient-form-card">
         <div class="card-header border-info">
             <ul class="nav nav-tabs card-header-tabs">
                 <li class="nav-item">
@@ -28,38 +28,35 @@
             </div>
          @endif
         <form action="{{ route('patients.store') }}" method="POST" enctype="multipart/form-data">
-            <div class="form-group text-center">
-                <div class="col" style=" margin-top: 3%">
-                    <img src="/img/no_avatar.jpg"  alt="create_avatar" class="create_avatar "><br>{{--PRofile pic upload (Restrict user thaht only img/png file can be uploaded--}}
-                </div>
-            </div>
-            <div class="form-group text-center">
-                <div class="col"><br>
-                <input name="avatar" type="file" style="width: 30%" class="form-control-file border ml-auto mr-auto" accept="image/*">
-                </div>
-            </div>
-                
-                <div class="container"><br>
+            <div class="patient-form-shell form-layout">
+                <aside class="patient-photo-panel">
+                    <div class="patient-photo-frame">
+                        <img src="/img/no_avatar.jpg" alt="Patient avatar preview" id="profileDisplay" class="patient-form-avatar">
+                    </div>
+                    <label for="profileImage" class="patient-photo-upload">
+                        <i class="fa fa-upload"></i>
+                        <span>Upload Patient Photo</span>
+                    </label>
+                    <input id="profileImage" name="avatar" type="file" class="patient-photo-input" accept="image/*" onchange="displayImage(this)">
+                </aside>
 
-                        
-                                    {{--1--}} 
-                                <div class="row " >
-                                    <div class="col">
+                <section class="patient-form-fields">
+                    <div class="patient-form-grid form-fields-grid">
                                         <div class="form-group">
                                             <label for="idnum">ID Number:</label>
-                                            <input name="id_number" autocomplete="off" type="text" class="form-control" placeholder="ID Number *" id="idnum">
+                                            <input name="id_number" autocomplete="off" type="text" class="form-control" placeholder="ID Number *" id="idnum" value="{{ old('id_number', request('student_id')) }}">
                                         </div>
                                         <div class="form-group">
                                             <label for="fname">First Name:</label>
-                                            <input name="first_name" autocomplete="off" type="text" class="form-control" placeholder="First Name *" id="fname">
+                                            <input name="first_name" autocomplete="off" type="text" class="form-control" placeholder="First Name *" id="fname" value="{{ old('first_name', request('first_name')) }}">
                                         </div>
                                         <div class="form-group">
                                             <label for="mname">Middle Name:</label>
-                                            <input name="middle_name" autocomplete="off" type="text" class="form-control"  placeholder="Middle Name *" id="mname" />
+                                            <input name="middle_name" autocomplete="off" type="text" class="form-control"  placeholder="Middle Name *" id="mname" value="{{ old('middle_name', request('middle_name')) }}" />
                                         </div>
                                         <div class="form-group">
                                             <label for="lname">Last Name:</label>
-                                            <input name="last_name" autocomplete="off" type="text" class="form-control" placeholder="Last Name *" id="lname">
+                                            <input name="last_name" autocomplete="off" type="text" class="form-control" placeholder="Last Name *" id="lname" value="{{ old('last_name', request('last_name')) }}">
                                         </div>
                                         <div class="form-group">
                                             <label for="hadd">Home Address:</label>
@@ -69,13 +66,9 @@
                                             <label for="padd">Present Address:</label>
                                             <input name="present_address" autocomplete="off" type="text" class="form-control"  placeholder="Present Address *" id="padd" />
                                         </div>
-                                        
-                                    </div>
-
-                                    <div class="col">
                                         <div class="form-group">
                                             <label class="mt-3">Gender:</label>
-                                            <div class="form-check">
+                                            <div class="form-check patient-gender-options">
 
                                                 <div class="custom-control custom-radio custom-control-inline">
                                                     <input type="radio" class="custom-control-input"  id="malegender" name="gender" value="male">
@@ -99,8 +92,8 @@
                                             <input name="birthdate" type="date" class="form-control" placeholder="Birth Date *" id="bdate" value="" />
                                         </div>
                                         <div class="form-group">
-                                            <label for="status">Civil Status:</label>
-                                            <select name="status" class="form-control" id="status">
+                                            <label for="civil_status">Civil Status:</label>
+                                            <select name="civil_status" class="form-control" id="civil_status">
                                                 <option class="hidden"  selected disabled>Civil Status</option>
                                                 <option>Single</option>
                                                 <option>Married</option>
@@ -162,29 +155,20 @@
 
                                         <div class="form-group">
                                             <label for="phonenum">Phone Number:</label>
-                                            <input name="phone_number" autocomplete="off" type="number" minlength="10" maxlength="13" id="phonenum" class="form-control" placeholder="Phone Number *" />
+                                            <input name="phone_number" autocomplete="off" type="number" minlength="10" maxlength="13" id="phonenum" class="form-control" placeholder="Phone Number *" value="{{ old('phone_number', request('contact_number')) }}" />
                                         </div>
                                         
                                 
-                                        {{-- <div class="form-group">
-                                            <label for="role">Role:</label>
-                                            <select class="form-control" id="role">
-                                                <option class="hidden"  selected disabled>Role</option>
-                                                <option>Student</option>
-                                                <option>Faculty</option>
-                                                <option>Staff</option>
-                                                <option>OPD/Dependent</option>
-                                            </select>
-                                        </div> --}}
-                                    </div>
-                                </div> {{--end /div 1 row--}}
+                    </div>
+                </section>
+            </div>
 
                                 {{--row2--}}
                                 <div class="row justify-content-center align-items-center">
                                     <div class="form-group">
-                                        <div class="border border-info mt-3 tab-card mr-10" >
-                                            <div class=" border-info card-header tab-card-header">
-                                                <ul class="nav nav-tabs card-header-tabs" id="myTab" role="tablist">
+                                        <div class="border border-info mt-3 tab-card medical-history-layout mr-10">
+                                            <div class="border-info card-header tab-card-header medical-history-nav">
+                                                <ul class="nav nav-tabs card-header-tabs medical-history-tabs" id="myTab" role="tablist">
                                                     <li class="nav-item">
                                                         <a class="nav-link active" id="one-tab" data-toggle="tab" href="#one" role="tab" aria-controls="One" aria-selected="true">Past Medical History</a>
                                                     </li>
@@ -195,21 +179,21 @@
                                                         <a class="nav-link" id="three-tab" data-toggle="tab" href="#three" role="tab" aria-controls="Three" aria-selected="false">Social History</a>
                                                     </li>
                                                     <li class="nav-item">
-                                                    <a class="nav-link" id="three-tab" data-toggle="tab" href="#four" role="tab" aria-controls="Four" aria-selected="false">Physical Examination</a>
+                                                    <a class="nav-link" id="four-tab" data-toggle="tab" href="#four" role="tab" aria-controls="Four" aria-selected="false">Physical Examination</a>
                                                     </li>
                                                     <li class="nav-item">
-                                                        <a class="nav-link" id="three-tab" data-toggle="tab" href="#five" role="tab" aria-controls="Five" aria-selected="false">Vital Signs</a>
+                                                        <a class="nav-link" id="five-tab" data-toggle="tab" href="#five" role="tab" aria-controls="Five" aria-selected="false">Vital Signs</a>
                                                     </li>
                                                     <li class="nav-item">
-                                                        <a class="nav-link" id="three-tab" data-toggle="tab" href="#six" role="tab" aria-controls="Six" aria-selected="false">Nursing Intervention</a>
+                                                        <a class="nav-link" id="six-tab" data-toggle="tab" href="#six" role="tab" aria-controls="Six" aria-selected="false">Nursing Intervention</a>
                                                     </li>
                                                     <li class="nav-item">
-                                                        <a class="nav-link" id="three-tab" data-toggle="tab" href="#seven" role="tab" aria-controls="Seven" aria-selected="false">Assessment</a>
+                                                        <a class="nav-link" id="seven-tab" data-toggle="tab" href="#seven" role="tab" aria-controls="Seven" aria-selected="false">Assessment</a>
                                                     </li>
                                                 </ul>
                                             </div>
 
-                                            <div class="tab-content" id="myTabContent">
+                                            <div class="tab-content medical-history-content" id="myTabContent">
                                                 {{--Tab1--}}
                                                 <div class="tab-pane fade show active p-3" id="one" role="tabpanel" aria-labelledby="one-tab">
                                                     <div class="row">
@@ -406,12 +390,12 @@
                                                 </div><br> {{--end /div3--}}
 
                                                 {{--tab4--}}
-                                                <div class="tab-pane fade p-3" id="four" role="tabpanel" aria-labelledby="three-tab">
-                                                    <div class="table-responsive-md">
+                                                <div class="tab-pane fade p-3" id="four" role="tabpanel" aria-labelledby="four-tab">
+                                                    <div class="table-responsive-md table-responsive-shell">
                                                         <div class="row">
                                                             <div class="col text-left table-responsive-md">
                                                                 <p class="register-heading text-center">(To be accomplished by physician)</p>
-                                                                <table class="table table-bordered ">
+                                                                <table class="table table-bordered data-table medical-history-table">
                                                                     <thead>
                                                                         <tr>
                                                                             <th></th>
@@ -594,7 +578,7 @@
                                                 </div> {{--end /div tab4--}}
 
                                                 {{--tab5--}}
-                                                <div class="tab-pane fade p-3" id="five" role="tabpanel" aria-labelledby="three-tab">
+                                                <div class="tab-pane fade p-3" id="five" role="tabpanel" aria-labelledby="five-tab">
                                                     <div class="row justify-content-center ">
                                                         <div class="form-inline ">
                                                             
@@ -628,11 +612,12 @@
                                                 </div> {{--end /div tab5--}}
 
                                                 {{--tab6--}}
-                                                <div class="tab-pane fade p-3" id="six" role="tabpanel" aria-labelledby="three-tab">
+                                                <div class="tab-pane fade p-3" id="six" role="tabpanel" aria-labelledby="six-tab">
                                                             
                                                     <div class="row justify-content-center">
                                                          <div class="form-group ">
-                                                            <table>
+                                                            <div class="table-responsive-shell">
+                                                            <table class="data-table medical-history-table">
                                                                 <thead>
                                                                     <tr>
                                                                         <th>Nurse Intervention:</th>
@@ -673,13 +658,14 @@
                                                                     </tr>
                                                                     
                                                                 </tbody>
-                                                            </table><br>
+                                                            </table>
+                                                            </div><br>
                                                         </div>
                                                     </div>            
                                                  </div> {{--end /div tab6--}}
 
                                                 {{--tab7--}}
-                                                <div class="tab-pane fade p-3" id="seven" role="tabpanel" aria-labelledby="three-tab">
+                                                <div class="tab-pane fade p-3" id="seven" role="tabpanel" aria-labelledby="seven-tab">
                                                     <div class="row justify-content-center">
                                                         <div class="form-group">
                                                             <p class="register-heading text-center"><b>ASSESSMENT AND RECOMMENDATION</b></p>

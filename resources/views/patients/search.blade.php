@@ -3,8 +3,8 @@
 @section('content')
 
 
-<div class="card text-center border-info">
-    <div class="card-header border-info">
+<div class="card text-center border-info patient-table-card">
+    <div class="card-header border-info patient-table-header">
       <ul class="nav nav-tabs card-header-tabs">
         <li class="nav-item">
           <a class="nav-link active" href="{{ route('patients.index') }}">Patients</a>
@@ -33,7 +33,8 @@
       {{--<i class="fa fa-search"></i>--}}
         
       </div>
-        <table class="table table-bordered table-responsive-md table-hover">
+        <div class="table-responsive-shell patient-table-wrap">
+        <table class="table table-bordered table-hover patient-data-table data-table">
             <thead class="text-center thead-light">
               
               <tr>
@@ -50,28 +51,29 @@
 	          	@foreach ($patients as $patient)
 	          	<tr>
                 <td>
-                  <img src="{{ $patient->avatar ?? 'http://dev.emr.io/img/no_avatar.jpg' }}" style="height: 50px; width: 50px; border-radius: 50%" />
+                  <img src="{{ $patient->avatar ?? asset('img/no_avatar.jpg') }}" alt="{{ $patient->first_name }} {{ $patient->last_name }}" class="patient-table-avatar" onerror="this.onerror=null;this.src='{{ asset('img/no_avatar.jpg') }}';" />
                 </td>
                 	<td>{{ $patient->id_number }}</td>
                		<td>{{ $patient->last_name }}</td>
                 	<td>{{ $patient->first_name }}</td>
                 	<td>{{ $patient->middle_name }}</td>
-                	<td>
+                  <td class="action-cell">
                   		
-                      <form action="{{ route('patients.destroy', $patient->id) }}" id="deleteForm" onsubmit="confirmDelete()" method="post">
+                      <form action="{{ route('patients.destroy', $patient->id) }}" class="table-action-group" method="post">
                         @csrf
                         @method('DELETE')
-                        <a href="{{ route('patients.show', $patient->id) }}"><i class="fa fa-eye" data-toggle="tooltip" data-placement="top" title="view" style="padding-right:20px"aria-hidden="true"></a></i>
-                        <a href="{{ route('patients.edit', $patient->id) }}"><i class="fa fa-edit" data-toggle="tooltip" data-placement="top" title="edit" style="padding-right:20px" aria-hidden="true"></a></i>
-                        <button class="btn" type="submit">
-                          <i class="fa fa-archive" data-toggle="tooltip" data-placement="top" title="archive" style="padding-right:15px"aria-hidden="true"></i> 
+                        <a href="{{ route('patients.show', $patient->id) }}" class="table-action-button" data-toggle="tooltip" data-placement="top" title="View"><i class="fa fa-eye" aria-hidden="true"></i></a>
+                        <a href="{{ route('patients.edit', $patient->id) }}" class="table-action-button" data-toggle="tooltip" data-placement="top" title="Edit"><i class="fa fa-edit" aria-hidden="true"></i></a>
+                        <button class="btn table-action-button" type="submit" data-toggle="tooltip" data-placement="top" title="Archive" data-confirm="Archive {{ $patient->first_name }} {{ $patient->last_name }}?" data-confirm-title="Archive patient">
+                          <i class="fa fa-archive" aria-hidden="true"></i>
                         </button>{{--archive nalang daw instead of deleting the files of user--}}
                       </form>
                 	</td>
 	      	      </tr>
             @endforeach
             </tbody>
-          </table><br>
+          </table>
+        </div><br>
           <div class="pagination justify-content-center">
             {{$patients->links()}}
             </div>
@@ -87,16 +89,6 @@
       });
     });
     </script>
-
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to delete this user?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
 
 <script>
   $(document).ready(function(){

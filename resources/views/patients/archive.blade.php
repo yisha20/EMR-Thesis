@@ -3,8 +3,8 @@
 @section('content')
 
 
-<div class="card text-center border-info">
-    <div class="card-header border-info">
+<div class="card text-center border-info patient-table-card">
+    <div class="card-header border-info patient-table-header">
       <ul class="nav nav-tabs card-header-tabs">
         <li class="nav-item">
           <a class="nav-link " href="{{ route('patients.index') }}">Patients</a>
@@ -32,7 +32,8 @@
       {{--<i class="fa fa-search"></i>--}}
         
       </div>
-        <table class="table table-bordered table-responsive-md table-hover">
+        <div class="table-responsive-shell patient-table-wrap">
+        <table class="table table-bordered table-hover patient-data-table data-table">
             <thead class="text-center thead-light">
               
               <tr>
@@ -40,6 +41,8 @@
                 <th scope="col">Last Name</th>
                 <th scope="col">First Name</th>
                 <th scope="col">Middle Name</th>
+                <th scope="col">Archive Date</th>
+                <th scope="col">Archived By</th>
                 <th scope="col">Action</th>
               </tr>
             </thead>
@@ -51,18 +54,19 @@
                		<td>{{ $patient->last_name }}</td>
                 	<td>{{ $patient->first_name }}</td>
                 	<td>{{ $patient->middle_name }}</td>
-                	<td>
-                  <form action="{{ route('patients.delete', $patient->id) }}" id="deleteForm" onsubmit="return false;" method="post">
+                  <td>{{ optional($patient->deleted_at)->format('M j, Y g:i A') }}</td>
+                  <td>{{ optional($patient->archivedBy)->fullName() ?: 'Unknown' }}</td>
+                  <td class="action-cell">
+                  <form action="{{ route('patients.delete', $patient->id) }}" class="table-action-group" onsubmit="return false;" method="post">
     @csrf
     @method('DELETE')
-    <a href="{{ route('patients.restore', $patient->id) }}">
-        <i class="fa fa-refresh" style="padding-right:20px" aria-hidden="true"></i>
+    <a href="{{ route('patients.restore', $patient->id) }}" class="table-action-button" data-toggle="tooltip" data-placement="top" title="Restore patient" aria-label="Restore patient" data-confirm="Restore {{ $patient->first_name }} {{ $patient->last_name }}?" data-confirm-title="Restore patient">
+        <i class="fa fa-refresh" aria-hidden="true"></i>
     </a>
 
     <!-- Disabled Delete Button -->
-    <button type="button" class="btn btn-secondary" disabled
-        style="cursor:not-allowed; opacity:0.6;" title="Delete disabled">
-        <i class="fa fa-trash" style="padding-right:3px" aria-hidden="true"></i>
+    <button type="button" class="btn table-action-button" disabled title="Delete disabled">
+        <i class="fa fa-trash" aria-hidden="true"></i>
     </button>
     {{-- archive nalang daw instead of deleting the files of patient --}}
 </form>
@@ -71,7 +75,8 @@
 	      	      </tr>
             @endforeach
             </tbody>
-          </table><br>
+          </table>
+        </div><br>
           <div class="pagination justify-content-center">
             {{$patients->links()}}
             </div>
@@ -87,16 +92,6 @@
       });
     });
     </script>
-
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to delete this patient?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
 
 <script>
   $(document).ready(function(){

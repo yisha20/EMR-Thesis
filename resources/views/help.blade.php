@@ -17,14 +17,15 @@
     </ul>
   </div>
   <div class="card-body">
-      <table class="table table-bordereds table-responsive-sm">
         <div class="input-group mb-4" style="margin:auto;max-width:300px">
           <input type="search"  placeholder="Search..." aria-describedby="button-addon5" class="form-control">
           <div class="input-group-append">
             <button id="button-addon5" type="submit" class="btn btn-primary"><i class="fa fa-search"></i></button>
           </div>
         </div>
-          <thead class="text-center thead-light">
+      <div class="table-responsive-shell">
+      <table class="table table-bordereds data-table">
+          <thead class="thead-light">
             <tr>
               <th scope="col">Help</th>
               <th scope="col">Description</th>
@@ -125,8 +126,9 @@
         <td>From the Homepage, on the right side of the footer, click "Active User" button,
           then active users will pop out.</td>
       </tr>
-      </tbody>
-    </table>
+          </tbody>
+      </table>
+      </div>
   </div>
 </div>
 @stop

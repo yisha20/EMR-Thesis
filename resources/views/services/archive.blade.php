@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card text-center border-info">
-    <div class="card-header border-info">
+<div class="card text-center border-info service-table-card">
+    <div class="card-header border-info service-table-header">
       <ul class="nav nav-tabs card-header-tabs">
         <li class="nav-item">
           <a class="nav-link " href="{{ route('services.index') }}">Clinic Services</a>
@@ -28,26 +28,33 @@
             </div> 
         </form> 
     </div>
-        <table class="table table-bordereds table-responsive-md table-hover">
-            <thead class="text-center thead-light">
+        <div class="service-table-wrap table-responsive-shell">
+          <table class="table table-bordereds table-hover service-data-table data-table is-wide">
+            <thead class="thead-light">
               <tr>
-                <th scope="col">Name of Service</th>
-                <th scope="col">Description</th>
-                <th scope="col">Action</th>
+                <th scope="col">NAME OF SERVICE</th>
+                <th scope="col">CATEGORY</th>
+                <th scope="col">DESCRIPTION</th>
+                <th scope="col">ARCHIVE DATE</th>
+                <th scope="col">ARCHIVED BY</th>
+                <th scope="col">ACTION</th>
               </tr>
             </thead>
             <tbody id="myTable">
               @foreach($services as $service)
               <tr>
                 <td>{{ $service->name }}</td>
-                <td>{{ $service->description }}</td>
-                <td>
-                  <form action="{{ route('services.delete', $service->id) }}" id="deleteForm" onsubmit="return confirmDelete()" method="post">
+                <td><span class="service-category-badge">{{ $service->category }}</span></td>
+                <td class="truncate-cell" title="{{ $service->description }}">{{ $service->description }}</td>
+                <td>{{ optional($service->deleted_at)->format('M j, Y g:i A') }}</td>
+                <td>{{ optional($service->archivedBy)->fullName() ?: 'Unknown' }}</td>
+                <td class="action-cell">
+                  <form action="{{ route('services.delete', $service->id) }}" method="post" class="table-action-group">
                     @csrf
                     @method('DELETE')
-                    <a href="{{ route('services.restore', $service->id) }}"><i class="fa fa-refresh" style="padding-right:20px"aria-hidden="true"></a></i>
-                    <button type="submit" class="btn">
-                        <i class="fa fa-trash" style="padding-right:15px"aria-hidden="true"></i> 
+                    <a href="{{ route('services.restore', $service->id) }}" class="table-action-button" title="Restore service" aria-label="Restore service" data-toggle="tooltip" data-confirm="Restore {{ $service->name }}?" data-confirm-title="Restore service"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+                    <button type="submit" class="table-action-button table-action-danger btn" title="Delete service" aria-label="Delete service" data-toggle="tooltip" data-confirm="Permanently delete {{ $service->name }}? This cannot be undone." data-confirm-title="Delete service">
+                        <i class="fa fa-trash" aria-hidden="true"></i>
                     </button>
                   </form>
                 </td>
@@ -56,6 +63,7 @@
             </tbody>
         
           </table>
+        </div>
     </div>
   </div>
 
@@ -70,15 +78,6 @@
     });
     </script>
 
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to delete this user?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
 @stop
 
 {{--@extends('layouts.app')
@@ -92,4 +91,3 @@
     <a href="{{ route('services.create') }}">Go to Create page</a>
 @endsection
 --}}
-

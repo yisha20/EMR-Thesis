@@ -19,4 +19,9 @@ class Service extends Model
     {
         return $this->belongsTo('App\User', 'added_by');
     }
+
+    public function archivedBy()
+    {
+        return $this->belongsTo('App\User', 'archived_by');
+    }
 }

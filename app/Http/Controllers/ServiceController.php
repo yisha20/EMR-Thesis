@@ -2,15 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ActivityLogger;
 use App\Service;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $services = Service::query()
+            ->when($request->filled('category'), function ($query) use ($request) {
+                $query->where('category', $request->category);
+            })
+            ->orderBy('name')
+            ->get();
+
         return view('services.index', [
-            'services' => Service::get()
+            'services' => $services
         ]);
     }
 
@@ -64,9 +72,11 @@ class ServiceController extends Controller
         ]);
         
         $services = Service::onlyTrashed()
-            ->where('name', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('description', 'LIKE', '%' . $data['search'] . '%')
-            ->orWhere('added_by', 'LIKE', '%' . $data['search'] . '%')
+            ->where(function ($query) use ($data) {
+                $query->where('name', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('description', 'LIKE', '%' . $data['search'] . '%')
+                    ->orWhere('added_by', 'LIKE', '%' . $data['search'] . '%');
+            })
             ->paginate(20);
 
         return view('services.archive_search', [
@@ -86,15 +96,20 @@ class ServiceController extends Controller
     {
         $request->validate([
             'name' => 'required',
+            'category' => 'required|in:Consultation,Immunization,Treatment,Laboratory,First Aid',
             'description' => 'required',
+            'status' => 'required|in:Active,Inactive',
         ]);
 
-        Service::create($request->only( 
-            'name',
-            'description',
-            'added_by'
-            )
-        );
+        $service = Service::create([
+            'name' => $request->name,
+            'category' => $request->category,
+            'description' => $request->description,
+            'status' => $request->status,
+            'added_by' => auth()->id(),
+        ]);
+
+        ActivityLogger::log('added service (' . $service->name . ')');
         
         return redirect()
             ->back()
@@ -112,22 +127,24 @@ class ServiceController extends Controller
     {
         $request->validate([
             'name' => 'required',
+            'category' => 'required|in:Consultation,Immunization,Treatment,Laboratory,First Aid',
             'description' => 'required',
+            'status' => 'required|in:Active,Inactive',
         ]);
 
-        $service->fill($request->only(
-                'name',
-                'description',
-                'added_by'
-            )
-        )->save();
+        $service->fill($request->only('name', 'category', 'description', 'status'))->save();
+
+        ActivityLogger::log('updated service (' . $service->name . ')');
         
         return redirect()->back()->with('success', 'A service has been updated.');
     }
 
     public function destroy(Service $service)
     {
+        $service->archived_by = auth()->id();
+        $service->save();
         $service->delete();
+        ActivityLogger::log('archived service (' . $service->name . ')');
         
         return redirect()
             ->back()
@@ -138,6 +155,7 @@ class ServiceController extends Controller
     {
         $service = Service::withTrashed()->where('id', $id)->first();
         $service->forceDelete();
+        ActivityLogger::log('deleted service (' . $service->name . ')');
         
         return redirect()
             ->back()
@@ -148,10 +166,12 @@ class ServiceController extends Controller
     {
         $service = Service::withTrashed()->where('id', $id)->first();
         $service->restore();
+        $service->archived_by = null;
+        $service->save();
+        ActivityLogger::log('restored service (' . $service->name . ')');
         
         return redirect()
             ->back()
             ->with('success', 'A service has been restored.');
     }
 }
-

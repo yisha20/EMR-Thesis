@@ -3,8 +3,8 @@
 @section('content')
 
 
-<div class="card text-center border-info">
-        <div class="card-header border-info">
+<div class="card text-center border-info service-table-card">
+        <div class="card-header border-info service-table-header">
             <ul class="nav nav-tabs card-header-tabs">
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('services.index') }}">Clinic Services</a>
@@ -33,36 +33,38 @@
       {{--<i class="fa fa-search"></i>--}}
         
       </div>
-        <table class="table table-bordered table-responsive-md table-hover">
-            <thead class="text-center thead-light">
+        <div class="service-table-wrap table-responsive-shell">
+          <table class="table table-bordered table-hover service-data-table service-compact-table data-table">
+            <thead class="thead-light">
               
               <tr>
-                <th scope="col">Name</th>
-                <th scope="col">Description</th>
-                <th scope="col">Action</th>
+                <th scope="col">NAME OF SERVICE</th>
+                <th scope="col">DESCRIPTION</th>
+                <th scope="col">ACTION</th>
               </tr>
             </thead>
 
             <tbody class="p2 text-center" id="myTable">
                 @foreach($services as $service)
                 <tr>
-                  <td class="text-left">{{ $service->name }}</td>
-                  <td>{{ $service->description }}</td>
-                  <td>
-                    <form action="{{ route('services.destroy', $service->id) }}" id="deleteForm" onsubmit="return confirmDelete()" method="post">
+                  <td>{{ $service->name }}</td>
+                  <td class="truncate-cell" title="{{ $service->description }}">{{ $service->description }}</td>
+                  <td class="action-cell">
+                    <form action="{{ route('services.destroy', $service->id) }}" method="post" class="table-action-group">
                       @csrf
                       @method('DELETE')
-                      <a href="{{ route('services.show', $service->id) }}"><i class="fa fa-eye" style="padding-right:20px"aria-hidden="true"></a></i>
-                      <a href="{{ route('services.edit', $service->id) }}"><i class="fa fa-edit" style="padding-right:20px"aria-hidden="true"></a></i>
-                      <button class="btn" type="submit">
-                        <i class="fa fa-archive" data-toggle="tooltip" data-placement="top" title="archive" style="padding-right:15px"aria-hidden="true"></i> 
+                      <a href="{{ route('services.show', $service->id) }}" class="table-action-button" title="View Service"><i class="fa fa-eye" aria-hidden="true"></i></a>
+                      <a href="{{ route('services.edit', $service->id) }}" class="table-action-button" title="Edit Service"><i class="fa fa-edit" aria-hidden="true"></i></a>
+                      <button class="table-action-button table-action-danger btn" type="submit" title="Archive Service" data-confirm="Archive {{ $service->name }}?" data-confirm-title="Archive service">
+                        <i class="fa fa-archive" aria-hidden="true"></i>
                       </button>
                     </form>
                   </td>
                 </tr>
                 @endforeach
             </tbody>
-          </table><br>
+          </table>
+        </div><br>
           <div class="pagination justify-content-center">
             {{$services->links()}}
             </div>
@@ -78,16 +80,6 @@
       });
     });
     </script>
-
-<script>
-  const confirmDelete = () => {
-    if (confirm('Are you sure you want to delete this user?')) {
-      return true
-    } else {
-      return false
-    }
-  }
-</script>
 
 <script>
   $(document).ready(function(){

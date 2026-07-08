@@ -9,7 +9,7 @@
   @endif
 
 
-<div class="card text-center border-info">
+<div class="card border-info service-form-card">
     <div class="card-header border-info">
       <ul class="nav nav-tabs card-header-tabs">
         <li class="nav-item">
@@ -24,36 +24,45 @@
       </ul>
     </div>
     <div class="card-body">
-      <form method="POST" action="{{ route('services.store') }}">
+      <form method="POST" action="{{ route('services.store') }}" class="service-create-form">
         @csrf
-            <div class="form-row">
-              <div class="col-md-4 mb-3">
-                <label for="validationCustom01">Name of Service</label>
-                <input name="name" type="text" class="form-control" id="validationCustom01" placeholder="service name" >
-                <div class="valid-feedback">
-                  Looks good!
-                </div>
-              </div>
-              <div class="col-md-8 mb-3">
-                <label for="validationCustom02">Description</label>
-                <input name="description" type="text" class="form-control" id="validationCustom02" placeholder="description">
-        
-              </div>
+          <div class="service-form-grid">
+            <div class="form-group">
+              <label for="serviceName">Name of Service</label>
+              <input name="name" type="text" class="form-control @error('name') is-invalid @enderror" id="serviceName" placeholder="Enter service name" value="{{ old('name') }}">
+              @error('name')
+                <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+              @enderror
             </div>
-            <div class="form-row">
-              <div class="col-md-6 mb-3 ml-5 mx-auto" style="width: 200px;">
-                <label for="validationCustom03">Added By</label>
-                <input name="added_by" value="{{ auth()->user()->fullName() }}" disabled type="text" class="form-control">
-                <input name="added_by" value="{{ auth()->user()->id }}" hidden type="text" class="form-control">
-                <div class="invalid-feedback">
-                  Please provide name.
-                </div>
-              </div>
+            <div class="form-group">
+              <label for="serviceCategory">Category</label>
+              <select name="category" id="serviceCategory" class="form-control @error('category') is-invalid @enderror">
+                @foreach (['Consultation', 'Immunization', 'Treatment', 'Laboratory', 'First Aid'] as $category)
+                  <option value="{{ $category }}" {{ old('category') === $category ? 'selected' : '' }}>{{ $category }}</option>
+                @endforeach
+              </select>
             </div>
-            <button class="btn btn-primary" type="submit">Submit form</button>
+            <div class="form-group">
+              <label for="serviceStatus">Status</label>
+              <select name="status" id="serviceStatus" class="form-control @error('status') is-invalid @enderror">
+                <option value="Active" selected>Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div class="form-group service-description-field">
+              <label for="serviceDescription">Description</label>
+              <textarea name="description" class="form-control @error('description') is-invalid @enderror" id="serviceDescription" rows="7" placeholder="Describe the purpose, procedure, and intended patient care for this service">{{ old('description') }}</textarea>
+              @error('description')
+                <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+              @enderror
+            </div>
+          </div>
+
+          <div class="service-form-footer">
+            <span class="service-created-by"><i class="fa fa-stethoscope"></i> Created By: {{ auth()->user()->fullName() }}</span>
+            <button class="btn btn-primary" type="submit">Create Service</button>
+          </div>
         </form>
     </div>
   </div>
 @endsection
-
-
