@@ -178,9 +178,14 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::with('student')->findOrFail($id);
+        $selectedRole = Role::find($request->role_id);
+        $roleName = $selectedRole ? strtolower($selectedRole->name) : '';
+        $requiresLicense = in_array($roleName, ['doctor', 'nurse'], true);
+        $isStudent = $roleName === 'student';
+        $studentRecordId = $user->student ? $user->student->id : null;
 
-        $request->validate([
+        $validated = $request->validate([
             'first_name' => 'required',
             'middle_name' => 'required',
             'last_name' => 'required',
@@ -192,12 +197,16 @@ class UserController extends Controller
             'age' => 'required',
             'birthdate' => 'required',
             'present_address' => 'required',
-            'role_id' => 'required',
+            'role_id' => 'required|exists:roles,id',
             'phone_number' => 'required',
-            'license_number' => 'required',
+            'license_number' => $requiresLicense ? 'required' : 'nullable',
+            'student_id_number' => $isStudent
+                ? ['required', 'string', 'max:255', Rule::unique('students', 'student_id_number')->ignore($studentRecordId)]
+                : 'nullable',
+            'college_department' => $isStudent ? 'required|string|max:255' : 'nullable',
         ]);
 
-        $user->fill($request->only([
+        $userFields = $request->only([
             'role_id',
             'email',
             'username',
@@ -211,8 +220,15 @@ class UserController extends Controller
             'present_address',
             'home_address',
             'phone_number',
-            'license_number',
-        ]));
+        ]);
+
+        // Do not clear a stored license when the selected role does not use it
+        // and the role-specific input is intentionally hidden.
+        if ($requiresLicense) {
+            $userFields['license_number'] = $validated['license_number'];
+        }
+
+        $user->fill($userFields);
 
         if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
             $request->validate([
@@ -230,6 +246,27 @@ class UserController extends Controller
         }
 
         $user->save();
+
+        if ($isStudent) {
+            $user->student()->updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'student_id_number' => $validated['student_id_number'],
+                    'college_department' => $validated['college_department'],
+                    'contact_number' => $validated['phone_number'],
+                    'first_name' => $validated['first_name'],
+                    'middle_name' => $validated['middle_name'],
+                    'last_name' => $validated['last_name'],
+                    'email' => $validated['email'],
+                    'gender' => $validated['gender'],
+                    'birth_date' => $validated['birthdate'],
+                    'age' => $validated['age'],
+                    'civil_status' => $validated['civil_status'],
+                    'home_address' => $request->home_address,
+                    'present_address' => $validated['present_address'],
+                ]
+            );
+        }
 
         ActivityLogger::log('updated user (' . $user->fullName() . ')');
 

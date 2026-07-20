@@ -3,16 +3,6 @@
 @section('content')
     
 
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
 <div class="card border-info user-form-card">
     <div class="card-header border">
         <ul class="nav nav-tabs card-header-tabs">
@@ -139,9 +129,22 @@
                                 <input id="email" name="email" type="email" 
                                 class="form-control @error('email') is-invalid @enderror" 
                                 placeholder="Email Address *" 
-                                value="{{ $user->email ? $user->email : old('email') }}" />
+                                value="{{ old('email', $user->email) }}" />
         
                                 @error('email')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label for="username">Username:</label>
+                                <input id="username" name="username" type="text"
+                                class="form-control @error('username') is-invalid @enderror"
+                                placeholder="Username *"
+                                value="{{ old('username', $user->username) }}" />
+
+                                @error('username')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
@@ -183,11 +186,11 @@
                                 <div class="form-check">
 
                                     <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" class="custom-control-input"  id="malegender" name="gender" {{ $user->gender == 'male' ? 'checked' : '' }} value="male">
+                                        <input type="radio" class="custom-control-input" id="malegender" name="gender" {{ strtolower(old('gender', $user->gender)) === 'male' ? 'checked' : '' }} value="male">
                                         <label class="custom-control-label" for="malegender">Male</label>
                                       </div>   
                                       <div class="custom-control custom-radio custom-control-inline">
-                                        <input type="radio" class="custom-control-input" id="femalegender" name="gender" {{ $user->gender == 'female' ? 'checked' : '' }} value="female">
+                                        <input type="radio" class="custom-control-input" id="femalegender" name="gender" {{ strtolower(old('gender', $user->gender)) === 'female' ? 'checked' : '' }} value="female">
                                         <label class="custom-control-label" for="femalegender">Female</label> 
                                         <br>
                                     </div> 
@@ -246,7 +249,7 @@
                                 <input id="phonenum" name="phone_number" type="number" minlength="10" maxlength="11" 
                                 class="form-control @error('phone_number') is-invalid @enderror" 
                                 placeholder="Phone Number *" 
-                                value="{{ $user->phone_number }}" />
+                                value="{{ old('phone_number', $user->phone_number) }}" />
         
                                 @error('phone_number')
                                     <span class="invalid-feedback" role="alert">
@@ -255,18 +258,34 @@
                                 @enderror
                             </div>
                         
-                            <div class="form-group">
+                            <div class="form-group" id="license-number-group">
                                 <label for="license_number">License Number:</label>
                                 <input id="license_number" name="license_number" type="number" 
                                 class="form-control @error('license_number') is-invalid @enderror" 
                                 placeholder="License Number *" 
-                                value="{{ $user->license_number ? $user->license_number : old('license_number') }}" />
+                                value="{{ old('license_number', $user->license_number) }}" />
         
                                 @error('license_number')
                                     <span class="invalid-feedback" role="alert">
                                         <strong>{{ $message }}</strong>
                                     </span>
                                 @enderror
+                            </div>
+                            <div id="student-fields">
+                                <div class="form-group">
+                                    <label for="student_id_number">Student ID Number:</label>
+                                    <input id="student_id_number" name="student_id_number" type="text"
+                                    class="form-control @error('student_id_number') is-invalid @enderror"
+                                    value="{{ old('student_id_number', optional($user->student)->student_id_number) }}" />
+                                    @error('student_id_number')<span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>@enderror
+                                </div>
+                                <div class="form-group">
+                                    <label for="college_department">College / Department:</label>
+                                    <input id="college_department" name="college_department" type="text"
+                                    class="form-control @error('college_department') is-invalid @enderror"
+                                    value="{{ old('college_department', optional($user->student)->college_department) }}" />
+                                    @error('college_department')<span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>@enderror
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="role_id">Role:</label>
@@ -275,7 +294,7 @@
                                 class="form-control @error('role_id') is-invalid @enderror">
                                     <option class="hidden" @if(!$user->role_id) selected @endif disabled>Role</option>
                                     @foreach(\App\Role::get() as $role)
-                                        <option value="{{ $role->id }}" @if($user->role_id == $role->id) selected @endif>{{ $role->name }}</option>
+                                        <option value="{{ $role->id }}" data-role-name="{{ strtolower($role->name) }}" {{ (string) old('role_id', $user->role_id) === (string) $role->id ? 'selected' : '' }}>{{ $role->name }}</option>
                                     @endforeach
                                     {{-- <option value="2" @if($user->role_id == '2') selected @endif>Doctor</option>
                                     <option value="3" @if($user->role_id == '3') selected @endif>Nurse</option> --}}
@@ -305,4 +324,32 @@
     margin: 0;
     }
 </style> 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var roleSelect = document.getElementById('role_id');
+        var licenseGroup = document.getElementById('license-number-group');
+        var licenseInput = document.getElementById('license_number');
+        var studentFields = document.getElementById('student-fields');
+        var studentInputs = studentFields.querySelectorAll('input');
+
+        function updateRoleFields() {
+            var selected = roleSelect.options[roleSelect.selectedIndex];
+            var roleName = selected ? (selected.getAttribute('data-role-name') || '') : '';
+            var requiresLicense = roleName === 'doctor' || roleName === 'nurse';
+            var isStudent = roleName === 'student';
+
+            licenseGroup.style.display = requiresLicense ? '' : 'none';
+            licenseInput.disabled = !requiresLicense;
+            licenseInput.required = requiresLicense;
+            studentFields.style.display = isStudent ? '' : 'none';
+            Array.prototype.forEach.call(studentInputs, function (input) {
+                input.disabled = !isStudent;
+                input.required = isStudent;
+            });
+        }
+
+        roleSelect.addEventListener('change', updateRoleFields);
+        updateRoleFields();
+    });
+</script>
 @stop
