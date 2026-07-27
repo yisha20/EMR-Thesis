@@ -12324,3 +12324,374 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 .queue-focus-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:18px}.queue-focus-grid article{display:grid;gap:7px;padding:16px;border:1px solid var(--emr-border,#dbe3ea);border-radius:var(--emr-radius,12px)}.queue-ticket{font-size:1.7rem}.queue-actions{display:flex;flex-wrap:wrap;gap:6px}.queue-actions form{margin:0}.queue-policy-form{display:flex;align-items:center;gap:8px}.assessment-check-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px}.assessment-check-grid>div{display:grid;grid-template-columns:auto 1fr;gap:5px}.assessment-check-grid small{grid-column:2}.section-ownership{font-weight:700;padding:8px 12px;border-left:4px solid var(--emr-primary,#1d4ed8)}.assessment-form-section{margin-bottom:16px}.account-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px}
 @media(max-width:767px){.sidebar{display:none!important;flex-basis:0!important;width:0!important}.main-workspace{margin-left:0!important;width:100%!important;max-width:100%;overflow-x:clip}.queue-focus-grid,.assessment-summary-list,.account-filter-grid{grid-template-columns:1fr}.assessment-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.queue-policy-form{align-items:stretch;flex-direction:column}.queue-workspace{overflow:hidden}.queue-workspace .table-responsive-shell{overflow-x:auto}}
 @media(max-width:390px){.assessment-check-grid{grid-template-columns:1fr}}
+
+/* Final themed workflow layer: keep this after legacy compatibility rules. */
+:root {
+  --clinic-border: #b9d9ee;
+  --clinic-ink: #123b56;
+  --clinic-muted: #5b7081;
+  --clinic-accent: #3b9dcc;
+  --clinic-surface: #ffffff;
+  --clinic-page: #f3f9fc;
+  --clinic-radius: 12px;
+  --clinic-shadow: 0 3px 10px rgba(31, 91, 126, 0.08);
+}
+
+@media (min-width: 768px) {
+  html,
+  body.emr-shell {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body.emr-shell .emr-app {
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body.emr-shell .emr-layout-frame {
+    align-items: stretch;
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body.emr-shell .desktop-sidebar {
+    align-self: stretch;
+    flex: 0 0 260px;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    position: relative;
+    top: 0;
+  }
+
+  body.emr-shell .desktop-sidebar.collapsed {
+    flex-basis: 78px;
+  }
+
+  body.emr-shell .desktop-sidebar .sidepanel-menu {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  body.emr-shell .emr-workspace {
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    width: 0;
+  }
+}
+
+.complaint-review-page,
+.assessment-record-page,
+.user-table-card {
+  color: var(--clinic-ink);
+  font-family: "Inter", "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.assessment-summary-card,
+.queue-routing-card,
+.active-queue-card,
+.assessment-record-page .dashboard-panel,
+.user-table-card {
+  background: var(--clinic-surface);
+  border: 1px solid var(--clinic-border) !important;
+  border-radius: var(--clinic-radius);
+  box-shadow: var(--clinic-shadow);
+}
+
+.assessment-summary-card .dashboard-panel-header,
+.queue-routing-card .dashboard-panel-header {
+  border-bottom: 1px solid var(--clinic-border);
+  gap: 12px;
+  padding: 16px 18px 14px;
+}
+
+.assessment-summary-card .dashboard-panel-header h2,
+.queue-routing-card .dashboard-panel-header h2,
+.assessment-record-page .assessment-form-section h2 {
+  color: var(--clinic-ink);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.25;
+  margin: 2px 0 0;
+}
+
+.assessment-summary-card .eyebrow,
+.queue-routing-card .eyebrow,
+.active-queue-card .eyebrow {
+  color: var(--clinic-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.assessment-summary-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.assessment-summary-actions .btn {
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 38px;
+  padding: 8px 13px;
+}
+
+.assessment-summary-card .assessment-summary-list {
+  gap: 10px 20px;
+  grid-template-columns: minmax(145px, 0.8fr) minmax(0, 1.2fr);
+  padding: 16px 18px 18px;
+}
+
+.assessment-summary-card .assessment-summary-list dt,
+.assessment-summary-card .assessment-summary-list dd {
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.assessment-summary-card .assessment-summary-list dt {
+  color: var(--clinic-muted);
+  font-weight: 600;
+}
+
+.queue-routing-form {
+  gap: 14px;
+  padding: 16px 18px 18px;
+}
+
+.queue-routing-form label {
+  color: var(--clinic-ink);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+.queue-routing-form .form-control,
+.queue-routing-form .btn {
+  border-radius: 9px;
+  font-size: 14px;
+  min-height: 42px;
+}
+
+.active-queue-card {
+  margin-top: 16px;
+  padding: 16px 18px;
+}
+
+.active-queue-card h2 {
+  color: var(--clinic-ink);
+  font-size: clamp(21px, 2vw, 25px);
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 6px 0 8px;
+}
+
+.active-queue-card .badge {
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 6px 11px;
+}
+
+.assessment-record-page {
+  margin: 0 auto;
+  max-width: 1240px;
+}
+
+.assessment-record-header {
+  background: var(--clinic-surface);
+  border: 1px solid var(--clinic-border);
+  border-radius: var(--clinic-radius);
+  box-shadow: var(--clinic-shadow);
+  margin-bottom: 16px;
+  padding: 18px 20px;
+}
+
+.assessment-record-header h1 {
+  color: var(--clinic-ink);
+  font-size: clamp(22px, 2.5vw, 28px);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 3px 0 5px;
+}
+
+.assessment-record-header p {
+  color: var(--clinic-muted);
+  margin: 0;
+}
+
+.section-ownership {
+  background: #eaf6fc;
+  border-left-color: var(--clinic-accent);
+  border-radius: 8px;
+  color: #286f96;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  margin: 16px 0 10px;
+}
+
+.assessment-record-page .assessment-form-section {
+  margin-bottom: 14px;
+  padding: 17px 20px;
+}
+
+.assessment-record-page .assessment-form-section > h2 {
+  border-bottom: 1px solid #e1edf4;
+  margin: -2px 0 15px;
+  padding-bottom: 10px;
+}
+
+.assessment-record-page .assessment-summary-list {
+  grid-template-columns: minmax(170px, 0.8fr) minmax(0, 1.2fr);
+}
+
+.assessment-record-page .assessment-check-grid {
+  gap: 9px 18px;
+}
+
+.assessment-record-page .assessment-check-grid > div {
+  align-items: start;
+  background: #f8fbfd;
+  border: 1px solid #e0edf4;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.assessment-record-page .assessment-check-grid > div.is-checked {
+  background: #eef8fd;
+  border-color: #8fc7e5;
+  color: #176b94;
+  font-weight: 600;
+}
+
+.user-table-card .emr-data-table-wrap {
+  border: 1px solid var(--clinic-border);
+  border-radius: 10px;
+  overflow-x: auto !important;
+  overflow-y: hidden;
+}
+
+.user-table-card .user-data-table {
+  font-size: 13px;
+  min-width: 1160px !important;
+  table-layout: auto !important;
+}
+
+.user-table-card .user-data-table th,
+.user-table-card .user-data-table td {
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 12px 14px !important;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.user-table-card .user-data-table th {
+  color: var(--clinic-muted);
+  font-weight: 700;
+}
+
+.user-table-card .user-data-table td {
+  color: var(--clinic-ink);
+  font-weight: 500;
+}
+
+.user-table-card .user-data-table td:nth-child(4),
+.user-table-card .user-data-table td:nth-child(5) {
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-table-card .user-data-table .role-badge,
+.user-table-card .user-data-table .emr-status-badge {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.user-table-card .action-cell,
+.user-table-card .action-cell .table-action-group {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .assessment-summary-card .dashboard-panel-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .assessment-summary-actions {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767.98px) {
+  html,
+  body.emr-shell {
+    height: auto;
+    min-height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  body.emr-shell .emr-app,
+  body.emr-shell .emr-layout-frame,
+  body.emr-shell .emr-workspace {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    width: 100%;
+  }
+
+  .assessment-summary-card .assessment-summary-list,
+  .assessment-record-page .assessment-summary-list {
+    gap: 3px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .assessment-summary-card .assessment-summary-list dd,
+  .assessment-record-page .assessment-summary-list dd {
+    margin-bottom: 9px;
+  }
+
+  .assessment-summary-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .assessment-summary-actions .btn,
+  .assessment-record-header .btn {
+    width: 100%;
+  }
+
+  .active-queue-card {
+    align-items: stretch;
+  }
+
+  .active-queue-card .btn {
+    width: 100%;
+  }
+
+  .assessment-record-page .assessment-form-section {
+    padding: 15px;
+  }
+}
