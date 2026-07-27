@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Consultation;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
+use App\Services\ClinicNotificationService;
 
 class ClinicQueueController extends Controller
 {
@@ -42,12 +43,84 @@ class ClinicQueueController extends Controller
     public function update(Request $request, ClinicQueue $queue, ClinicQueueService $service)
     {
         $data=$request->validate(['status'=>'required|in:called,serving,completed,cancelled,missed,transferred','reason'=>'nullable|string|max:1000']);
-        if (in_array($data['status'],['cancelled','transferred'],true)) $request->validate(['reason'=>'required|string|max:1000']);
+        if (in_array($data['status'],['cancelled','transferred','missed'],true)) $request->validate(['reason'=>'required|string|max:1000']);
         $queue=$service->transition($queue,$data['status'],$request->user()->id,$data['reason']??null);
-        if ($data['status']==='completed' && $queue->queue_type==='counter') {
-            $queue->complaint()->update(['status'=>'Counter Resolved','completed_at'=>now()]);
-        }
         return redirect()->back()->with('success','Queue status updated.');
+    }
+
+    public function presence(Request $request, ClinicQueue $queue, ClinicNotificationService $notifier)
+    {
+        $data=$request->validate(['presence_status'=>'required|in:waiting_inside,temporarily_away,returning,present']);
+        $account=$request->user()->patientAccount;
+        abort_unless($account && $account->accessibleAccountIds()->contains($queue->patient_account_id),403);
+        abort_unless(in_array($queue->status,['waiting','called'],true),422,'Presence can no longer be changed for this queue entry.');
+        DB::transaction(function () use ($queue,$data,$request,$notifier) {
+            $queue=ClinicQueue::whereKey($queue->id)->lockForUpdate()->firstOrFail();
+            $updates=['presence_status'=>$data['presence_status']];
+            if ($data['presence_status']==='temporarily_away') $updates['away_at']=now();
+            if ($data['presence_status']==='returning') $updates['returning_at']=now();
+            if (in_array($data['presence_status'],['waiting_inside','present'],true)) $updates['present_at']=now();
+            $queue->update($updates);
+            if ($data['presence_status']==='temporarily_away') {
+                $notifier->sendToRoles(['Nurse','Staff'],'patient_temporarily_away','Patient Temporarily Away',
+                    'Queue '.$queue->ticket_number.' is waiting outside temporarily.',
+                    ['queue_id'=>$queue->id,'complaint_id'=>$queue->student_complaint_id,'action_url'=>route('dashboard')]);
+                $notifier->log($request->user()->id,'Patient marked temporarily away','Queue #'.$queue->id.'.');
+            } elseif ($data['presence_status']==='returning') {
+                $notifier->sendToRoles(['Nurse','Staff'],'patient_returning','Patient Returning',
+                    'Queue '.$queue->ticket_number.' is returning to the clinic.',
+                    ['queue_id'=>$queue->id,'complaint_id'=>$queue->student_complaint_id,'action_url'=>route('dashboard')],
+                    'return-'.$queue->returning_at->timestamp);
+                $notifier->log($request->user()->id,'Patient returning','Queue #'.$queue->id.'.');
+            }
+        });
+        return $request->expectsJson()?response()->json(['ok'=>true,'presence_status'=>$data['presence_status']])
+            :redirect()->back()->with('success','Queue presence updated. Your queue position was preserved.');
+    }
+
+    public function acknowledge(Request $request, ClinicQueue $queue, ClinicNotificationService $notifier)
+    {
+        $account=$request->user()->patientAccount;
+        abort_unless($account && $account->accessibleAccountIds()->contains($queue->patient_account_id),403);
+        abort_unless($queue->status==='called',422,'Only an active queue call can be acknowledged.');
+        ClinicQueue::whereKey($queue->id)->whereNull('patient_acknowledged_at')->update([
+            'patient_acknowledged_at'=>now(),'presence_status'=>'present','present_at'=>now(),
+        ]);
+        $notifier->log($request->user()->id,'Patient acknowledged call','Queue #'.$queue->id.'.');
+        return $request->expectsJson()?response()->json(['ok'=>true]):redirect()->back()->with('success','Call acknowledged.');
+    }
+
+    public function transfer(Request $request, ClinicQueue $queue, ClinicQueueService $service)
+    {
+        $data=$request->validate(['queue_type'=>'required|in:counter,consultation','reason'=>'required|string|max:1000']);
+        abort_if($data['queue_type']===$queue->queue_type,422,'Select a different destination queue.');
+        $new=DB::transaction(function() use ($queue,$data,$request,$service) {
+            $queue=ClinicQueue::whereKey($queue->id)->lockForUpdate()->firstOrFail();
+            abort_unless(in_array($queue->status,['waiting','called'],true),422,'This queue entry cannot be transferred.');
+            $complaint=StudentComplaint::whereKey($queue->student_complaint_id)->lockForUpdate()->firstOrFail();
+            $consultation=$complaint->consultation;
+            if ($data['queue_type']==='consultation' && ! $consultation) {
+                abort_unless($complaint->patient_id,422,'Link the patient record before consultation transfer.');
+                $consultation=Consultation::create(['student_complaint_id'=>$complaint->id,'patient_id'=>$complaint->patient_id,
+                    'service_needed'=>'Medical Consultation','priority'=>ucfirst($queue->priority),
+                    'forwarded_by'=>$request->user()->id,'forwarded_at'=>now(),'status'=>'Pending Consultation']);
+                $complaint->update(['status'=>'Forwarded']);
+            }
+            $service->transition($queue,'transferred',$request->user()->id,$data['reason']);
+            $new=$service->enqueue($complaint,$data['queue_type'],$queue->priority,$request->user()->id,
+                $data['queue_type']==='consultation'?optional($consultation)->id:null);
+            $new->update(['transferred_from_queue_id'=>$queue->id]);
+            return $new;
+        });
+        return redirect()->back()->with('success','Patient transferred to '.$new->ticket_number.'.');
+    }
+
+    public function requeue(Request $request, ClinicQueue $queue, ClinicQueueService $service)
+    {
+        abort_unless($queue->status==='missed',422,'Only missed entries may return to queue.');
+        $new=$service->enqueue($queue->complaint,$queue->queue_type,$queue->priority,$request->user()->id,$queue->consultation_id);
+        $new->update(['transferred_from_queue_id'=>$queue->id]);
+        return redirect()->back()->with('success','Patient returned to queue as '.$new->ticket_number.'.');
     }
 
     public function callNext(Request $request, ClinicQueueService $service)
@@ -65,6 +138,20 @@ class ClinicQueueController extends Controller
         return redirect()->back()->with('success','Queue dispatch policy updated.');
     }
 
+    public function live(Request $request)
+    {
+        $doctor=optional($request->user()->role)->name==='Doctor';
+        $entries=ClinicQueue::where('queue_date',now()->toDateString())
+            ->whereIn('status',['waiting','called','serving','missed'])
+            ->when($doctor,function($query){$query->where('queue_type','consultation');})
+            ->orderBy('id')->get(['id','status','presence_status','updated_at'])->map(function($entry){
+                return ['id'=>$entry->id,'status'=>$entry->status,'presence_status'=>$entry->presence_status,
+                    'presence_label'=>ucwords(str_replace('_',' ',$entry->presence_status)),
+                    'updated_at'=>$entry->updated_at->toIso8601String()];
+            });
+        return response()->json(['entries'=>$entries])->header('Cache-Control','no-store');
+    }
+
     public function status(Request $request)
     {
         $account=$request->user()->patientAccount; abort_unless($account,403);
@@ -75,7 +162,11 @@ class ClinicQueueController extends Controller
         $ahead=ClinicQueue::where('queue_date',$queue->queue_date)->where('queue_type',$queue->queue_type)->where('status','waiting')
             ->get()->filter(function($q)use($queue,$rank){return $rank[$q->priority]<$rank[$queue->priority]||($q->priority===$queue->priority&&$q->position<$queue->position);})->count();
         $now=ClinicQueue::where('queue_date',$queue->queue_date)->where('queue_type',$queue->queue_type)->whereIn('status',['called','serving'])->orderByDesc('called_at')->value('ticket_number');
-        return response()->json(['queue'=>['ticket'=>$queue->ticket_number,'type'=>$queue->queue_type,'status'=>$queue->status,'patients_ahead'=>$ahead,'now_serving'=>$now,'updated_at'=>$queue->updated_at->toIso8601String()]])
+        app(ClinicNotificationService::class)->positionNotifications(app(ClinicQueueService::class));
+        return response()->json(['queue'=>['id'=>$queue->id,'ticket'=>$queue->ticket_number,'type'=>$queue->queue_type,
+            'status'=>$queue->status,'presence_status'=>$queue->presence_status,'patients_ahead'=>$ahead,
+            'now_serving'=>$now,'is_nearly_next'=>$ahead===1,'is_next'=>$ahead===0,
+            'acknowledged'=>(bool)$queue->patient_acknowledged_at,'updated_at'=>$queue->updated_at->toIso8601String()]])
             ->header('Cache-Control','no-store, no-cache, must-revalidate');
     }
 }

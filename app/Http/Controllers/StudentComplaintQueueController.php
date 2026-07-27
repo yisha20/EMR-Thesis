@@ -14,6 +14,7 @@ use App\Patient;
 use App\Prescription;
 use App\Services\PrescriptionPdfService;
 use App\Services\ClinicQueueService;
+use App\Services\ClinicNotificationService;
 use App\Student;
 use App\StudentComplaint;
 use App\User;
@@ -365,20 +366,10 @@ class StudentComplaintQueueController extends Controller
             }
             ActivityLogger::log('completed consultation for ' . $complaint->student_name, $data['diagnosis']);
 
-            User::where('status', 'Active')
-                ->whereHas('role', function ($query) { $query->whereIn('name', ['Nurse', 'Staff']); })
-                ->get()
-                ->each(function ($recipient) use ($consultation, $complaint) {
-                    ClinicNotification::create([
-                        'user_id' => $recipient->id,
-                        'role_target' => $recipient->role->name,
-                        'title' => 'Consultation Completed',
-                        'message' => $complaint->student_name . "'s consultation has been completed. You may now call the next student.",
-                        'type' => 'consultation_completed',
-                        'related_consultation_id' => $consultation->id,
-                        'related_patient_id' => $consultation->patient_id,
-                    ]);
-                });
+            app(ClinicNotificationService::class)->sendToRoles(['Nurse','Staff'],'consultation_completed',
+                'Consultation Completed','Consultation queue service has been completed. You may now call the next student.',
+                ['complaint_id'=>$complaint->id,'consultation_id'=>$consultation->id,
+                    'patient_id'=>$consultation->patient_id,'action_url'=>route('dashboard')]);
 
             if (empty($data['prescription_type'])) {
                 return null;

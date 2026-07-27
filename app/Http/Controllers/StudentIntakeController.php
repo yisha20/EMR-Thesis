@@ -13,6 +13,8 @@ use App\ClinicQueue;
 use Illuminate\Http\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use App\Services\ClinicNotificationService;
 
 class StudentIntakeController extends Controller
 {
@@ -114,6 +116,7 @@ class StudentIntakeController extends Controller
             $attachment = Storage::disk('local')->putFile('patient-intake', new File($request->file('attachment')));
         }
 
+        $complaint = DB::transaction(function () use ($student,$account,$dependent,$options,$data,$attachment,$request) {
         $complaint = StudentComplaint::create([
             'student_id' => $student->id,
             'student_id_number' => $student->student_id_number,
@@ -140,6 +143,9 @@ class StudentIntakeController extends Controller
         ]);
 
         ActivityLogger::log('submitted chief complaint (' . $student->full_name . ')');
+        app(ClinicNotificationService::class)->newComplaint($complaint);
+        return $complaint;
+        });
 
         return redirect()->route('student.complaints.index')
             ->with('success', 'Your chief complaint was submitted to the clinic queue.');

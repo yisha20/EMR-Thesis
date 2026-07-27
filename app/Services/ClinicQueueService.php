@@ -40,13 +40,16 @@ class ClinicQueueService
                 'assigned_staff_id'=>$actorId,'assigned_nurse_id'=>$actorId,
             ]);
             QueueStatusLog::create(['clinic_queue_id'=>$queue->id,'changed_by'=>$actorId,'to_status'=>'waiting','reason'=>'Added to '.$type.' queue.']);
-            $userId = optional($complaint->patientAccount)->user_id;
-            if ($userId) ClinicNotification::create([
-                'user_id'=>$userId,'related_patient_id'=>$complaint->patient_id,'related_consultation_id'=>$consultationId,
-                'related_queue_id'=>$queue->id,'title'=>'Clinic queue update',
-                'message'=>$type === 'counter' ? 'Your clinic request has been added to the counter queue.' : 'Your clinic request has been forwarded to the doctor.',
-                'type'=>'queue','is_read'=>false,
-            ]);
+            $notifier=app(ClinicNotificationService::class);
+            $ahead=ClinicQueue::where('queue_date',$date)->where('queue_type',$type)
+                ->where('status','waiting')->where('position','<',$next)->count();
+            $notifier->patientQueueEvent($queue,
+                $type === 'counter' ? 'patient_added_to_counter_queue' : 'patient_forwarded_to_consultation',
+                $type === 'counter' ? 'Added to Counter Service Queue' : 'Added to Doctor Consultation Queue',
+                'Queue Number: '.$queue->ticket_number.'. Patients Ahead: '.$ahead.'.');
+            if ($type === 'consultation') $notifier->doctorsForwarded($queue);
+            $notifier->log($actorId,'Patient added to queue','Queue #'.$queue->id.' created.');
+            $notifier->positionNotifications($this);
             return $queue;
         });
     }
@@ -57,25 +60,91 @@ class ClinicQueueService
             $queue = ClinicQueue::whereKey($queue->id)->lockForUpdate()->firstOrFail();
             $from = $queue->status;
             $allowed = [
-                'waiting'=>['called','serving','cancelled','missed','transferred'],
+                'waiting'=>['called','serving','cancelled','transferred'],
                 'called'=>['called','serving','missed','cancelled','transferred'],
                 'serving'=>['completed','cancelled','transferred'],
             ];
             if (! in_array($status, $allowed[$from] ?? [], true)) {
                 throw ValidationException::withMessages(['status'=>'That queue action is not valid from '.$from.'.']);
             }
+            $isRecall=$from === 'called' && $status === 'called';
+            $grace=config('clinic_queue.call_grace_minutes',5);
+            if ($isRecall) {
+                if ($queue->recall_count >= config('clinic_queue.max_recalls',2)) {
+                    throw ValidationException::withMessages(['status'=>'The maximum recall count has been reached.']);
+                }
+                $since=$queue->last_recalled_at ?: $queue->called_at;
+                if ($since && now()->lt($since->copy()->addMinutes($grace))) {
+                    throw ValidationException::withMessages(['status'=>'Wait for the '.$grace.'-minute response grace period before recalling.']);
+                }
+            }
+            if ($status === 'missed') {
+                $since=$queue->last_recalled_at ?: $queue->called_at;
+                if ($queue->recall_count < config('clinic_queue.max_recalls',2)) {
+                    throw ValidationException::withMessages(['status'=>'Use the allowed recalls before marking this patient missed.']);
+                }
+                if ($since && now()->lt($since->copy()->addMinutes($grace))) {
+                    throw ValidationException::withMessages(['status'=>'The response grace period has not elapsed.']);
+                }
+            }
             $updates = ['status'=>$status,'assigned_staff_id'=>$actorId];
-            if ($status === 'called') $updates['called_at'] = now();
+            if ($status === 'called' && ! $isRecall) $updates['called_at'] = now();
+            if ($isRecall) {
+                $updates['recall_count']=$queue->recall_count+1;
+                $updates['last_recalled_at']=now();
+            }
             if ($status === 'serving') $updates['serving_started_at'] = now();
             if (in_array($status,['completed','cancelled','transferred'],true)) $updates['completed_at'] = now();
-            if ($status === 'missed') $updates['missed_at'] = now();
+            if ($status === 'missed') {
+                $updates['missed_at'] = now();
+                $updates['missed_reason']=$reason;
+            }
             $queue->update($updates);
+            if ($queue->queue_type==='consultation' && $queue->consultation) {
+                $consultationUpdates=[];
+                if ($status==='called') $consultationUpdates=['status'=>'Called','called_at'=>$queue->called_at ?: now(),'called_by'=>$actorId];
+                if ($status==='serving') $consultationUpdates=['status'=>'In Consultation','started_at'=>now()];
+                if ($status==='completed') $consultationUpdates=['status'=>'Completed','completed_at'=>now()];
+                if ($status==='missed') $consultationUpdates=['status'=>'Missed'];
+                if ($status==='cancelled') $consultationUpdates=['status'=>'Cancelled'];
+                if ($status==='transferred') $consultationUpdates=['status'=>'Cancelled'];
+                if ($consultationUpdates) $queue->consultation->update($consultationUpdates);
+            }
+            if ($status==='completed') {
+                $queue->complaint()->update(['status'=>$queue->queue_type==='counter'?'Counter Resolved':'Completed','completed_at'=>now()]);
+            }
             QueueStatusLog::create(['clinic_queue_id'=>$queue->id,'changed_by'=>$actorId,'from_status'=>$from,'to_status'=>$status,'reason'=>$reason]);
-            $messages = ['called'=>'It is your turn. Please proceed to the designated clinic area.','serving'=>'Your clinic service has started.','completed'=>'Your clinic queue service has been completed.','missed'=>'Your queue number was missed. Please contact clinic staff.','cancelled'=>'Your clinic queue request was cancelled.','transferred'=>'You were transferred to another clinic queue.'];
-            if (isset($messages[$status]) && optional($queue->account)->user_id) ClinicNotification::create([
-                'user_id'=>$queue->account->user_id,'related_queue_id'=>$queue->id,'title'=>'Queue '.$queue->ticket_number,
-                'message'=>$messages[$status],'type'=>'queue','is_read'=>false,
-            ]);
+            $notifier=app(ClinicNotificationService::class);
+            $events=[
+                'serving'=>['patient_service_started','Service Started','Your clinic service has started. Status: In Service.'],
+                'completed'=>['patient_service_completed','Service Completed','Your clinic service has been completed. You may view the updated record in Health History.'],
+                'missed'=>['patient_marked_missed','Queue Call Missed','Your queue number was marked as missed. Please contact clinic staff if you still need assistance.'],
+                'cancelled'=>['queue_cancelled','Queue Cancelled','Your clinic queue request was cancelled.'],
+                'transferred'=>['patient_queue_transferred','Queue Transferred','You were transferred to another clinic queue.'],
+            ];
+            if ($status === 'called') {
+                $notifier->patientQueueEvent($queue,$isRecall?'patient_recalled':'patient_called',
+                    $isRecall?'Recall Notice':"It's Your Turn",
+                    'Queue Number '.$queue->ticket_number.($isRecall?' is being called again.':' is now being called.').' Please proceed immediately to the clinic.',
+                    $isRecall?'recall-'.$queue->recall_count:'initial');
+                if (! $isRecall) $queue->update(['called_notification_sent_at'=>now()]);
+                if ($queue->queue_type==='consultation') {
+                    $notifier->sendToRoles(['Doctor'],'patient_called','Consultation Patient Ready',
+                        'Queue '.$queue->ticket_number.' has been called and is ready for consultation.',
+                        ['queue_id'=>$queue->id,'consultation_id'=>$queue->consultation_id,'action_url'=>route('dashboard')],
+                        $isRecall?'recall-'.$queue->recall_count:'initial');
+                }
+            } elseif (isset($events[$status])) {
+                $event=$events[$status];
+                if ($status==='completed' && $queue->queue_type==='consultation') {
+                    $event=['consultation_completed','Consultation Completed',
+                        'Your consultation is complete. Check My Prescriptions and Health History for available updates.'];
+                }
+                $notifier->patientQueueEvent($queue,$event[0],$event[1],$event[2]);
+            }
+            $notifier->log($actorId,$isRecall?'Patient recalled':ucfirst(str_replace('_',' ','patient '.$status)),
+                'Queue #'.$queue->id.' changed from '.$from.' to '.$status.'.');
+            $notifier->positionNotifications($this);
             return $queue;
         });
     }
@@ -104,6 +173,9 @@ class ClinicQueueService
                 'queue_date'=>$date,'policy'=>'alternating','created_at'=>now(),'updated_at'=>now(),
             ]);
             DB::table('clinic_queue_dispatch_states')->where('queue_date',$date)->lockForUpdate()->first();
+            if (ClinicQueue::where('queue_date',$date)->where('status','called')->lockForUpdate()->exists()) {
+                throw ValidationException::withMessages(['queue'=>'A patient is already being called. Start, miss, or cancel that call before calling another patient.']);
+            }
             $candidate=$this->nextCandidate($date);
             if (! $candidate) throw ValidationException::withMessages(['queue'=>'There is no automatic next patient.']);
             $candidate=$this->transition($candidate,'called',$actorId,'Called from Nurse Dashboard.');

@@ -24,7 +24,8 @@ class NotificationController extends Controller
                 'message' => $notification->message,
                 'timestamp' => $notification->created_at->diffForHumans(),
                 'is_read' => $notification->is_read,
-                'view_queue_url' => route('student-complaints.index'),
+                'notification_type'=>$notification->notification_type ?: $notification->type,
+                'view_queue_url' => $notification->action_url ?: $this->defaultAction($notification),
                 'read_url' => route('notifications.read', $notification),
             ];
         });
@@ -35,12 +36,25 @@ class NotificationController extends Controller
     public function read(Request $request, ClinicNotification $notification)
     {
         abort_unless(ClinicNotification::forUser($request->user())->whereKey($notification->id)->exists(), 403);
-        $notification->update(['is_read' => true]);
+        $notification->update(['is_read' => true,'read_at'=>$notification->read_at ?: now()]);
 
         if ($request->expectsJson()) {
             return response()->json(['ok' => true]);
         }
 
         return redirect()->back();
+    }
+
+    public function readAll(Request $request)
+    {
+        ClinicNotification::forUser($request->user())->where('is_read',false)
+            ->update(['is_read'=>true,'read_at'=>now()]);
+        return $request->expectsJson()?response()->json(['ok'=>true]):redirect()->back()->with('success','All notifications marked read.');
+    }
+
+    private function defaultAction(ClinicNotification $notification)
+    {
+        return optional(request()->user())->isPatientPortalUser()
+            ? route('student.dashboard') : route('dashboard');
     }
 }

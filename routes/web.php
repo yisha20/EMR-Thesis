@@ -28,6 +28,10 @@ Route::view('/forgot-password', 'auth.forgot_password')->name('auth.forgot_passw
 Route::post('/forgot-password', 'ForgotPasswordController@send')->name('auth.send_code');
 Route::get('/forgot-password/verify/{email}', 'ForgotPasswordController@verify')->name('auth.verify');
 Route::middleware('auth')->group(function () {
+    Route::get('/notifications', 'NotificationController@index')->name('notifications.index');
+    Route::get('/notifications/unread', 'NotificationController@unread')->name('notifications.unread');
+    Route::post('/notifications/read-all', 'NotificationController@readAll')->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', 'NotificationController@read')->name('notifications.read');
     Route::get('/change-password', [App\Http\Controllers\Auth\PasswordChangeController::class, 'showChangePasswordForm'])
         ->name('password.change');
     Route::post('/change-password', [App\Http\Controllers\Auth\PasswordChangeController::class, 'updatePassword'])
@@ -56,6 +60,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/patient/dependents', 'PatientDependentController@index')->name('patient.dependents.index');
             Route::post('/patient/dependents', 'PatientDependentController@store')->name('patient.dependents.store');
             Route::get('/patient/queue-status', 'ClinicQueueController@status')->name('patient.queue.status');
+            Route::post('/patient/queue/{queue}/presence', 'ClinicQueueController@presence')->name('patient.queue.presence');
+            Route::post('/patient/queue/{queue}/acknowledge', 'ClinicQueueController@acknowledge')->name('patient.queue.acknowledge');
         });
     });
     Route::get('/health-assessments/{assessment}/pdf', 'HealthAssessmentController@pdf')->name('health-assessments.pdf');
@@ -64,17 +70,17 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Administrator,Doctor,Nurse,Staff')->group(function () {
     Route::get('/health-assessments/{assessment}', 'HealthAssessmentController@show')->name('patient.assessment.staff');
     Route::post('/student-complaints/{complaint}/queue', 'ClinicQueueController@store')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.store');
-    Route::patch('/clinic-queues/{queue}', 'ClinicQueueController@update')->name('clinic-queues.update');
+    Route::patch('/clinic-queues/{queue}', 'ClinicQueueController@update')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.update');
     Route::post('/clinic-queues/call-next', 'ClinicQueueController@callNext')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.call-next');
     Route::patch('/clinic-queues/policy/today', 'ClinicQueueController@policy')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.policy');
+    Route::get('/clinic-queues/live', 'ClinicQueueController@live')->name('clinic-queues.live');
+    Route::post('/clinic-queues/{queue}/transfer', 'ClinicQueueController@transfer')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.transfer');
+    Route::post('/clinic-queues/{queue}/requeue', 'ClinicQueueController@requeue')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.requeue');
     Route::patch('/patient-dependents/{dependent}/verify', 'PatientDependentController@verify')->middleware('role:Administrator,Nurse')->name('patient-dependents.verify');
     Route::get('dashboard', 'DashboardController@index')->name('dashboard');
     Route::get('/activity-logs', 'ActivityLogController@index')->name('activity.logs');
 
     Route::middleware('role:Administrator,Nurse,Staff')->group(function () {
-        Route::get('/notifications', 'NotificationController@index')->name('notifications.index');
-        Route::get('/notifications/unread', 'NotificationController@unread')->name('notifications.unread');
-        Route::post('/notifications/{notification}/read', 'NotificationController@read')->name('notifications.read');
         Route::post('/consultations/{consultation}/call-student', 'ConsultationQueueController@callStudent')->name('consultations.call-student');
     });
 
