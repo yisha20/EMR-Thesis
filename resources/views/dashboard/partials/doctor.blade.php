@@ -25,6 +25,7 @@
 @endphp
 
 <div class="doctor-dashboard-layout">
+    @include('dashboard.partials.queue-workspace')
     <section class="doctor-dashboard-grid">
         <article class="dashboard-panel doctor-calendar-card" data-doctor-calendar-events='@json($calendarEvents)'>
             <div class="doctor-panel-heading">
@@ -49,7 +50,7 @@
             </div>
         </article>
 
-        <aside class="dashboard-panel doctor-analytics-card">
+        <aside class="dashboard-panel doctor-analytics-card" hidden aria-hidden="true">
             <div class="dashboard-panel-header">
                 <div>
                     <p class="eyebrow">At a glance</p>
