@@ -133,6 +133,40 @@ class PatientPortalExpansionTest extends TestCase
         $this->assertStringContainsString('Physical Examination',$html);
     }
 
+    public function test_alternating_dispatch_is_priority_protected_and_persists_last_type()
+    {
+        [$owner,$student,$account]=$this->patientUser('student','dispatch-owner');
+        $service=app(ClinicQueueService::class);
+        $make=function($type,$priority,$label)use($student,$account,$owner,$service){
+            $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,
+                'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,
+                'chief_complaint'=>$label,'symptoms_description'=>'','urgency_level'=>'Unassigned',
+                'triage_priority'=>$priority,'status'=>'Reviewed','submitted_at'=>now()]);
+            return $service->enqueue($complaint,$type,$priority,$owner->id);
+        };
+        $counter=$make('counter','low','Counter low');
+        $doctor=$make('consultation','high','Doctor high');
+        $this->assertSame($doctor->id,$service->nextCandidate()->id);
+        $service->callNext($owner->id);
+        $doctorTwo=$make('consultation','low','Doctor low');
+        $this->assertSame($counter->id,$service->nextCandidate()->id);
+        $service->callNext($owner->id);
+        $this->assertSame($doctorTwo->id,$service->nextCandidate()->id);
+    }
+
+    public function test_routed_complaint_moves_operations_to_dashboard()
+    {
+        [$owner,$student,$account]=$this->patientUser('student','review-cleanup');
+        $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,
+            'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,'chief_complaint'=>'Review cleanup',
+            'symptoms_description'=>'','urgency_level'=>'Unassigned','triage_priority'=>'low','status'=>'Reviewed','submitted_at'=>now()]);
+        app(ClinicQueueService::class)->enqueue($complaint,'counter','low',$owner->id);
+        $nurse=$this->staffUser('Nurse','review-cleanup-nurse');
+        $this->actingAs($nurse)->get(route('student-complaints.show',$complaint))->assertOk()
+            ->assertSee('Open Queue Dashboard')->assertDontSee('Call / Recall')->assertDontSee('Mark Missed');
+        $this->get(route('dashboard'))->assertOk()->assertSee('Shared Clinic Queue')->assertSee('Call Next');
+    }
+
     private function patientUser($type,$key=null)
     {
         $key=$key?:uniqid($type,true);$role=Role::firstOrCreate(['name'=>'Student']);
