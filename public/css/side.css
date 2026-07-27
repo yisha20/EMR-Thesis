@@ -12534,12 +12534,18 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     min-height: 100dvh;
     max-height: 100vh;
     max-height: 100dvh;
-    position: sticky;
+    bottom: 0;
+    left: 0;
+    position: fixed;
+    right: auto;
     top: 0;
+    width: 260px;
+    z-index: 1000;
   }
 
   body.emr-shell .desktop-sidebar.collapsed {
     flex-basis: 78px;
+    width: 78px;
   }
 
   body.emr-shell .desktop-sidebar .sidepanel-menu {
@@ -12552,10 +12558,15 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   body.emr-shell .emr-workspace {
     flex: 1 1 auto;
     height: auto;
+    margin-left: 260px;
     min-height: 100vh;
     min-width: 0;
     overflow: visible;
     width: auto;
+  }
+
+  body.emr-shell.sidebar-collapsed .emr-workspace {
+    margin-left: 78px;
   }
 }
 
@@ -12826,6 +12837,10 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     min-height: 100vh;
     overflow: visible;
     width: 100%;
+  }
+
+  body.emr-shell .emr-workspace {
+    margin-left: 0;
   }
 
   .assessment-summary-card .assessment-summary-list,
