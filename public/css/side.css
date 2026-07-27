@@ -12363,13 +12363,13 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   }
 
   body.emr-shell .desktop-sidebar {
-    align-self: flex-start;
+    align-self: stretch;
     flex: 0 0 260px;
-    height: 100vh;
-    height: 100dvh;
-    min-height: 0;
-    position: sticky;
-    top: 0;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    position: relative;
+    top: auto;
   }
 
   body.emr-shell .desktop-sidebar.collapsed {
@@ -12377,11 +12377,10 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   }
 
   body.emr-shell .desktop-sidebar .sidepanel-menu {
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 0 0 auto;
+    min-height: auto;
     overflow-x: hidden;
-    overflow-y: auto;
-    scrollbar-width: thin;
+    overflow-y: visible;
   }
 
   body.emr-shell .emr-workspace {
