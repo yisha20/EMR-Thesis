@@ -5993,46 +5993,36 @@ body.dark-mode .notification-history-item.is-unread {
 
   .user-table-card .user-data-table th:nth-child(1),
   .user-table-card .user-data-table td:nth-child(1) {
-    width: 9%;
+    width: 11%;
   }
 
   .user-table-card .user-data-table th:nth-child(2),
   .user-table-card .user-data-table td:nth-child(2) {
-    width: 9%;
+    width: 11%;
   }
 
   .user-table-card .user-data-table th:nth-child(3),
   .user-table-card .user-data-table td:nth-child(3) {
-    width: 10%;
+    width: 13%;
   }
 
   .user-table-card .user-data-table th:nth-child(4),
   .user-table-card .user-data-table td:nth-child(4) {
-    width: 14%;
+    width: 17%;
   }
 
   .user-table-card .user-data-table th:nth-child(5),
   .user-table-card .user-data-table td:nth-child(5) {
-    width: 18%;
+    width: 25%;
   }
 
   .user-table-card .user-data-table th:nth-child(6),
   .user-table-card .user-data-table td:nth-child(6) {
-    width: 7%;
+    width: 9%;
   }
 
   .user-table-card .user-data-table th:nth-child(7),
   .user-table-card .user-data-table td:nth-child(7) {
-    width: 13%;
-  }
-
-  .user-table-card .user-data-table th:nth-child(8),
-  .user-table-card .user-data-table td:nth-child(8) {
-    width: 10%;
-  }
-
-  .user-table-card .user-data-table th:nth-child(9),
-  .user-table-card .user-data-table td:nth-child(9) {
     width: 110px;
   }
 
@@ -6067,24 +6057,6 @@ body.dark-mode .notification-history-item.is-unread {
   }
 }
 
-@media (min-width: 768px) and (max-width: 1100px) {
-  .user-table-card .user-data-table th:nth-child(7),
-  .user-table-card .user-data-table td:nth-child(7),
-  .user-table-card .user-data-table th:nth-child(8),
-  .user-table-card .user-data-table td:nth-child(8) {
-    display: none;
-  }
-
-  .user-table-card .user-data-table th:nth-child(4),
-  .user-table-card .user-data-table td:nth-child(4) {
-    width: 17%;
-  }
-
-  .user-table-card .user-data-table th:nth-child(5),
-  .user-table-card .user-data-table td:nth-child(5) {
-    width: 24%;
-  }
-}
 
 .nurse-recent-activity .timeline-item {
   padding: 10px 0;

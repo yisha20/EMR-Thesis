@@ -23,7 +23,7 @@
         <div class="table-responsive-shell emr-data-table-wrap">
             <table class="table table-hover user-data-table emr-data-table data-table is-wide">
                 <thead>
-                    <tr><th>System Role</th><th>Account Type</th><th>Identifier</th><th>Full Name</th><th>Email</th><th>Status</th><th>Last Login</th><th>Created At</th><th class="text-right">Actions</th></tr>
+                    <tr><th>System Role</th><th>Account Type</th><th>Identifier</th><th>Full Name</th><th>Email</th><th>Status</th><th class="text-right">Actions</th></tr>
                 </thead>
                 <tbody id="userTable">
                     @forelse ($users as $user)
@@ -34,8 +34,6 @@
                             <td><strong>{{ $user->fullName() }}</strong></td>
                             <td>{{ $user->email }}</td>
                             <td><span class="emr-status-badge active">Active</span></td>
-                            <td>{{ $user->last_login_at ? $user->last_login_at->format('M j, Y g:i A') : 'Never' }}</td>
-                            <td>{{ $user->created_at->format('M j, Y') }}</td>
                             <td class="action-cell">
                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" class="table-action-group">
                                     @csrf @method('DELETE')
@@ -46,7 +44,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9">@include('includes.empty-state', ['title' => 'No users found.', 'icon' => 'fa-users'])</td></tr>
+                        <tr><td colspan="7">@include('includes.empty-state', ['title' => 'No users found.', 'icon' => 'fa-users'])</td></tr>
                     @endforelse
                 </tbody>
             </table>
