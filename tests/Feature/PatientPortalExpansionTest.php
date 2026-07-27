@@ -14,6 +14,9 @@ use App\StudentComplaint;
 use App\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use App\ClinicNotification;
+use Carbon\Carbon;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class PatientPortalExpansionTest extends TestCase
@@ -148,6 +151,7 @@ class PatientPortalExpansionTest extends TestCase
         $doctor=$make('consultation','high','Doctor high');
         $this->assertSame($doctor->id,$service->nextCandidate()->id);
         $service->callNext($owner->id);
+        $service->transition($doctor->fresh(),'serving',$owner->id);
         $doctorTwo=$make('consultation','low','Doctor low');
         $this->assertSame($counter->id,$service->nextCandidate()->id);
         $service->callNext($owner->id);
@@ -165,6 +169,107 @@ class PatientPortalExpansionTest extends TestCase
         $this->actingAs($nurse)->get(route('student-complaints.show',$complaint))->assertOk()
             ->assertSee('Open Queue Dashboard')->assertDontSee('Call / Recall')->assertDontSee('Mark Missed');
         $this->get(route('dashboard'))->assertOk()->assertSee('Shared Clinic Queue')->assertSee('Call Next');
+    }
+
+    public function test_new_complaint_notifies_each_nurse_once_and_refresh_does_not_duplicate()
+    {
+        $nurse=$this->staffUser('Nurse','notify-new-complaint');
+        [$owner,, $account]=$this->patientUser('student','notify-complaint-owner');
+        $account->update(['health_assessment_status'=>'patient_submitted']);
+        $option=CommonComplaintOption::where('name','Headache')->firstOrFail();
+        $this->actingAs($owner)->post(route('student.complaints.store'),['complaint_options'=>[$option->id]])->assertRedirect();
+        $complaint=StudentComplaint::latest('id')->firstOrFail();
+        $this->assertSame(1,ClinicNotification::where('user_id',$nurse->id)
+            ->where('notification_type','new_patient_complaint')->where('related_complaint_id',$complaint->id)->count());
+        $this->get(route('student.complaints.index'))->assertOk();
+        $this->assertSame(1,ClinicNotification::where('user_id',$nurse->id)
+            ->where('notification_type','new_patient_complaint')->where('related_complaint_id',$complaint->id)->count());
+    }
+
+    public function test_consultation_routing_notifies_doctor_once()
+    {
+        [$owner,$student,$account]=$this->patientUser('student','notify-doctor-owner');
+        $patient=Patient::create(['id_number'=>$student->student_id_number,'first_name'=>'Doctor','last_name'=>'Notice',
+            'type'=>'Student','status'=>'Active','added_by'=>$owner->id]);
+        $account->update(['patient_id'=>$patient->id]);
+        $nurse=$this->staffUser('Nurse','notify-doctor-nurse');
+        $doctor=$this->staffUser('Doctor','notify-forwarded-doctor');
+        $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,'patient_id'=>$patient->id,
+            'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,'chief_complaint'=>'Consultation',
+            'symptoms_description'=>'','urgency_level'=>'Unassigned','triage_priority'=>'high','status'=>'Reviewed','submitted_at'=>now()]);
+        $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),['queue_type'=>'consultation','priority'=>'high'])->assertRedirect();
+        $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),['queue_type'=>'consultation','priority'=>'high'])->assertRedirect();
+        $this->assertSame(1,ClinicNotification::where('user_id',$doctor->id)
+            ->where('notification_type','patient_forwarded_to_consultation')
+            ->where('related_complaint_id',$complaint->id)->count());
+    }
+
+    public function test_presence_keeps_position_and_notification_access_is_private()
+    {
+        [$owner,$student,$account]=$this->patientUser('student','presence-owner');
+        $account->update(['health_assessment_status'=>'patient_submitted']);
+        $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,
+            'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,'chief_complaint'=>'Presence',
+            'symptoms_description'=>'','urgency_level'=>'Unassigned','triage_priority'=>'low','status'=>'Reviewed','submitted_at'=>now()]);
+        $queue=app(ClinicQueueService::class)->enqueue($complaint,'counter','low',$owner->id);
+        $position=$queue->position;
+        $this->actingAs($owner)->postJson(route('patient.queue.presence',$queue),['presence_status'=>'temporarily_away'])
+            ->assertOk()->assertJson(['presence_status'=>'temporarily_away']);
+        $this->assertSame($position,$queue->fresh()->position);
+        [$other,, $otherAccount]=$this->patientUser('student','presence-other');
+        $otherAccount->update(['health_assessment_status'=>'patient_submitted']);
+        $this->actingAs($other)->postJson(route('patient.queue.presence',$queue),['presence_status'=>'returning'])->assertStatus(403);
+        $notice=ClinicNotification::where('user_id',$owner->id)->firstOrFail();
+        $this->post(route('notifications.read',$notice))->assertStatus(403);
+    }
+
+    public function test_position_call_recall_and_acknowledgement_notifications_are_deduplicated()
+    {
+        Carbon::setTestNow(now()->startOfMinute());
+        [$owner,$student,$account]=$this->patientUser('student','queue-event-owner');
+        $account->update(['health_assessment_status'=>'patient_submitted']);
+        $make=function($label)use($student,$account,$owner){
+            $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,
+                'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,'chief_complaint'=>$label,
+                'symptoms_description'=>'','urgency_level'=>'Unassigned','triage_priority'=>'low','status'=>'Reviewed','submitted_at'=>now()]);
+            return app(ClinicQueueService::class)->enqueue($complaint,'counter','low',$owner->id);
+        };
+        $first=$make('First');$second=$make('Second');
+        $this->assertSame(1,ClinicNotification::where('related_queue_id',$first->id)->where('notification_type','patient_next_in_queue')->count());
+        $this->assertSame(1,ClinicNotification::where('related_queue_id',$second->id)->where('notification_type','patient_nearly_next')->count());
+        $service=app(ClinicQueueService::class);$service->transition($first,'called',$owner->id);
+        $this->assertSame(1,ClinicNotification::where('related_queue_id',$first->id)->where('notification_type','patient_called')->count());
+        $this->actingAs($owner)->postJson(route('patient.queue.acknowledge',$first))->assertOk();
+        $this->assertNotNull($first->fresh()->patient_acknowledged_at);
+        Carbon::setTestNow(now()->addMinutes(config('clinic_queue.call_grace_minutes')));
+        $service->transition($first->fresh(),'called',$owner->id);
+        $this->assertSame(1,$first->fresh()->recall_count);
+        $this->assertSame(1,ClinicNotification::where('related_queue_id',$first->id)->where('notification_type','patient_recalled')->count());
+        Carbon::setTestNow(now()->addMinutes(config('clinic_queue.call_grace_minutes')));
+        $service->transition($first->fresh(),'called',$owner->id);
+        $this->assertSame(config('clinic_queue.max_recalls'),$first->fresh()->recall_count);
+        try {$service->transition($first->fresh(),'called',$owner->id);$this->fail('Recall limit was not enforced.');}
+        catch (ValidationException $exception) {$this->assertArrayHasKey('status',$exception->errors());}
+        Carbon::setTestNow(now()->addMinutes(config('clinic_queue.call_grace_minutes')));
+        $service->transition($first->fresh(),'missed',$owner->id,'Did not respond');
+        $this->assertSame('Did not respond',$first->fresh()->missed_reason);
+        $this->assertDatabaseHas('student_complaints',['id'=>$first->student_complaint_id]);
+        Carbon::setTestNow();
+    }
+
+    public function test_two_call_next_attempts_do_not_open_two_active_calls()
+    {
+        [$owner,$student,$account]=$this->patientUser('student','concurrent-call-owner');
+        foreach (['One','Two'] as $label) {
+            $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,
+                'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,'chief_complaint'=>$label,
+                'symptoms_description'=>'','urgency_level'=>'Unassigned','triage_priority'=>'low','status'=>'Reviewed','submitted_at'=>now()]);
+            app(ClinicQueueService::class)->enqueue($complaint,'counter','low',$owner->id);
+        }
+        $service=app(ClinicQueueService::class);$service->callNext($owner->id);
+        try {$service->callNext($owner->id);$this->fail('A second active call was allowed.');}
+        catch (ValidationException $exception) {$this->assertStringContainsString('already being called',$exception->errors()['queue'][0]);}
+        $this->assertSame(1,ClinicQueue::where('queue_date',now()->toDateString())->where('status','called')->count());
     }
 
     private function patientUser($type,$key=null)
