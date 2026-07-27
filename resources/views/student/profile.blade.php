@@ -8,7 +8,7 @@
     };
 
     $details = [
-        ['label' => 'IIT ID Number', 'value' => $student->student_id_number],
+        ['label' => ucfirst($account->patient_type) . ' ID Number', 'value' => $account->identifier ?: $student->student_id_number],
         ['label' => 'College / Department', 'value' => $student->college_department],
         ['label' => 'Email Address', 'value' => $student->email ?: $student->user->email],
         ['label' => 'Contact Number', 'value' => $student->contact_number],
@@ -23,9 +23,9 @@
 
 <div class="profile-page-shell">
     <div class="profile-page-heading">
-        <p class="eyebrow">Student profile</p>
+        <p class="eyebrow">Patient profile</p>
         <h1>Account Overview</h1>
-        <span>Review your student identity, academic details, and contact information.</span>
+        <span>Review your identity, department, and contact information.</span>
     </div>
 
     <div class="profile-layout-grid profile-layout">
@@ -35,13 +35,13 @@
                 <img src="{{ $student->user->avatar ?? asset('img/no_avatar.jpg') }}" alt="{{ $student->full_name }}" class="profile-avatar" onerror="this.onerror=null;this.src='{{ asset('img/no_avatar.jpg') }}';">
             </div>
             <h2>{{ $student->full_name }}</h2>
-            <span class="profile-role-badge is-student">Student</span>
+            <span class="profile-role-badge is-student">{{ucfirst($account->patient_type)}}</span>
         </aside>
 
         <section class="profile-details-card">
             <div class="profile-details-header">
                 <div>
-                    <p class="eyebrow">Student details</p>
+                    <p class="eyebrow">Patient details</p>
                     <h2>Profile Information</h2>
                 </div>
             </div>

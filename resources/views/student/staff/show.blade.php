@@ -39,6 +39,7 @@
     $printPrescriptionId = session('print_prescription_id');
     $shouldOpenIssuedPrescription = $issuedPrescription && (int) $openPrescriptionId === (int) $issuedPrescription->id;
     $shouldPrintIssuedPrescription = $issuedPrescription && (int) $printPrescriptionId === (int) $issuedPrescription->id;
+    $healthSummary = optional($complaint->patientAccount)->latestAssessment;
 @endphp
 
 <div class="dashboard-wrap complaint-workflow-page {{ $isDoctorReview ? 'doctor-consultation-review' : '' }}">
@@ -54,11 +55,19 @@
             </div>
             <div class="complaint-review-meta">
                 <span>{{ $complaint->complaint_category ?: 'Uncategorized' }}</span>
-                <span class="urgency-badge urgency-{{ strtolower($complaint->urgency_level) }}">{{ $isDoctorReview && $complaint->consultation ? $complaint->consultation->priority : $complaint->urgency_level }}</span>
+                <span class="urgency-badge urgency-{{ strtolower($complaint->triage_priority) }}">{{ $isDoctorReview && $complaint->consultation ? $complaint->consultation->priority : ucfirst($complaint->triage_priority) }}</span>
                 <span class="complaint-status status-{{ \Illuminate\Support\Str::slug($complaint->status) }}">{{ $complaint->status }}</span>
                 <span>Submitted: {{ $complaint->submitted_at->format('M j, Y') }} &bull; {{ $complaint->submitted_at->format('g:i A') }}</span>
             </div>
         </div>
+
+        @foreach($complaint->queues()->whereIn('status',['waiting','called','serving'])->get() as $queue)
+        <div class="card card-body mb-3"><div class="d-flex flex-wrap justify-content-between align-items-center"><div><h3>{{ ucfirst($queue->queue_type) }} Queue · {{ $queue->ticket_number }}</h3><span class="badge badge-info">{{ ucfirst($queue->status) }}</span></div><div class="d-flex flex-wrap">
+            @foreach(['called'=>'Call / Recall','serving'=>'Start Service','completed'=>'Complete','missed'=>'Mark Missed'] as $state=>$label)
+            <form method="POST" action="{{route('clinic-queues.update',$queue)}}" class="ml-2">@csrf @method('PATCH')<input type="hidden" name="status" value="{{$state}}"><button class="btn btn-sm {{$state==='completed'?'btn-success':'btn-outline-primary'}}" data-confirm="{{$label}} queue number {{$queue->ticket_number}}?">{{$label}}</button></form>
+            @endforeach
+        </div></div></div>
+        @endforeach
         <a href="{{ route('student-complaints.index') }}" class="btn btn-light"><i class="fa fa-arrow-left"></i> Back to Queue</a>
     </section>
 
@@ -175,8 +184,54 @@
     @else
         <div class="complaint-review-grid">
             @include('student.staff.partials.concern-card', ['complaint' => $complaint])
-            @include('student.staff.partials.history-card', ['complaint' => $complaint, 'matchingPatients' => $matchingPatients, 'patient' => $patient, 'previousRecords' => $previousRecords])
+            <section class="dashboard-panel assessment-summary-card">
+                <div class="dashboard-panel-header">
+                    <div><p class="eyebrow">Clinical context</p><h2>Health Assessment Summary</h2></div>
+                    @if($healthSummary)<div class="assessment-summary-actions"><a class="btn btn-sm btn-light" href="{{route('patient.assessment.staff',$healthSummary)}}">Open Full Health Assessment</a><a class="btn btn-sm btn-outline-primary" href="{{route('health-assessments.pdf',$healthSummary)}}">Download PDF</a></div>@endif
+                </div>
+                @if($healthSummary)
+                <dl class="assessment-summary-list">
+                    <dt>Known allergies</dt><dd>{{$healthSummary->medicalHistories->filter(function($item){return strpos($item->condition,'Allergies') === 0;})->pluck('notes')->filter()->implode(', ') ?: ($healthSummary->medicalHistories->pluck('condition')->contains('Allergies') ? 'Reported' : 'None reported')}}</dd>
+                    <dt>Current medications</dt><dd>{{$healthSummary->medications->pluck('medication')->implode(', ') ?: 'None reported'}}</dd>
+                    <dt>Past medical history</dt><dd>{{$healthSummary->medicalHistories->pluck('condition')->implode(', ') ?: 'None reported'}}</dd>
+                    <dt>Family history</dt><dd>{{$healthSummary->familyHistories->pluck('condition')->implode(', ') ?: 'None reported'}}</dd>
+                    <dt>Social history</dt><dd>Smoking: {{data_get($healthSummary,'social_history.smoking_status','Not reported')}}; Alcohol: {{data_get($healthSummary,'social_history.drinks_alcohol','Not reported')}}</dd>
+                    <dt>Registered dependents</dt><dd>{{optional($complaint->patientAccount)->dependents ? $complaint->patientAccount->dependents->count() : 0}}</dd>
+                    <dt>Assessment status</dt><dd>{{str_replace('_',' ',ucfirst($healthSummary->status))}}</dd>
+                    <dt>Assessment date</dt><dd>{{optional($healthSummary->submitted_at)->format('d M Y') ?: 'Draft'}}</dd>
+                </dl>
+                @else
+                    <p class="text-muted mb-0">No digital health assessment is linked to this patient.</p>
+                @endif
+            </section>
         </div>
+
+        @if($canTriage && $complaint->status === 'Reviewed')
+        <section class="dashboard-panel queue-routing-card">
+            <div class="dashboard-panel-header"><div><p class="eyebrow">Digital queue number</p><h2>Queue Routing</h2></div></div>
+            <form method="POST" action="{{route('clinic-queues.store',$complaint)}}" class="queue-routing-form" data-queue-routing>
+                @csrf
+                <div class="form-group"><label for="queue_type">Route to</label><select id="queue_type" name="queue_type" class="form-control"><option value="counter">Counter Service</option><option value="consultation">Doctor Consultation</option></select></div>
+                <div class="form-group"><label for="queue_priority">Staff Triage Priority</label><select id="queue_priority" name="priority" class="form-control">@foreach(['low','moderate','high','urgent'] as $priority)<option value="{{$priority}}">{{ucfirst($priority)}}</option>@endforeach</select></div>
+                <button class="btn btn-primary" data-queue-submit>Add to Counter Queue</button>
+            </form>
+        </section>
+        @endif
+
+        @foreach($complaint->queues()->whereIn('status',['waiting','called','serving'])->get() as $queue)
+        <section class="dashboard-panel active-queue-card">
+            <div><p class="eyebrow">{{ucfirst($queue->queue_type)}} queue</p><h2>Queue Number {{$queue->ticket_number}}</h2><span class="badge badge-info">{{ucfirst($queue->status)}}</span></div>
+            <div class="queue-control-actions">
+                @foreach(['called'=>'Call / Recall','serving'=>'Start Service','completed'=>'Complete','missed'=>'Mark Missed'] as $state=>$label)
+                <form method="POST" action="{{route('clinic-queues.update',$queue)}}">@csrf @method('PATCH')<input type="hidden" name="status" value="{{$state}}"><button class="btn btn-sm {{$state==='completed'?'btn-success':'btn-light'}}" data-confirm="{{$label}} queue number {{$queue->ticket_number}}?">{{$label}}</button></form>
+                @endforeach
+            </div>
+        </section>
+        @endforeach
+
+        <section class="complaint-emr-section">
+            @include('student.staff.partials.history-card', ['complaint' => $complaint, 'matchingPatients' => $matchingPatients, 'patient' => $patient, 'previousRecords' => $previousRecords])
+        </section>
 
         @if ($canTriage && $complaint->status === 'Pending')
             <section class="dashboard-panel workflow-action-panel">
@@ -223,7 +278,7 @@
                     <form method="POST" action="{{ route('student-complaints.forward', $complaint) }}" class="workflow-form workflow-form-grid">
                         @csrf
                         <div class="form-group"><label for="service_needed">Service needed</label><select name="service_needed" id="service_needed" class="form-control" required>@foreach (['Checkup', 'Medical Consultation', 'Dental Consultation', 'Physical Examination', 'Laboratory Request', 'Other service'] as $service)<option value="{{ $service }}" {{ old('service_needed') === $service ? 'selected' : '' }}>{{ $service === 'Other service' ? 'Other' : $service }}</option>@endforeach</select></div>
-                        <div class="form-group"><label for="priority">Priority</label><select name="priority" id="priority" class="form-control" required>@foreach (['Low', 'Moderate', 'High'] as $priority)<option value="{{ $priority }}" {{ old('priority', $complaint->urgency_level) === $priority ? 'selected' : '' }}>{{ $priority }}</option>@endforeach</select></div>
+                        <div class="form-group"><label for="priority">Staff Triage Priority</label><select name="priority" id="priority" class="form-control" required>@foreach (['Low', 'Moderate', 'High', 'Urgent'] as $priority)<option value="{{ $priority }}" {{ old('priority', ucfirst($complaint->triage_priority === 'unassigned' ? 'low' : $complaint->triage_priority)) === $priority ? 'selected' : '' }}>{{ $priority }}</option>@endforeach</select></div>
                         <div class="form-group form-group-wide"><label for="nurse_notes">Nurse notes</label><textarea name="nurse_notes" id="nurse_notes" rows="4" class="form-control">{{ old('nurse_notes') }}</textarea></div>
                         <button class="btn btn-primary"><i class="fa fa-share"></i> Forward to Doctor</button>
                     </form>
@@ -286,6 +341,17 @@
 @push('js')
 <script>
 (function () {
+    var queueRoute = document.getElementById('queue_type');
+    var queueSubmit = document.querySelector('[data-queue-submit]');
+    function syncQueueLabel() {
+        if (!queueRoute || !queueSubmit) return;
+        queueSubmit.textContent = queueRoute.value === 'counter' ? 'Add to Counter Queue' : 'Forward to Consultation Queue';
+    }
+    if (queueRoute) {
+        queueRoute.addEventListener('change', syncQueueLabel);
+        syncQueueLabel();
+    }
+
     var chooser = document.querySelector('[data-action-chooser]');
     var shell = document.querySelector('[data-selected-action-shell]');
     if (chooser && shell) {

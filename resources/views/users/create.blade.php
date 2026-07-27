@@ -83,7 +83,7 @@
                                 <select id="role_id" name="role_id" class="form-control">
                                     <option class="hidden" selected disabled>Role</option>
                                     @foreach(\App\Role::get() as $role)
-                                        <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                        <option value="{{ $role->id }}" data-role-name="{{ strtolower($role->name) }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
                                             {{ $role->name }}
                                         </option>
                                     @endforeach
@@ -173,7 +173,7 @@
                                 <input id="phonenum" type="number" minlength="10" maxlength="10" name="phone_number" class="form-control" placeholder="" value="{{ old('phone_number') }}" />
                             </div>
                             
-                            <div class="form-group">
+                            <div class="form-group" id="license-number-group">
                                 <label for="license_number">License Number:</label>
                                 <input id="license_number"
                                 name="license_number" 
@@ -198,4 +198,24 @@
             </div>
         </form>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var roleSelect = document.getElementById('role_id');
+            var licenseGroup = document.getElementById('license-number-group');
+            var licenseInput = document.getElementById('license_number');
+
+            function updateLicenseField() {
+                var selected = roleSelect.options[roleSelect.selectedIndex];
+                var roleName = selected ? (selected.getAttribute('data-role-name') || '') : '';
+                var requiresLicense = roleName === 'doctor' || roleName === 'nurse';
+
+                licenseGroup.style.display = requiresLicense ? '' : 'none';
+                licenseInput.disabled = !requiresLicense;
+                licenseInput.required = requiresLicense;
+            }
+
+            roleSelect.addEventListener('change', updateLicenseField);
+            updateLicenseField();
+        });
+    </script>
 @stop

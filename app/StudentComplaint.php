@@ -49,4 +49,12 @@ class StudentComplaint extends Model
     {
         return $this->hasOne(Consultation::class);
     }
+
+    public function patientAccount() { return $this->belongsTo(PatientAccount::class); }
+    public function dependent() { return $this->belongsTo(PatientDependent::class); }
+    public function complaintOptions()
+    {
+        return $this->belongsToMany(CommonComplaintOption::class, 'complaint_option_selections');
+    }
+    public function queues() { return $this->hasMany(ClinicQueue::class); }
 }

@@ -5,9 +5,9 @@
     <div class="login-card-modern student-register-card">
         <div class="login-card-body">
             <div class="login-card-header">
-                <p class="eyebrow">Student digital intake</p>
+                <p class="eyebrow">Clinic patient portal</p>
                 <h1>Create your clinic account</h1>
-                <span>Use your MSU-IIT student information.</span>
+                <span>Register as a student or faculty/employee.</span>
             </div>
 
             <form method="POST" action="{{ route('student.register.store') }}" class="student-register-form">
@@ -16,11 +16,24 @@
                     <div class="alert alert-danger">{{ $message }}</div>
                 @enderror
                 <div class="student-register-grid form-fields-grid">
-                    <div class="student-register-section-title">Student Information</div>
+                    <div class="student-register-section-title">Account Information</div>
                     <div class="form-group">
-                        <label for="student_id_number">IIT ID Number</label>
-                        <input id="student_id_number" name="student_id_number" value="{{ old('student_id_number') }}" class="form-control @error('student_id_number') is-invalid @enderror" required>
+                        <label for="account_type">Account Type</label>
+                        <select id="account_type" name="account_type" class="form-control @error('account_type') is-invalid @enderror" required>
+                            <option value="student" {{ old('account_type', 'student') === 'student' ? 'selected' : '' }}>Student</option>
+                            <option value="faculty" {{ old('account_type') === 'faculty' ? 'selected' : '' }}>Faculty / Employee</option>
+                        </select>
+                        @error('account_type')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="student_id_number">Student ID Number</label>
+                        <input id="student_id_number" name="student_id_number" value="{{ old('student_id_number') }}" class="form-control @error('student_id_number') is-invalid @enderror">
                         @error('student_id_number')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="faculty_id_number">Faculty / Employee ID Number</label>
+                        <input id="faculty_id_number" name="faculty_id_number" value="{{ old('faculty_id_number') }}" class="form-control @error('faculty_id_number') is-invalid @enderror">
+                        @error('faculty_id_number')<span class="invalid-feedback">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
                         <label for="college_department">College / Department</label>
@@ -102,7 +115,7 @@
                         <input id="password_confirmation" type="password" name="password_confirmation" class="form-control" required>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Create Student Account</button>
+                <button type="submit" class="btn btn-primary btn-block">Create Patient Account</button>
                 <a href="{{ route('login') }}" class="student-auth-link">Already registered? Sign in</a>
             </form>
         </div>

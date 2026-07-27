@@ -32,7 +32,7 @@
         <main class="student-main-stack">
             <section class="student-hero-card">
                 <div>
-                    <p class="eyebrow">Student clinic portal</p>
+                    <p class="eyebrow">Clinic patient portal <span class="badge badge-light">{{ ucfirst($account->patient_type) }}</span></p>
                     <h1>Welcome, {{ $student->first_name }}</h1>
                     <p>Manage your clinic concerns, prescriptions, and health records.</p>
                     <div class="student-hero-meta">
@@ -41,6 +41,12 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#studentConcernModal"><i class="fa fa-plus"></i> Submit New Concern</button>
+            </section>
+
+            <section class="student-update-cards" aria-label="Patient status">
+                <article class="student-update-card"><div class="student-update-copy"><strong>Health Assessment</strong><small>{{ str_replace('_',' ',ucfirst($account->health_assessment_status)) }}</small>@if($assessment)<a href="{{ route('health-assessments.pdf',$assessment) }}">Download PDF</a>@endif</div><span class="student-update-icon"><i class="fa fa-file-text-o"></i></span></article>
+                <article class="student-update-card" id="patientQueueCard" data-queue-url="{{ route('patient.queue.status') }}"><div class="student-update-copy"><strong>Queue Status</strong>@if($activeQueue)<small>Your Queue Number: <b>{{ $activeQueue->ticket_number }}</b></small><b>{{ ucfirst($activeQueue->status) }}</b>@else<small>No active queue number</small>@endif</div><span class="student-update-icon"><i class="fa fa-users"></i></span></article>
+                @if(in_array($account->patient_type,['student','faculty']))<article class="student-update-card"><div class="student-update-copy"><strong>Registered Dependents</strong><small>{{ $dependents->count() }} registered</small><a href="{{ route('patient.dependents.index') }}">Manage dependents</a></div><span class="student-update-icon"><i class="fa fa-user-plus"></i></span></article>@endif
             </section>
 
             <section class="student-update-cards" aria-label="Clinic updates">
@@ -77,7 +83,7 @@
                 @if ($currentComplaint)
                     <div class="student-concern-modern">
                         <div class="student-concern-modern-header">
-                            <h2><i class="fa fa-heartbeat"></i> Current Clinic Concern</h2>
+                            <h2><i class="fa fa-heartbeat"></i> Latest Clinic Concern</h2>
                             <span class="student-status-pill {{ $statusTone }}">{{ $currentComplaint->status }}</span>
                         </div>
 
@@ -86,7 +92,7 @@
                             <p>
                                 {{ $currentComplaint->complaint_category ?: 'General Consultation' }}
                                 <span>&bull;</span>
-                                {{ $currentComplaint->urgency_level }}
+                                Triage: {{ ucfirst($currentComplaint->triage_priority) }}
                                 <span>&bull;</span>
                                 {{ $currentComplaint->submitted_at->format('M j, Y') }}
                                 <span>&bull;</span>
@@ -96,7 +102,7 @@
 
                         <div class="student-symptom-quote">
                             <span>Symptoms</span>
-                            <p>{{ $currentComplaint->symptoms_description }}</p>
+                            <p>{{ $currentComplaint->symptoms_description ?: 'No additional details provided.' }}</p>
                         </div>
 
                         <div class="student-concern-info-grid">
@@ -173,9 +179,17 @@
                     @endforelse
                 </div>
             </section>
+
+            <section class="dashboard-panel">
+                <div class="dashboard-panel-header"><div><p class="eyebrow">Before your visit</p><h2>Important Information</h2></div></div>
+                <p class="mb-0">Bring your university ID when visiting the clinic. For severe or life-threatening symptoms, contact emergency services immediately.</p>
+            </section>
         </aside>
     </div>
 
     @include('student.complaints.partials.intake-modal')
 </div>
 @endsection
+@push('js')
+<script>(function(){var card=document.getElementById('patientQueueCard');if(!card)return,last=null;function poll(){fetch(card.dataset.queueUrl,{cache:'no-store',credentials:'same-origin',headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}}).then(function(r){if(!r.ok)throw new Error('Queue refresh failed');return r.json()}).then(function(d){if(!d.queue){card.querySelector('.student-update-copy').innerHTML='<strong>Queue Status</strong><small>No active queue number</small>';last=null;return;}var q=d.queue;card.querySelector('.student-update-copy').innerHTML='<strong>'+q.type.charAt(0).toUpperCase()+q.type.slice(1)+' Queue</strong><small>Your Queue Number: <b>'+q.ticket+'</b> · Now Serving: '+(q.now_serving||'—')+'</small><b>'+q.patients_ahead+' People Ahead · '+q.status+'</b>';if(q.status==='called'&&last!=='called'){var a=document.createElement('div');a.className='queue-turn-banner';a.textContent='It is your turn. Please proceed to the designated clinic area.';document.body.appendChild(a);setTimeout(function(){a.remove()},10000)}last=q.status;}).catch(function(){});}poll();setInterval(poll,20000);document.addEventListener('visibilitychange',function(){if(!document.hidden)poll()});})();</script>
+@endpush

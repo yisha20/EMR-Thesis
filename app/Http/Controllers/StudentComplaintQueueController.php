@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\ComplaintStatusLog;
 use App\ClinicNotification;
+use App\ClinicQueue;
 use App\Consultation;
 use App\CounterService;
 use App\Helpers\ActivityLogger;
@@ -12,6 +13,7 @@ use App\MedicalRecord;
 use App\Patient;
 use App\Prescription;
 use App\Services\PrescriptionPdfService;
+use App\Services\ClinicQueueService;
 use App\Student;
 use App\StudentComplaint;
 use App\User;
@@ -54,6 +56,9 @@ class StudentComplaintQueueController extends Controller
         $complaint->load([
             'student.user', 'reviewer', 'statusLogs.changedBy', 'patient.medicalRecords',
             'medicalRecord', 'counterService.handler', 'consultation.forwarder', 'consultation.doctor', 'consultation.prescription.patient', 'consultation.prescription.doctor',
+            'patientAccount.latestAssessment.medicalHistories', 'patientAccount.latestAssessment.familyHistories',
+            'patientAccount.latestAssessment.medications', 'dependent.sponsor.user',
+            'complaintOptions', 'patientAccount.dependents',
         ]);
         $matchingPatients = Patient::where('id_number', $complaint->student_id_number)->get();
 
@@ -169,6 +174,11 @@ class StudentComplaintQueueController extends Controller
                 'completed_at' => $handledAt,
             ]);
             $this->logStatus($complaint, $request, $fromStatus, 'Counter Resolved', $data['notes'] ?? 'Resolved at clinic counter.');
+            $activeQueue = ClinicQueue::where('student_complaint_id', $complaint->id)->where('queue_type', 'counter')
+                ->whereIn('status', ['waiting','called','serving'])->lockForUpdate()->first();
+            if ($activeQueue) {
+                app(ClinicQueueService::class)->transition($activeQueue, 'completed', $request->user()->id, 'Counter service completed.');
+            }
             ActivityLogger::log('completed counter remedy (' . $complaint->student_name . ')', $data['remedy_given']);
         });
 
@@ -179,7 +189,7 @@ class StudentComplaintQueueController extends Controller
     {
         $data = $request->validate([
             'service_needed' => 'required|in:Checkup,Medical Consultation,Dental Consultation,Physical Examination,Laboratory Request,Other service',
-            'priority' => 'required|in:Low,Moderate,High',
+            'priority' => 'required|in:Low,Moderate,High,Urgent',
             'nurse_notes' => 'nullable|string|max:5000',
         ]);
 
@@ -234,7 +244,9 @@ class StudentComplaintQueueController extends Controller
                 'patient_id' => $patient->id,
                 'medical_record_id' => $record->id,
                 'status' => 'Forwarded',
+                'triage_priority' => strtolower($data['priority']),
             ]);
+            app(ClinicQueueService::class)->enqueue($complaint, 'consultation', $data['priority'], $request->user()->id, $consultation->id);
             $this->logStatus($complaint, $request, $fromStatus, 'Forwarded', $data['nurse_notes'] ?? 'Forwarded to doctor consultation queue.');
             ActivityLogger::log('forwarded complaint to consultation (' . $complaint->student_name . ')', $data['service_needed']);
         });
@@ -341,6 +353,11 @@ class StudentComplaintQueueController extends Controller
                 'attending_physician' => $request->user()->fullName(),
             ]);
             $this->logStatus($complaint, $request, 'In Consultation', 'Completed', $data['doctor_notes'] ?? 'Doctor completed consultation.');
+            $activeQueue = ClinicQueue::where('student_complaint_id', $complaint->id)->where('queue_type', 'consultation')
+                ->whereIn('status', ['waiting','called','serving'])->lockForUpdate()->first();
+            if ($activeQueue) {
+                app(ClinicQueueService::class)->transition($activeQueue, 'completed', $request->user()->id, 'Doctor consultation completed.');
+            }
             ActivityLogger::log('completed consultation for ' . $complaint->student_name, $data['diagnosis']);
 
             User::where('status', 'Active')

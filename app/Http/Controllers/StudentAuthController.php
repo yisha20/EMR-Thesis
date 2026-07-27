@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Role;
 use App\Student;
 use App\User;
+use App\PatientAccount;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -25,8 +26,11 @@ class StudentAuthController extends Controller
 
     public function register(Request $request)
     {
+        $request->merge(['account_type' => $request->input('account_type', 'student')]);
         $data = $request->validate([
-            'student_id_number' => 'required|string|max:50|unique:students,student_id_number',
+            'account_type' => 'required|in:student,faculty',
+            'student_id_number' => 'required_if:account_type,student|nullable|string|max:50|unique:students,student_id_number|unique:patient_accounts,student_id_number',
+            'faculty_id_number' => 'required_if:account_type,faculty|nullable|string|max:50|unique:patient_accounts,faculty_id_number',
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
             'last_name' => 'required|string|max:100',
@@ -49,6 +53,7 @@ class StudentAuthController extends Controller
         try {
             DB::transaction(function () use ($data) {
                 $studentRole = Role::whereRaw('LOWER(name) = ?', ['student'])->firstOrFail();
+                $identifier = $data['account_type'] === 'student' ? $data['student_id_number'] : $data['faculty_id_number'];
                 $fullName = trim(implode(' ', array_filter([
                     $data['first_name'],
                     $data['middle_name'] ?? null,
@@ -57,7 +62,7 @@ class StudentAuthController extends Controller
 
                 $user = User::create([
                     'role_id' => $studentRole->id,
-                    'username' => $data['student_id_number'],
+                    'username' => $identifier,
                     'name' => $fullName,
                     'status' => 'Active',
                     'email' => $data['email'],
@@ -78,7 +83,7 @@ class StudentAuthController extends Controller
 
                 Student::create([
                     'user_id' => $user->id,
-                    'student_id_number' => $data['student_id_number'],
+                    'student_id_number' => $identifier,
                     'first_name' => $data['first_name'],
                     'middle_name' => $data['middle_name'] ?? null,
                     'last_name' => $data['last_name'],
@@ -93,10 +98,19 @@ class StudentAuthController extends Controller
                     'present_address' => $data['present_address'] ?? null,
                 ]);
 
+                PatientAccount::create([
+                    'user_id' => $user->id,
+                    'patient_type' => $data['account_type'],
+                    'student_id_number' => $data['account_type'] === 'student' ? $identifier : null,
+                    'faculty_id_number' => $data['account_type'] === 'faculty' ? $identifier : null,
+                    'verification_status' => 'verified',
+                    'health_assessment_status' => 'not_started',
+                ]);
+
                 ActivityLog::create([
                     'user_id' => $user->id,
-                    'action' => 'Student registered account: ' . $fullName,
-                    'description' => 'Student self-registration completed.',
+                    'action' => ucfirst($data['account_type']) . ' registered account: ' . $fullName,
+                    'description' => 'Patient portal self-registration completed.',
                 ]);
             });
         } catch (Throwable $exception) {
@@ -108,6 +122,6 @@ class StudentAuthController extends Controller
         }
 
         return redirect()->route('login')
-            ->with('success', 'Your student account was created. You may now sign in.');
+            ->with('success', 'Your patient portal account was created. Sign in to complete your health assessment.');
     }
 }

@@ -86,7 +86,7 @@ class StudentDigitalIntakeTest extends TestCase
         $this->post(route('login'), [
             'email' => 'login-student@example.test',
             'password' => 'password123',
-        ])->assertRedirect(route('student.dashboard'));
+        ])->assertRedirect(route('patient.assessment.edit'));
 
         $this->assertAuthenticatedAs(User::where('email', 'login-student@example.test')->firstOrFail());
     }
@@ -147,9 +147,10 @@ class StudentDigitalIntakeTest extends TestCase
 
         $this->assertDatabaseHas('student_complaints', [
             'student_id' => $student->id,
-            'complaint_category' => 'General Consultation',
+            'complaint_category' => 'General symptoms',
             'chief_complaint' => 'Fever',
-            'urgency_level' => 'High',
+            'urgency_level' => 'Unassigned',
+            'triage_priority' => 'unassigned',
             'status' => 'Pending',
         ]);
     }
@@ -511,7 +512,7 @@ class StudentDigitalIntakeTest extends TestCase
 
         $completionResponse->assertSessionHasNoErrors();
         $prescription = \App\Prescription::where('consultation_id', $complaint->consultation->id)->firstOrFail();
-        $completionResponse->assertRedirect(route('prescriptions.show', $prescription));
+        $completionResponse->assertRedirect(route('student-complaints.show', $complaint));
 
         $this->assertDatabaseHas('medical_records', [
             'id' => $complaint->medical_record_id,
@@ -685,10 +686,7 @@ class StudentDigitalIntakeTest extends TestCase
 
         $this->actingAs($nurse)
             ->get(route('medical-records.edit', $record))
-            ->assertStatus(200)
-            ->assertSee('2026-06-03 03:30 PM')
-            ->assertSee('name="date_of_consultation" value="2026-06-03"', false)
-            ->assertSee('name="time_of_consultation" value="15:30:00"', false);
+            ->assertStatus(403);
     }
 
     public function test_nurse_dashboard_replaces_registered_users_with_student_queue()

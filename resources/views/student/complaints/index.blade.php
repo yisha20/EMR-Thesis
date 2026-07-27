@@ -21,7 +21,7 @@
         <div class="dashboard-panel-header">
             <div><p class="eyebrow">Submission history</p><h2>My Complaint History</h2></div>
         </div>
-        <div class="table-responsive-shell">
+        <div class="table-responsive-shell complaint-history-table">
             <table class="table emr-data-table data-table student-complaint-history">
                 <thead><tr><th>Submitted</th><th>Chief Complaint</th><th>Urgency</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
@@ -38,6 +38,21 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+        <div class="complaint-history-cards">
+            @forelse($complaints as $complaint)
+            @php($queueNumber=optional($complaint->queues->sortByDesc('created_at')->first())->ticket_number)
+            <article class="complaint-history-card">
+                <div><span>Submitted</span><strong>{{$complaint->submitted_at->format('M j, Y, g:i A')}}</strong></div>
+                <div><span>Chief complaint</span><strong>{{$complaint->chief_complaint}}</strong></div>
+                <div><span>Category</span><strong>{{$complaint->complaint_category ?: 'General Consultation'}}</strong></div>
+                <div><span>Status</span><strong>{{$complaint->status}}</strong></div>
+                @if($queueNumber)<div><span>Queue Number</span><strong>{{$queueNumber}}</strong></div>@endif
+                <a href="{{route('student.complaints.show',$complaint)}}" class="btn btn-primary">View Details</a>
+            </article>
+            @empty
+            <p>No complaints submitted yet.</p>
+            @endforelse
         </div>
         <div class="pagination justify-content-center">{{ $complaints->links() }}</div>
     </section>

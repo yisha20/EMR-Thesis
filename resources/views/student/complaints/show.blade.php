@@ -16,7 +16,7 @@
         <div class="complaint-detail-wide"><span>Chief Complaint</span><strong>{{ $complaint->chief_complaint }}</strong></div>
         <div class="complaint-detail-wide"><span>Symptoms Description</span><p>{{ $complaint->symptoms_description }}</p></div>
         @if ($complaint->attachment)
-            <div><span>Attachment</span><a href="{{ $complaint->attachment }}" target="_blank" rel="noopener">Open attachment</a></div>
+            <div><span>Attachment</span><a href="{{ route('student.complaints.attachment',$complaint) }}" target="_blank" rel="noopener">Open attachment</a></div>
         @endif
         @if ($complaint->diagnosis)
             <div class="complaint-detail-wide"><span>Diagnosis</span><p>{{ $complaint->diagnosis }}</p></div>

@@ -12020,3 +12020,300 @@ body.mobile-drawer-open {
     font-size: 1.75rem;
   }
 }
+html, body, #app, .emr-app, .emr-layout-frame, .emr-workspace, .emr-page-container, .emr-main {
+    min-height: 100%;
+    height: auto;
+}
+html, body { overflow-x: hidden; overflow-y: auto; }
+.emr-workspace, .emr-page-container, .emr-main { min-width: 0; overflow: visible; }
+.student-concern-modal .modal-dialog { max-height: calc(100vh - 2rem); margin: 1rem auto; }
+.student-concern-modal .modal-content { max-height: calc(100vh - 2rem); overflow: hidden; }
+.student-concern-modal .modal-body { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.student-concern-modal .modal-footer { flex-shrink: 0; }
+.assessment-page { max-width: 1120px; margin: 0 auto; padding-bottom: 3rem; }
+.assessment-heading { display:flex; justify-content:space-between; gap:1rem; align-items:flex-start; margin-bottom:1rem; }
+.assessment-form { background:#fff; border-radius:16px; padding:clamp(1rem,3vw,2rem); box-shadow:0 8px 30px rgba(18,38,63,.08); }
+.assessment-progress { display:grid; grid-template-columns:repeat(4,1fr); gap:.4rem; margin-bottom:2rem; }
+.assessment-progress span { padding:.7rem; text-align:center; background:#edf1f7; border-radius:8px; color:#64748b; }
+.assessment-progress span.active { color:#fff; background:#2457a7; }
+.assessment-step { display:none; }.assessment-step.active { display:block; }
+.assessment-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.assessment-grid label { font-weight:600; min-width:0; }
+.check-card-grid,.complaint-chip-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.6rem; margin-bottom:1rem; }
+.check-card,.complaint-chip { min-height:44px; display:flex; align-items:center; gap:.5rem; padding:.65rem .8rem; border:1px solid #d8e0eb; border-radius:9px; cursor:pointer; }
+.check-card:focus-within,.complaint-chip:focus-within { outline:3px solid rgba(36,87,167,.25); border-color:#2457a7; }
+.medication-row { margin-bottom:.5rem; }.assessment-actions { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:2rem; position:sticky; bottom:0; background:#fff; padding:.75rem 0; }
+.queue-turn-banner { position:fixed; z-index:9999; right:1rem; bottom:1rem; max-width:360px; padding:1rem; border-radius:10px; background:#17633a; color:#fff; box-shadow:0 8px 30px rgba(0,0,0,.25); }
+@media (max-width:767px) {
+    .assessment-grid { grid-template-columns:1fr; }
+    .check-card-grid,.complaint-chip-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .assessment-progress { grid-template-columns:1fr 1fr; font-size:.8rem; }
+    .student-concern-modal .modal-dialog { margin:.5rem; max-height:calc(100vh - 1rem); }
+    .student-concern-modal .modal-content { max-height:calc(100vh - 1rem); }
+}
+@media (max-width:430px) {
+    .check-card-grid,.complaint-chip-grid { grid-template-columns:1fr; }
+    .assessment-heading { display:block; }
+    .assessment-actions .btn { min-height:44px; flex:1 1 calc(50% - .6rem); }
+}
+
+/* Patient portal refinement: one effective breakpoint layer. */
+.complaint-modal-dialog {
+  display:flex;
+  flex-direction:column;
+  margin:16px auto;
+  max-height:calc(100vh - 32px);
+  max-height:calc(100dvh - 32px);
+  max-width:900px;
+  width:calc(100vw - 32px);
+}
+.complaint-modal-dialog .modal-content {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  max-height:inherit;
+  min-height:0;
+  overflow:hidden;
+}
+.complaint-modal-dialog .student-intake-form {
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
+}
+.complaint-modal-header { flex:0 0 auto; padding:14px 20px; }
+.complaint-modal-body {
+  flex:1 1 auto;
+  min-height:0;
+  overflow-y:auto;
+  padding:16px 20px;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+}
+.complaint-modal-footer {
+  background:#fff;
+  border-top:1px solid #d8e7f0;
+  bottom:0;
+  flex:0 0 auto;
+  padding:12px 20px;
+  position:sticky;
+  z-index:2;
+}
+.concern-options-grid {
+  display:grid;
+  gap:8px;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  margin-bottom:10px;
+}
+.concern-category-title { font-size:.78rem; margin:10px 0 5px; }
+.complaint-chip {
+  min-height:40px;
+  overflow-wrap:anywhere;
+  padding:7px 9px;
+  word-break:normal;
+}
+.complaint-chip:has(input:checked) {
+  background:#eaf3ff;
+  border-color:#2457a7;
+  box-shadow:inset 0 0 0 1px #2457a7;
+}
+.other-concern-section {
+  align-items:center;
+  background:#f7fafc;
+  border:1px solid #d8e7f0;
+  border-radius:10px;
+  display:grid;
+  gap:10px;
+  grid-template-columns:minmax(130px,.35fr) minmax(0,1.65fr);
+  margin-top:12px;
+  padding:10px;
+}
+.other-concern-section .complaint-chip { margin:0; }
+.other-concern-section [data-other-complaint] { min-width:0; }
+.complaint-review-header { align-items:flex-start; }
+.complaint-review-header > div { min-width:0; }
+.complaint-review-header > .card { display:none; }
+.complaint-review-identity,.complaint-review-meta { flex-wrap:wrap; }
+.complaint-review-grid {
+  align-items:start;
+  display:grid;
+  gap:18px;
+  grid-template-columns:minmax(0,1.4fr) minmax(320px,.8fr);
+}
+.assessment-summary-card,.assessment-summary-card * { min-width:0; }
+.assessment-summary-card .dashboard-panel-header { align-items:flex-start; flex-wrap:wrap; }
+.assessment-summary-actions { display:flex; flex-wrap:wrap; gap:6px; }
+.assessment-summary-list {
+  display:grid;
+  gap:10px 16px;
+  grid-template-columns:minmax(140px,.7fr) minmax(0,1.3fr);
+  margin:0;
+}
+.assessment-summary-list dt,.assessment-summary-list dd {
+  margin:0;
+  min-width:0;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.assessment-summary-list dt { color:#526577; font-weight:700; }
+.queue-routing-card { margin-top:18px; }
+.queue-routing-form {
+  align-items:end;
+  display:grid;
+  gap:14px;
+  grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;
+}
+.queue-routing-form .form-group { margin:0; min-width:0; }
+.complaint-emr-section { margin-top:18px; }
+.active-queue-card { align-items:center; display:flex; gap:18px; justify-content:space-between; }
+.queue-control-actions { display:flex; flex-wrap:wrap; gap:7px; }
+.queue-control-actions form { margin:0; }
+.assessment-record-header { align-items:flex-start; display:flex; gap:16px; justify-content:space-between; }
+.assessment-record-grid { display:grid; gap:18px; grid-template-columns:1fr 1fr; margin:18px 0; }
+.assessment-record-item { border-bottom:1px solid #e3eaf1; padding:8px 0; }
+.complaint-history-cards { display:none; }
+
+@media (min-width:768px) {
+  body.student-portal-shell {
+    height:100vh;
+    height:100dvh;
+    overflow:hidden;
+  }
+  body.student-portal-shell .emr-app,
+  body.student-portal-shell .emr-layout-frame {
+    height:100%;
+    min-height:0;
+    overflow:hidden;
+  }
+  body.student-portal-shell .emr-layout-frame {
+    display:flex;
+  }
+  body.student-portal-shell .desktop-sidebar {
+    display:flex !important;
+    flex:0 0 260px;
+    height:100%;
+    max-width:260px;
+    min-width:260px;
+    overflow:visible;
+    position:relative;
+    width:260px;
+  }
+  body.student-portal-shell .desktop-sidebar.collapsed {
+    flex-basis:78px;
+    max-width:78px;
+    min-width:78px;
+    width:78px;
+  }
+  body.student-portal-shell .desktop-sidebar .sidepanel-menu {
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  body.student-portal-shell .emr-workspace {
+    display:flex;
+    flex:1 1 0;
+    flex-direction:column;
+    height:100%;
+    min-height:0;
+    overflow-y:auto;
+    width:0;
+  }
+}
+
+@media (min-width:768px) and (max-width:1023px) {
+  .concern-options-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .complaint-review-grid { grid-template-columns:minmax(0,1fr) minmax(290px,.75fr); }
+}
+
+@media (max-width:767.98px) {
+  html,body { max-width:100%; overflow-x:hidden; }
+  body.student-portal-shell .desktop-sidebar,
+  body.student-portal-shell .sidepanel,
+  body.student-portal-shell .sidepanel.collapsed {
+    display:none !important;
+    height:0 !important;
+    width:0 !important;
+  }
+  body.student-portal-shell .emr-layout-frame,
+  body.student-portal-shell .app-layout {
+    display:block !important;
+    grid-template-columns:minmax(0,1fr) !important;
+    max-width:100% !important;
+    width:100% !important;
+  }
+  body.student-portal-shell .emr-workspace,
+  body.student-portal-shell .main-wrapper,
+  body.student-portal-shell .main-shell,
+  body.student-portal-shell .main-content,
+  body.student-portal-shell .page-content,
+  body.student-portal-shell .emr-page-container,
+  body.student-portal-shell .emr-main,
+  body.student-portal-shell .student-dashboard,
+  body.student-portal-shell .patient-dashboard,
+  body.student-portal-shell .student-portal-page {
+    left:auto !important;
+    margin-left:0 !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    width:100% !important;
+  }
+  body.student-portal-shell .page-content,
+  body.student-portal-shell .emr-page-container { padding:14px !important; }
+  body.student-portal-shell .student-dashboard-grid,
+  body.student-portal-shell .patient-dashboard-grid,
+  body.student-portal-shell .dashboard-main-grid,
+  body.student-portal-shell .profile-grid,
+  body.student-portal-shell .health-record-grid,
+  body.student-portal-shell .student-update-cards,
+  body.student-portal-shell .profile-layout-grid,
+  body.student-portal-shell .profile-data-grid,
+  .complaint-review-grid,
+  .assessment-record-grid {
+    grid-template-columns:minmax(0,1fr) !important;
+  }
+  body.student-portal-shell .student-hero-card,
+  body.student-portal-shell .student-update-card,
+  body.student-portal-shell .dashboard-panel,
+  body.student-portal-shell .health-timeline-card,
+  body.student-portal-shell .profile-identity-card,
+  body.student-portal-shell .profile-details-card {
+    max-width:100% !important;
+    min-width:0 !important;
+    width:100% !important;
+  }
+  body.student-portal-shell h1 { font-size:clamp(1.75rem,8vw,2.1rem); }
+  body.student-portal-shell h2 { font-size:clamp(1.35rem,6vw,1.6rem); }
+  body.student-portal-shell .student-hero-meta { flex-wrap:wrap; }
+  body.student-portal-shell .student-hero-card .btn,
+  body.student-portal-shell .student-welcome .btn { min-height:44px; width:100%; }
+  .complaint-modal-dialog {
+    margin:8px;
+    max-height:calc(100vh - 16px);
+    max-height:calc(100dvh - 16px);
+    width:calc(100vw - 16px);
+  }
+  .complaint-modal-header,.complaint-modal-body { padding:12px 14px; }
+  .complaint-modal-footer { display:grid; gap:8px; grid-template-columns:1fr 1fr; padding:10px 14px; }
+  .complaint-modal-footer .btn { margin:0; min-height:44px; width:100%; }
+  .concern-options-grid { grid-template-columns:minmax(0,1fr); }
+  .other-concern-section { align-items:stretch; grid-template-columns:minmax(0,1fr); }
+  .assessment-summary-list { grid-template-columns:minmax(0,1fr); gap:3px; }
+  .assessment-summary-list dd { margin-bottom:9px; }
+  .queue-routing-form { grid-template-columns:minmax(0,1fr); }
+  .queue-routing-form .btn { min-height:44px; width:100%; }
+  .assessment-record-header,.active-queue-card { align-items:stretch; flex-direction:column; }
+  .assessment-record-header .btn,.queue-control-actions .btn { min-height:44px; }
+  .complaint-history-table { display:none; }
+  .complaint-history-cards { display:grid; gap:12px; }
+  .complaint-history-card { background:#fff; border:1px solid #dfe8f0; border-radius:12px; display:grid; gap:9px; max-width:100%; min-width:0; padding:15px; width:100%; }
+  .complaint-history-card div { display:grid; gap:2px; min-width:0; }
+  .complaint-history-card span { color:#65788a; font-size:.75rem; text-transform:uppercase; }
+  .complaint-history-card strong { overflow-wrap:anywhere; word-break:normal; }
+  .complaint-history-card .btn { min-height:44px; width:100%; }
+  body.student-portal-shell .health-timeline-item { grid-template-columns:minmax(0,1fr) !important; }
+  body.student-portal-shell .health-timeline-date { position:static !important; text-align:left; width:100%; }
+  body.student-portal-shell .profile-page-shell,
+  body.student-portal-shell .profile-layout-grid,
+  body.student-portal-shell .profile-avatar-wrap { left:auto !important; margin-left:0 !important; position:static !important; }
+}

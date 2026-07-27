@@ -20,7 +20,7 @@ $topbarUnreadCount = $showClinicNotifications
             <span>{{ config('app.name', 'EMR') }}</span>
         </a>
         @if ($isStudent)
-            <button id="mobileMenuToggle" class="mobile-menu-btn" type="button" aria-controls="studentMobileDrawer" aria-expanded="false" aria-label="Open student menu">
+            <button id="mobileMenuToggle" class="mobile-menu-btn" type="button" aria-controls="studentMobileDrawer" aria-expanded="false" aria-label="Open patient menu">
                 <i class="fa fa-bars"></i>
             </button>
         @else
@@ -93,10 +93,10 @@ $topbarUnreadCount = $showClinicNotifications
 
 @if ($isStudent)
     <div id="studentMobileDrawerOverlay" class="mobile-drawer-overlay" aria-hidden="true"></div>
-    <nav id="studentMobileDrawer" class="mobile-drawer" aria-label="Student mobile menu" aria-hidden="true">
+    <nav id="studentMobileDrawer" class="mobile-drawer" aria-label="Patient mobile menu" aria-hidden="true">
         <div class="mobile-drawer-header">
             <div>
-                <span class="mobile-drawer-kicker">Student Portal</span>
+                <span class="mobile-drawer-kicker">Patient Portal</span>
                 <strong>{{ config('app.name', 'EMR') }}</strong>
             </div>
             <button id="studentMobileDrawerClose" type="button" aria-label="Close student menu">
@@ -107,8 +107,11 @@ $topbarUnreadCount = $showClinicNotifications
         <div class="mobile-drawer-links">
             <a class="{{ request()->routeIs('student.dashboard') ? 'active' : '' }}" href="{{ route('student.dashboard') }}"><i class="fa fa-home"></i><span>Dashboard</span></a>
             <a class="{{ request()->routeIs('student.complaints.*') ? 'active' : '' }}" href="{{ route('student.complaints.index') }}"><i class="fa fa-file-text-o"></i><span>My Complaints</span></a>
-            <a class="{{ request()->routeIs('student.medical-history') ? 'active' : '' }}" href="{{ route('student.medical-history') }}"><i class="fa fa-heartbeat"></i><span>Health History</span></a>
+            <a class="{{ request()->routeIs('student.medical-history') ? 'active' : '' }}" href="{{ route('student.medical-history') }}"><i class="fa fa-heartbeat"></i><span>My Health Record</span></a>
             <a class="{{ request()->routeIs('student.prescriptions.*') ? 'active' : '' }}" href="{{ route('student.prescriptions.index') }}"><i class="fa fa-medkit"></i><span>My Prescriptions</span></a>
+            @if(optional(Auth::user()->patientAccount)->patient_type !== 'dependent')
+            <a class="{{ request()->routeIs('patient.dependents.*') ? 'active' : '' }}" href="{{ route('patient.dependents.index') }}"><i class="fa fa-user-plus"></i><span>My Dependents</span></a>
+            @endif
             <a class="{{ request()->routeIs('student.profile') ? 'active' : '' }}" href="{{ route('student.profile') }}"><i class="fa fa-user-o"></i><span>Profile</span></a>
         </div>
 

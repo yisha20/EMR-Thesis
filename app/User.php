@@ -117,6 +117,39 @@ class User extends Authenticatable
         return $this->hasOne(Student::class);
     }
 
+    public function patientAccount()
+    {
+        return $this->hasOne(PatientAccount::class);
+    }
+
+    public function isPatientPortalUser()
+    {
+        return $this->patientAccount()->exists() || $this->isStudent();
+    }
+
+    public function ensurePatientAccount()
+    {
+        $existing = $this->patientAccount()->first();
+        if ($existing) {
+            $this->setRelation('patientAccount', $existing);
+            return $existing;
+        }
+        $student = $this->student()->first();
+        if (! $this->isStudent() || ! $student) {
+            return null;
+        }
+        $account = $this->patientAccount()->firstOrCreate(['user_id'=>$this->id], [
+            'patient_id' => Patient::where('id_number', $student->student_id_number)->value('id'),
+            'patient_type' => 'student',
+            'student_id_number' => $student->student_id_number,
+            'verification_status' => 'verified',
+            'health_assessment_status' => 'patient_submitted',
+            'health_assessment_completed_at' => now(),
+        ]);
+        $this->setRelation('patientAccount', $account);
+        return $account;
+    }
+
     public function isStudent()
     {
         return $this->role && strcasecmp($this->role->name, 'Student') === 0;

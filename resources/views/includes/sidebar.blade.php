@@ -17,7 +17,7 @@ if ($sidebarRoleName === 'Administrator') {
     $sidebarRoleClass .= ' badge-primary';
 }
 @endphp
-<aside id="mySidepanel" class="sidepanel sidebar collapsed">
+<aside id="mySidepanel" class="sidepanel sidebar desktop-sidebar collapsed">
         <div class="sidepanel-header">
             <a class="sidepanel-brand" href="{{ $homeRoute }}">
                 <span class="sidepanel-logo">
@@ -50,16 +50,24 @@ if ($sidebarRoleName === 'Administrator') {
 
         <div class="sidepanel-menu">
             @if ($isStudent)
-            <div class="sidepanel-section-label">Student Portal</div>
-            <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.dashboard') ? 'active' : '' }}" href="{{ route('student.dashboard') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Student Dashboard" aria-label="Student Dashboard">
-                <i class="fa fa-home"></i><span>Student Dashboard</span>
+            <div class="sidepanel-section-label">Patient Portal</div>
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.dashboard') ? 'active' : '' }}" href="{{ route('student.dashboard') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Dashboard" aria-label="Dashboard">
+                <i class="fa fa-home"></i><span>Dashboard</span>
             </a>
             <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.complaints.*') ? 'active' : '' }}" href="{{ route('student.complaints.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="My Complaints" aria-label="My Complaints">
                 <i class="fa fa-file-text-o"></i><span>My Complaints</span>
             </a>
             <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.medical-history') ? 'active' : '' }}" href="{{ route('student.medical-history') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Health History" aria-label="Health History">
-                <i class="fa fa-heartbeat"></i><span>Health History</span>
+                <i class="fa fa-heartbeat"></i><span>My Health Record</span>
             </a>
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.prescriptions.*') ? 'active' : '' }}" href="{{ route('student.prescriptions.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="My Prescriptions" aria-label="My Prescriptions">
+                <i class="fa fa-medkit"></i><span>My Prescriptions</span>
+            </a>
+            @if(optional($auth->patientAccount)->patient_type !== 'dependent')
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('patient.dependents.*') ? 'active' : '' }}" href="{{ route('patient.dependents.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="My Dependents" aria-label="My Dependents">
+                <i class="fa fa-user-plus"></i><span>My Dependents</span>
+            </a>
+            @endif
             <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.profile') ? 'active' : '' }}" href="{{ route('student.profile') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Profile" aria-label="Profile">
                 <i class="fa fa-user-o"></i><span>Profile</span>
             </a>

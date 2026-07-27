@@ -42,16 +42,30 @@ Route::middleware('auth')->group(function () {
     Route::get('/prescriptions/{prescription}/download', 'PrescriptionController@download')->name('prescriptions.download');
 
     Route::middleware('role:Student')->group(function () {
-        Route::get('/student/dashboard', 'StudentIntakeController@dashboard')->name('student.dashboard');
-        Route::get('/student/complaints', 'StudentIntakeController@index')->name('student.complaints.index');
-        Route::post('/student/complaints', 'StudentIntakeController@store')->name('student.complaints.store');
-        Route::get('/student/complaints/{complaint}', 'StudentIntakeController@show')->name('student.complaints.show');
-        Route::get('/student/medical-history', 'StudentIntakeController@medicalHistory')->name('student.medical-history');
-        Route::get('/student/prescriptions', 'PrescriptionController@index')->name('student.prescriptions.index');
-        Route::get('/student/profile', 'StudentIntakeController@profile')->name('student.profile');
+        Route::get('/patient/health-assessment', 'HealthAssessmentController@edit')->name('patient.assessment.edit');
+        Route::post('/patient/health-assessment/draft', 'HealthAssessmentController@save')->name('patient.assessment.save');
+        Route::post('/patient/health-assessment/submit', 'HealthAssessmentController@submit')->name('patient.assessment.submit');
+        Route::middleware('assessment.complete')->group(function () {
+            Route::get('/student/dashboard', 'StudentIntakeController@dashboard')->name('student.dashboard');
+            Route::get('/student/complaints', 'StudentIntakeController@index')->name('student.complaints.index');
+            Route::post('/student/complaints', 'StudentIntakeController@store')->name('student.complaints.store');
+            Route::get('/student/complaints/{complaint}', 'StudentIntakeController@show')->name('student.complaints.show');
+            Route::get('/student/medical-history', 'StudentIntakeController@medicalHistory')->name('student.medical-history');
+            Route::get('/student/prescriptions', 'PrescriptionController@index')->name('student.prescriptions.index');
+            Route::get('/student/profile', 'StudentIntakeController@profile')->name('student.profile');
+            Route::get('/patient/dependents', 'PatientDependentController@index')->name('patient.dependents.index');
+            Route::post('/patient/dependents', 'PatientDependentController@store')->name('patient.dependents.store');
+            Route::get('/patient/queue-status', 'ClinicQueueController@status')->name('patient.queue.status');
+        });
     });
+    Route::get('/health-assessments/{assessment}/pdf', 'HealthAssessmentController@pdf')->name('health-assessments.pdf');
+    Route::get('/student/complaints/{complaint}/attachment', 'StudentIntakeController@attachment')->name('student.complaints.attachment');
 
     Route::middleware('role:Administrator,Doctor,Nurse,Staff')->group(function () {
+    Route::get('/health-assessments/{assessment}', 'HealthAssessmentController@show')->name('patient.assessment.staff');
+    Route::post('/student-complaints/{complaint}/queue', 'ClinicQueueController@store')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.store');
+    Route::patch('/clinic-queues/{queue}', 'ClinicQueueController@update')->name('clinic-queues.update');
+    Route::patch('/patient-dependents/{dependent}/verify', 'PatientDependentController@verify')->middleware('role:Administrator,Nurse')->name('patient-dependents.verify');
     Route::get('dashboard', 'DashboardController@index')->name('dashboard');
     Route::get('/activity-logs', 'ActivityLogController@index')->name('activity.logs');
 
@@ -82,6 +96,9 @@ Route::middleware('auth')->group(function () {
     Route::get('profile/{user}', 'ProfileController@show')->name('profile.show');
 
     Route::middleware('admin')->group(function () {
+        Route::get('/complaint-options', 'CommonComplaintOptionController@index')->name('complaint-options.index');
+        Route::post('/complaint-options', 'CommonComplaintOptionController@store')->name('complaint-options.store');
+        Route::put('/complaint-options/{option}', 'CommonComplaintOptionController@update')->name('complaint-options.update');
         Route::resource('users', 'UserController');
         Route::get('users/archive/index', 'UserController@archive')->name('users.archive');
         Route::delete('users/force-delete/{id}', 'UserController@deleteUser')->name('users.delete');

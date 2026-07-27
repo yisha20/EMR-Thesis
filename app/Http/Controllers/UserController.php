@@ -48,6 +48,9 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $imagePath = null;
+        $selectedRole = Role::find($request->role_id);
+        $roleName = $selectedRole ? strtolower($selectedRole->name) : '';
+        $requiresLicense = in_array($roleName, ['doctor', 'nurse'], true);
 
         if ($request->hasFile('avatar') && $request->file('avatar')->isValid()) {
             $request->validate([
@@ -72,9 +75,9 @@ class UserController extends Controller
             'birthdate' => 'required',
             'present_address' => 'required',
             'gender' => 'required',
-            'role_id' => 'required',
+            'role_id' => 'required|exists:roles,id',
             'phone_number' => 'required',
-            'license_number' => 'required',
+            'license_number' => $requiresLicense ? 'required' : 'nullable',
         ]);
 
         $user = User::create([

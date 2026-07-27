@@ -58,7 +58,7 @@
                             <td>{{ $complaint->student_id_number }}</td>
                             <td><strong>{{ $complaint->student_name }}</strong></td>
                             <td>{{ $complaint->chief_complaint }}</td>
-                            <td><span class="urgency-badge urgency-{{ strtolower($complaint->urgency_level) }}">{{ $complaint->urgency_level }}</span></td>
+                            <td><span class="urgency-badge urgency-{{ strtolower($complaint->triage_priority) }}">{{ ucfirst($complaint->triage_priority) }}</span></td>
                             <td>{{ $complaint->submitted_at->format('M j, Y') }}<small class="d-block text-muted">{{ $complaint->submitted_at->format('g:i A') }}</small></td>
                             <td><span class="complaint-status status-{{ \Illuminate\Support\Str::slug($complaint->status) }}">{{ $complaint->status }}</span></td>
                             <td class="action-cell">
