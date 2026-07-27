@@ -32,18 +32,25 @@
             <td><strong>{{ $entry->ticket_number }}</strong></td><td>{{ $patientName($entry) }}</td>
             <td>{{ ucfirst(optional($entry->account)->patient_type ?: 'patient') }}<br><small>{{ optional($entry->complaint)->student_id_number }}</small></td>
             <td>{{ \Illuminate\Support\Str::limit(optional($entry->complaint)->chief_complaint,50) }}</td><td>{{ ucfirst($entry->queue_type) }}</td>
-            <td><span class="urgency-badge urgency-{{ $entry->priority }}">{{ ucfirst($entry->priority) }}</span></td><td>{{ $entry->created_at->diffForHumans(null,true) }}</td><td>{{ ucfirst($entry->status) }}</td>
+            <td><span class="urgency-badge urgency-{{ $entry->priority }}">{{ ucfirst($entry->priority) }}</span></td><td>{{ $entry->created_at->diffForHumans(null,true) }}</td><td>{{ ucfirst($entry->status) }}<br><span class="presence-badge presence-{{ $entry->presence_status }}" data-presence-badge="{{ $entry->id }}">{{ ucwords(str_replace('_',' ',$entry->presence_status)) }}</span></td>
             <td class="queue-actions">
             @if(auth()->user()->role->name==='Doctor')
                 @if($entry->status==='called')<form method="POST" action="{{ route('student-complaints.start-consultation',$entry->complaint) }}">@csrf<button class="btn btn-sm btn-primary">Start Consultation</button></form>@endif
                 <a class="btn btn-sm btn-light" href="{{ route('student-complaints.show',$entry->complaint) }}">View Patient Record</a>
             @else
                 @foreach(['waiting'=>['called'=>'Call'],'called'=>['called'=>'Recall','serving'=>'Start Service','missed'=>'Mark Missed'],'serving'=>['completed'=>'Complete']] [$entry->status] ?? [] as $state=>$label)
-                <form method="POST" action="{{ route('clinic-queues.update',$entry) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="{{ $state }}"><button class="btn btn-sm {{ $state==='missed'?'btn-danger':'btn-primary' }}" data-confirm="{{ $label }} {{ $entry->ticket_number }}?">{{ $label }}</button></form>
+                <form method="POST" action="{{ route('clinic-queues.update',$entry) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="{{ $state }}">@if($state==='missed')<input type="hidden" name="reason" value="Did not respond after recalls and grace period">@endif<button class="btn btn-sm {{ $state==='missed'?'btn-danger':'btn-primary' }}" data-confirm="{{ $state==='missed'?'Mark this patient as missed? The complaint record will remain.':$label.' '.$entry->ticket_number.'?' }}">{{ $label }}</button></form>
                 @endforeach
+                @if(in_array($entry->status,['waiting','called'],true))<form method="POST" action="{{ route('clinic-queues.transfer',$entry) }}">@csrf<input type="hidden" name="queue_type" value="{{ $entry->queue_type==='counter'?'consultation':'counter' }}"><input type="hidden" name="reason" value="Transferred by clinic staff"><button class="btn btn-sm btn-light" data-confirm="Transfer {{ $entry->ticket_number }} to the {{ $entry->queue_type==='counter'?'consultation':'counter' }} queue?">Transfer</button></form>@endif
+                @if($entry->status==='missed')<form method="POST" action="{{ route('clinic-queues.requeue',$entry) }}">@csrf<button class="btn btn-sm btn-light" data-confirm="Return this missed patient to the end of the active queue?">Return to Queue</button></form>@endif
                 @if(in_array($entry->status,['waiting','called'],true))<form method="POST" action="{{ route('clinic-queues.update',$entry) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="cancelled"><input type="hidden" name="reason" value="Cancelled from queue dashboard"><button class="btn btn-sm btn-outline-danger" data-confirm="Cancel {{ $entry->ticket_number }}?">Cancel</button></form>@endif
             @endif
             </td>
         </tr>@empty<tr><td colspan="9">No active queue entries today.</td></tr>@endforelse</tbody></table>
     </div>
 </section>
+@push('js')
+<script>
+(function(){var root=document.getElementById('queue-operations-title');if(!root||!window.fetch)return;var url='{{ route('clinic-queues.live') }}',known={{ $queueEntries->count() }};function poll(){if(document.hidden)return;fetch(url,{credentials:'same-origin',cache:'no-store',headers:{'Accept':'application/json'}}).then(function(r){return r.json()}).then(function(data){if(data.entries.length!==known){window.location.reload();return}data.entries.forEach(function(entry){var badge=document.querySelector('[data-presence-badge="'+entry.id+'"]');if(badge){badge.className='presence-badge presence-'+entry.presence_status;badge.textContent=entry.presence_label}})}).catch(function(){})}window.setInterval(poll,{{ config('clinic_queue.staff_poll_seconds',30)*1000 }});document.addEventListener('visibilitychange',function(){if(!document.hidden)poll()});})();
+</script>
+@endpush

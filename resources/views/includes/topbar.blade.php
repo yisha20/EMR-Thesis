@@ -4,7 +4,7 @@ $activeUsers = \App\User::getActive();
 $sidebarRoleName = optional(optional($auth)->role)->name ?? 'EMR';
 $isStudent = $sidebarRoleName === 'Student';
 $homeRoute = $isStudent ? route('student.dashboard') : route('dashboard');
-$showClinicNotifications = in_array($sidebarRoleName, ['Nurse', 'Staff'], true);
+$showClinicNotifications = (bool) $auth;
 $topbarNotifications = $showClinicNotifications
     ? \App\ClinicNotification::forUser($auth)->latest()->take(8)->get()
     : collect();
@@ -20,6 +20,10 @@ $topbarUnreadCount = $showClinicNotifications
             <span>{{ config('app.name', 'EMR') }}</span>
         </a>
         @if ($isStudent)
+            <a class="mobile-patient-notifications" href="{{ route('notifications.index') }}" aria-label="Notifications, {{ $topbarUnreadCount }} unread">
+                <i class="fa fa-bell-o"></i>
+                @if($topbarUnreadCount)<span>{{ $topbarUnreadCount }}</span>@endif
+            </a>
             <button id="mobileMenuToggle" class="mobile-menu-btn" type="button" aria-controls="studentMobileDrawer" aria-expanded="false" aria-label="Open patient menu">
                 <i class="fa fa-bars"></i>
             </button>
@@ -44,7 +48,7 @@ $topbarUnreadCount = $showClinicNotifications
                             <span class="clinic-notification-count {{ $topbarUnreadCount ? '' : 'is-empty' }}" data-notification-count>{{ $topbarUnreadCount }}</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right clinic-notification-dropdown" aria-labelledby="clinicNotificationDropdown">
-                            <div class="clinic-notification-heading"><strong>Notifications</strong><a href="{{ route('notifications.index') }}">View all</a></div>
+                            <div class="clinic-notification-heading"><strong>Notifications</strong><span><form method="POST" action="{{ route('notifications.read-all') }}" class="d-inline">@csrf<button type="submit" class="notification-read-all">Read all</button></form> <a href="{{ route('notifications.index') }}">View all</a></span></div>
                             <div class="clinic-notification-list" data-notification-list>
                                 @forelse ($topbarNotifications as $notification)
                                     <article class="clinic-notification-item {{ $notification->is_read ? '' : 'is-unread' }}">
@@ -109,6 +113,7 @@ $topbarUnreadCount = $showClinicNotifications
             <a class="{{ request()->routeIs('student.complaints.*') ? 'active' : '' }}" href="{{ route('student.complaints.index') }}"><i class="fa fa-file-text-o"></i><span>My Complaints</span></a>
             <a class="{{ request()->routeIs('student.medical-history') ? 'active' : '' }}" href="{{ route('student.medical-history') }}"><i class="fa fa-heartbeat"></i><span>My Health Record</span></a>
             <a class="{{ request()->routeIs('student.prescriptions.*') ? 'active' : '' }}" href="{{ route('student.prescriptions.index') }}"><i class="fa fa-medkit"></i><span>My Prescriptions</span></a>
+            <a class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}"><i class="fa fa-bell-o"></i><span>Notifications</span>@if($topbarUnreadCount)<strong class="drawer-unread-count">{{ $topbarUnreadCount }}</strong>@endif</a>
             @if(optional(Auth::user()->patientAccount)->patient_type !== 'dependent')
             <a class="{{ request()->routeIs('patient.dependents.*') ? 'active' : '' }}" href="{{ route('patient.dependents.index') }}"><i class="fa fa-user-plus"></i><span>My Dependents</span></a>
             @endif
@@ -185,7 +190,8 @@ $topbarUnreadCount = $showClinicNotifications
         if (event.target.closest('[data-toast-close]')) document.querySelector('[data-consultation-toast]').classList.remove('is-visible');
     });
     poll();
-    window.setInterval(poll, 30000);
+    window.setInterval(function () { if (!document.hidden) poll(); }, {{ config('clinic_queue.staff_poll_seconds',30) * 1000 }});
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) poll(); });
 })();
 </script>
 @endif

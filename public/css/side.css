@@ -12916,3 +12916,109 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     padding: 15px;
   }
 }
+
+.patient-queue-card {
+  align-items: flex-start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.patient-queue-card .patient-presence-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  grid-column: 1 / -1;
+}
+
+.patient-presence-controls button {
+  background: #fff;
+  border: 1px solid #9ccbe4;
+  border-radius: 8px;
+  color: #246f98;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  min-height: 34px;
+  padding: 6px 9px;
+}
+
+.patient-presence-controls button.active {
+  background: #318fbd;
+  border-color: #318fbd;
+  color: #fff;
+}
+
+.queue-turn-banner.persistent {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  max-width: 440px;
+}
+
+.notification-read-all {
+  background: transparent;
+  border: 0;
+  color: #2f83ae;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+
+.presence-badge {
+  background: #e8f2f7;
+  border-radius: 999px;
+  color: #3f6f87;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 700;
+  margin-top: 4px;
+  padding: 4px 7px;
+}
+.presence-temporarily_away { background: #fff3d6; color: #946200; }
+.presence-returning { background: #e7f5ff; color: #176b98; }
+.presence-present { background: #e3f6ea; color: #187542; }
+.mobile-patient-notifications { display:none; }
+
+@media (max-width: 767.98px) {
+  .mobile-patient-notifications {
+    align-items:center;
+    color:#287ba6;
+    display:inline-flex;
+    font-size:18px;
+    gap:3px;
+    margin-left:auto;
+    margin-right:8px;
+    position:relative;
+  }
+  .mobile-patient-notifications span,.drawer-unread-count {
+    align-items:center;
+    background:#dc3545;
+    border-radius:999px;
+    color:#fff;
+    display:inline-flex;
+    font-size:9px;
+    font-weight:700;
+    justify-content:center;
+    min-height:16px;
+    min-width:16px;
+    padding:2px 4px;
+  }
+  .patient-presence-controls {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .patient-presence-controls button {
+    min-height: 42px;
+    width: 100%;
+  }
+
+  .queue-turn-banner.persistent {
+    bottom: 10px;
+    left: 10px;
+    max-width: none;
+    right: 10px;
+  }
+}
