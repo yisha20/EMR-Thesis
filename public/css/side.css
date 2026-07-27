@@ -12552,7 +12552,25 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     flex: 1 1 auto;
     min-height: 0;
     overflow-x: hidden;
-    overflow-y: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 10px;
+    scrollbar-color: #9bc5dc transparent;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.emr-shell .desktop-sidebar .sidepanel-menu::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  body.emr-shell .desktop-sidebar .sidepanel-menu::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  body.emr-shell .desktop-sidebar .sidepanel-menu::-webkit-scrollbar-thumb {
+    background: #9bc5dc;
+    border-radius: 999px;
   }
 
   body.emr-shell .emr-workspace {
