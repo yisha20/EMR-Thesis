@@ -12573,6 +12573,28 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     border-radius: 999px;
   }
 
+  body.emr-shell .desktop-sidebar:not(.collapsed) .sidepanel-menu {
+    overflow-y: scroll;
+    scrollbar-color: #4b9ac3 #e5f1f7;
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+  }
+
+  body.emr-shell .desktop-sidebar:not(.collapsed) .sidepanel-menu::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  body.emr-shell .desktop-sidebar:not(.collapsed) .sidepanel-menu::-webkit-scrollbar-track {
+    background: #e5f1f7;
+    border-radius: 999px;
+  }
+
+  body.emr-shell .desktop-sidebar:not(.collapsed) .sidepanel-menu::-webkit-scrollbar-thumb {
+    background: #4b9ac3;
+    border: 2px solid #e5f1f7;
+    border-radius: 999px;
+  }
+
   body.emr-shell .emr-workspace {
     flex: 1 1 auto;
     height: auto;
