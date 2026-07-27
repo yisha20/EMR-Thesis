@@ -63,9 +63,7 @@
 
         @foreach($complaint->queues()->whereIn('status',['waiting','called','serving'])->get() as $queue)
         <div class="card card-body mb-3"><div class="d-flex flex-wrap justify-content-between align-items-center"><div><h3>{{ ucfirst($queue->queue_type) }} Queue · {{ $queue->ticket_number }}</h3><span class="badge badge-info">{{ ucfirst($queue->status) }}</span></div><div class="d-flex flex-wrap">
-            @foreach(['called'=>'Call / Recall','serving'=>'Start Service','completed'=>'Complete','missed'=>'Mark Missed'] as $state=>$label)
-            <form method="POST" action="{{route('clinic-queues.update',$queue)}}" class="ml-2">@csrf @method('PATCH')<input type="hidden" name="status" value="{{$state}}"><button class="btn btn-sm {{$state==='completed'?'btn-success':'btn-outline-primary'}}" data-confirm="{{$label}} queue number {{$queue->ticket_number}}?">{{$label}}</button></form>
-            @endforeach
+            <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-primary ml-2">Open Queue Dashboard</a>
         </div></div></div>
         @endforeach
         <a href="{{ route('student-complaints.index') }}" class="btn btn-light"><i class="fa fa-arrow-left"></i> Back to Queue</a>
@@ -190,15 +188,17 @@
                     @if($healthSummary)<div class="assessment-summary-actions"><a class="btn btn-sm btn-light" href="{{route('patient.assessment.staff',$healthSummary)}}">Open Full Health Assessment</a><a class="btn btn-sm btn-outline-primary" href="{{route('health-assessments.pdf',$healthSummary)}}">Download PDF</a></div>@endif
                 </div>
                 @if($healthSummary)
+                @php($allergyText=$healthSummary->medicalHistories->filter(function($item){return strpos($item->condition,'Allergies') === 0;})->pluck('notes')->filter()->implode(', '))
+                @if($allergyText)<div class="clinical-alert"><strong>Known Allergy Alert</strong><span>{{ $allergyText }}</span></div>@endif
                 <dl class="assessment-summary-list">
-                    <dt>Known allergies</dt><dd>{{$healthSummary->medicalHistories->filter(function($item){return strpos($item->condition,'Allergies') === 0;})->pluck('notes')->filter()->implode(', ') ?: ($healthSummary->medicalHistories->pluck('condition')->contains('Allergies') ? 'Reported' : 'None reported')}}</dd>
+                    <dt>Assessment status</dt><dd>{{str_replace('_',' ',ucfirst($healthSummary->status))}}</dd>
+                    <dt>Assessment date</dt><dd>{{optional($healthSummary->submitted_at)->format('d M Y') ?: 'Not provided'}}</dd>
+                    <dt>Known allergies</dt><dd>{{$allergyText ?: ($healthSummary->medicalHistories->pluck('condition')->contains('Allergies') ? 'Reported' : 'None reported')}}</dd>
                     <dt>Current medications</dt><dd>{{$healthSummary->medications->pluck('medication')->implode(', ') ?: 'None reported'}}</dd>
                     <dt>Past medical history</dt><dd>{{$healthSummary->medicalHistories->pluck('condition')->implode(', ') ?: 'None reported'}}</dd>
                     <dt>Family history</dt><dd>{{$healthSummary->familyHistories->pluck('condition')->implode(', ') ?: 'None reported'}}</dd>
                     <dt>Social history</dt><dd>Smoking: {{data_get($healthSummary,'social_history.smoking_status','Not reported')}}; Alcohol: {{data_get($healthSummary,'social_history.drinks_alcohol','Not reported')}}</dd>
-                    <dt>Registered dependents</dt><dd>{{optional($complaint->patientAccount)->dependents ? $complaint->patientAccount->dependents->count() : 0}}</dd>
-                    <dt>Assessment status</dt><dd>{{str_replace('_',' ',ucfirst($healthSummary->status))}}</dd>
-                    <dt>Assessment date</dt><dd>{{optional($healthSummary->submitted_at)->format('d M Y') ?: 'Draft'}}</dd>
+                    @if(optional($complaint->patientAccount)->patient_type==='dependent')<dt>Registered dependents</dt><dd>{{optional($complaint->patientAccount)->dependents ? $complaint->patientAccount->dependents->count() : 0}}</dd>@endif
                 </dl>
                 @else
                     <p class="text-muted mb-0">No digital health assessment is linked to this patient.</p>
@@ -222,9 +222,7 @@
         <section class="dashboard-panel active-queue-card">
             <div><p class="eyebrow">{{ucfirst($queue->queue_type)}} queue</p><h2>Queue Number {{$queue->ticket_number}}</h2><span class="badge badge-info">{{ucfirst($queue->status)}}</span></div>
             <div class="queue-control-actions">
-                @foreach(['called'=>'Call / Recall','serving'=>'Start Service','completed'=>'Complete','missed'=>'Mark Missed'] as $state=>$label)
-                <form method="POST" action="{{route('clinic-queues.update',$queue)}}">@csrf @method('PATCH')<input type="hidden" name="status" value="{{$state}}"><button class="btn btn-sm {{$state==='completed'?'btn-success':'btn-light'}}" data-confirm="{{$label}} queue number {{$queue->ticket_number}}?">{{$label}}</button></form>
-                @endforeach
+                <a href="{{ route('dashboard') }}" class="btn btn-sm btn-light">Open Queue Dashboard</a>
             </div>
         </section>
         @endforeach

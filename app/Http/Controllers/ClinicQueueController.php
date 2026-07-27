@@ -43,8 +43,26 @@ class ClinicQueueController extends Controller
     {
         $data=$request->validate(['status'=>'required|in:called,serving,completed,cancelled,missed,transferred','reason'=>'nullable|string|max:1000']);
         if (in_array($data['status'],['cancelled','transferred'],true)) $request->validate(['reason'=>'required|string|max:1000']);
-        $service->transition($queue,$data['status'],$request->user()->id,$data['reason']??null);
+        $queue=$service->transition($queue,$data['status'],$request->user()->id,$data['reason']??null);
+        if ($data['status']==='completed' && $queue->queue_type==='counter') {
+            $queue->complaint()->update(['status'=>'Counter Resolved','completed_at'=>now()]);
+        }
         return redirect()->back()->with('success','Queue status updated.');
+    }
+
+    public function callNext(Request $request, ClinicQueueService $service)
+    {
+        $queue=$service->callNext($request->user()->id);
+        return redirect()->back()->with('success',$queue->ticket_number.' is now being called.');
+    }
+
+    public function policy(Request $request)
+    {
+        $data=$request->validate(['policy'=>'required|in:alternating,strict_priority,manual']);
+        DB::table('clinic_queue_dispatch_states')->updateOrInsert(['queue_date'=>now()->toDateString()],[
+            'policy'=>$data['policy'],'updated_by'=>$request->user()->id,'updated_at'=>now(),'created_at'=>now(),
+        ]);
+        return redirect()->back()->with('success','Queue dispatch policy updated.');
     }
 
     public function status(Request $request)

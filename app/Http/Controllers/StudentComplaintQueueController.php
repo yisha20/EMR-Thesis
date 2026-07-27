@@ -269,6 +269,11 @@ class StudentComplaintQueueController extends Controller
                 'attending_staff_id' => $request->user()->id,
                 'attending_physician' => $request->user()->fullName(),
             ]);
+            $activeQueue = ClinicQueue::where('student_complaint_id',$complaint->id)->where('queue_type','consultation')
+                ->whereIn('status',['waiting','called'])->lockForUpdate()->first();
+            if ($activeQueue) {
+                app(ClinicQueueService::class)->transition($activeQueue,'serving',$request->user()->id,'Doctor started consultation.');
+            }
             $this->logStatus($complaint, $request, $fromStatus, 'In Consultation', 'Doctor started consultation.');
             ActivityLogger::log('started consultation (' . $complaint->student_name . ')');
         });
