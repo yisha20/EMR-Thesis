@@ -10,6 +10,8 @@ use App\Service;
 use App\StudentComplaint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\ClinicQueue;
+use App\Services\ClinicQueueService;
 
 class DashboardController extends Controller
 {
@@ -66,6 +68,16 @@ class DashboardController extends Controller
                 ->orderBy('forwarded_at')
                 ->first();
         }
+        $queueEntries=collect(); $nextQueue=null; $queuePolicy='alternating';
+        if (in_array($roleName,['Administrator','Nurse','Staff','Doctor'],true)) {
+            $queueEntries=ClinicQueue::with(['complaint.student.user','account.user','consultation.forwarder','doctor'])
+                ->where('queue_date',$today)->whereIn('status',['waiting','called','serving','missed'])
+                ->when($roleName==='Doctor',function($query){$query->where('queue_type','consultation');})
+                ->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'moderate' THEN 3 WHEN 'low' THEN 4 ELSE 5 END")
+                ->orderBy('created_at')->get();
+            $nextQueue=app(ClinicQueueService::class)->nextCandidate($today->toDateString());
+            $queuePolicy=DB::table('clinic_queue_dispatch_states')->where('queue_date',$today)->value('policy') ?: 'alternating';
+        }
 
         return view('dashboard', compact(
             'roleName',
@@ -73,7 +85,7 @@ class DashboardController extends Controller
             'analytics',
             'recentActivityLogs',
             'recentConsultations',
-            'nextConsultation'
+            'nextConsultation','queueEntries','nextQueue','queuePolicy'
         ));
     }
 

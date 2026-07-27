@@ -80,7 +80,8 @@
         </a>
     </section>
 
-    <section class="dashboard-panel next-student-card">
+    @include('dashboard.partials.queue-workspace')
+    <section class="dashboard-panel next-student-card" hidden>
         <div class="dashboard-panel-header"><div><p class="eyebrow">Doctor consultation queue</p><h2>Next Student in Queue</h2></div></div>
         @if ($nextConsultation)
             <div class="next-student-content">
