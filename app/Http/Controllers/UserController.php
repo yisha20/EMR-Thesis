@@ -9,16 +9,35 @@ use Illuminate\Http\Request;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Models\ActivityLog;
 
 class UserController extends Controller
 {
     /**
      * Display active users.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('role')->whereNull('deleted_at')->get();
+        $users = User::with(['role','patientAccount'])->whereNull('deleted_at')
+            ->when($request->filled('role'), function ($query) use ($request) {
+                $query->whereHas('role', function ($role) use ($request) { $role->where('name',$request->role); });
+            })->when($request->filled('account_type'), function ($query) use ($request) {
+                $query->whereHas('patientAccount', function ($account) use ($request) { $account->where('patient_type',$request->account_type); });
+            })->when($request->filled('status'), function ($query) use ($request) {
+                $query->where('status',$request->status);
+            })->get();
         return view('users.index', compact('users'));
+    }
+
+    public function updateAccountType(Request $request, User $user)
+    {
+        $data=$request->validate(['patient_type'=>'required|in:student,faculty,dependent']);
+        abort_unless($user->patientAccount,422,'This user has no patient account.');
+        $old=$user->patientAccount->patient_type;
+        $user->patientAccount->update(['patient_type'=>$data['patient_type']]);
+        ActivityLog::create(['user_id'=>$request->user()->id,'action'=>'Patient account type changed',
+            'description'=>'User #'.$user->id.' changed from '.$old.' to '.$data['patient_type'].'.']);
+        return redirect()->back()->with('success','Account type updated.');
     }
 
     /**

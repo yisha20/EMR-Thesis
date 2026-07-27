@@ -65,6 +65,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/health-assessments/{assessment}', 'HealthAssessmentController@show')->name('patient.assessment.staff');
     Route::post('/student-complaints/{complaint}/queue', 'ClinicQueueController@store')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.store');
     Route::patch('/clinic-queues/{queue}', 'ClinicQueueController@update')->name('clinic-queues.update');
+    Route::post('/clinic-queues/call-next', 'ClinicQueueController@callNext')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.call-next');
+    Route::patch('/clinic-queues/policy/today', 'ClinicQueueController@policy')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.policy');
     Route::patch('/patient-dependents/{dependent}/verify', 'PatientDependentController@verify')->middleware('role:Administrator,Nurse')->name('patient-dependents.verify');
     Route::get('dashboard', 'DashboardController@index')->name('dashboard');
     Route::get('/activity-logs', 'ActivityLogController@index')->name('activity.logs');
@@ -100,6 +102,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/complaint-options', 'CommonComplaintOptionController@store')->name('complaint-options.store');
         Route::put('/complaint-options/{option}', 'CommonComplaintOptionController@update')->name('complaint-options.update');
         Route::resource('users', 'UserController');
+        Route::patch('users/{user}/account-type', 'UserController@updateAccountType')->name('users.account-type');
         Route::get('users/archive/index', 'UserController@archive')->name('users.archive');
         Route::delete('users/force-delete/{id}', 'UserController@deleteUser')->name('users.delete');
         Route::get('users/restore/{id}', 'UserController@restoreUser')->name('users.restore');
