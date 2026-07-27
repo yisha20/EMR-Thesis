@@ -6,6 +6,7 @@
   $roleName = optional($user->role)->name ?? 'Unassigned';
   $roleClass = 'profile-role-badge';
   $birthDate = $user->birthdate ? \Carbon\Carbon::parse($user->birthdate)->format('F j, Y') : null;
+  $createdAt = $user->created_at ? $user->created_at->format('F j, Y \a\t g:i A') : null;
 
   if ($roleName === 'Administrator') {
       $roleClass .= ' is-admin';
@@ -25,6 +26,7 @@
       ['label' => 'Birth Date', 'value' => $birthDate],
       ['label' => 'Phone Number', 'value' => $user->phone_number],
       ['label' => 'License Number', 'value' => $user->license_number],
+      ['label' => 'Created At', 'value' => $createdAt],
   ];
 @endphp
 
