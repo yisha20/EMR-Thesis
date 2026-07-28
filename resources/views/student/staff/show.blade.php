@@ -227,6 +227,7 @@
                 @csrf
                 <div class="form-group"><label for="queue_type">Route to</label><select id="queue_type" name="queue_type" class="form-control"><option value="counter">Counter Service</option><option value="consultation">Doctor Consultation</option></select></div>
                 <div class="form-group"><label for="queue_priority">Staff Triage Priority</label><select id="queue_priority" name="priority" class="form-control">@foreach(['low','moderate','high','urgent'] as $priority)<option value="{{$priority}}">{{ucfirst($priority)}}</option>@endforeach</select></div>
+                <div class="form-group" data-queue-doctor hidden><label for="assigned_doctor_id">Assigned Doctor</label><select id="assigned_doctor_id" name="assigned_doctor_id" class="form-control" disabled required><option value="">Select an available doctor</option>@foreach($availableDoctors as $doctor)<option value="{{ $doctor->id }}">Dr. {{ $doctor->fullName() }} — {{ optional($doctor->doctorProfile)->specialty ?: 'General Medicine' }} — Available — {{ $doctor->waiting_consultations_count }} waiting</option>@endforeach</select></div>
                 <button class="btn btn-primary" data-queue-submit>Add to Counter Queue</button>
             </form>
         </section>
@@ -356,9 +357,15 @@
 (function () {
     var queueRoute = document.getElementById('queue_type');
     var queueSubmit = document.querySelector('[data-queue-submit]');
+    var queueDoctorGroup = document.querySelector('[data-queue-doctor]');
+    var queueDoctor = document.getElementById('assigned_doctor_id');
     function syncQueueLabel() {
         if (!queueRoute || !queueSubmit) return;
         queueSubmit.textContent = queueRoute.value === 'counter' ? 'Add to Counter Queue' : 'Forward to Consultation Queue';
+        if (queueDoctorGroup && queueDoctor) {
+            queueDoctorGroup.hidden = queueRoute.value !== 'consultation';
+            queueDoctor.disabled = queueRoute.value !== 'consultation';
+        }
     }
     if (queueRoute) {
         queueRoute.addEventListener('change', syncQueueLabel);

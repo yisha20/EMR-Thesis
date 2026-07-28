@@ -10,27 +10,53 @@ use App\Consultation;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\DB;
 use App\Services\ClinicNotificationService;
+use App\User;
+use Illuminate\Validation\ValidationException;
 
 class ClinicQueueController extends Controller
 {
     public function store(Request $request, StudentComplaint $complaint, ClinicQueueService $service)
     {
-        $data=$request->validate(['queue_type'=>'required|in:counter,consultation','priority'=>'required|in:low,moderate,high,urgent']);
+        $data=$request->validate([
+            'queue_type'=>'required|in:counter,consultation',
+            'priority'=>'required|in:low,moderate,high,urgent',
+            'assigned_doctor_id'=>'required_if:queue_type,consultation|nullable|integer|exists:users,id',
+        ]);
         abort_unless($complaint->status === 'Reviewed' || $complaint->queues()->whereIn('status',['waiting','called','serving'])->exists(), 422, 'The complaint must be reviewed before queue routing.');
         $queue=DB::transaction(function()use($request,$complaint,$service,$data){
             $complaint=StudentComplaint::whereKey($complaint->id)->lockForUpdate()->firstOrFail();
             $consultation=$complaint->consultation;
+            $doctor = null;
+            if ($data['queue_type'] === 'consultation') {
+                $doctor = User::whereKey($data['assigned_doctor_id'])->where('status', 'Active')
+                    ->whereNull('deleted_at')
+                    ->whereHas('role', function ($query) { $query->where('name', 'Doctor'); })
+                    ->whereHas('doctorProfile', function ($query) { $query->where('availability', 'available'); })
+                    ->lockForUpdate()->first();
+                if (! $doctor) {
+                    throw ValidationException::withMessages([
+                        'assigned_doctor_id' => 'The selected doctor is no longer available. Please select another doctor.',
+                    ]);
+                }
+            }
             if($data['queue_type']==='consultation'&&!$consultation){
                 abort_unless($complaint->patient_id,422,'Link the patient record before forwarding to consultation.');
                 $consultation=Consultation::create([
                     'student_complaint_id'=>$complaint->id,'patient_id'=>$complaint->patient_id,
                     'service_needed'=>'Medical Consultation','priority'=>ucfirst($data['priority']),
                     'forwarded_by'=>$request->user()->id,'forwarded_at'=>now(),'status'=>'Pending Consultation',
+                    'doctor_id'=>$doctor->id,
                 ]);
                 $complaint->status='Forwarded';
+            } elseif ($data['queue_type'] === 'consultation') {
+                abort_unless(in_array($consultation->status, ['Pending Consultation', 'Called'], true), 422);
+                $consultation->update(['doctor_id' => $doctor->id, 'priority' => ucfirst($data['priority'])]);
             }
             $complaint->triage_priority=$data['priority'];$complaint->save();
-            $queue=$service->enqueue($complaint,$data['queue_type'],$data['priority'],$request->user()->id,optional($consultation)->id);
+            $queue=$service->enqueue($complaint,$data['queue_type'],$data['priority'],$request->user()->id,optional($consultation)->id,optional($doctor)->id);
+            if ($doctor && (int) $queue->assigned_doctor_id !== (int) $doctor->id) {
+                $queue->update(['assigned_doctor_id' => $doctor->id, 'priority' => $data['priority']]);
+            }
             ActivityLog::create(['user_id'=>$request->user()->id,'action'=>$data['queue_type']==='counter'?'Added to counter queue':'Added to consultation queue','description'=>'Complaint #'.$complaint->id.' assigned queue number '.$queue->ticket_number.'.']);
             return $queue;
         });
