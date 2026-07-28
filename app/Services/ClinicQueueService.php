@@ -11,9 +11,9 @@ use Illuminate\Validation\ValidationException;
 
 class ClinicQueueService
 {
-    public function enqueue(StudentComplaint $complaint, $type, $priority, $actorId, $consultationId = null)
+    public function enqueue(StudentComplaint $complaint, $type, $priority, $actorId, $consultationId = null, $doctorId = null)
     {
-        return DB::transaction(function () use ($complaint, $type, $priority, $actorId, $consultationId) {
+        return DB::transaction(function () use ($complaint, $type, $priority, $actorId, $consultationId, $doctorId) {
             $existing = ClinicQueue::where('student_complaint_id', $complaint->id)->where('queue_type', $type)
                 ->whereIn('status', ['waiting','called','serving'])->lockForUpdate()->first();
             if ($existing) return $existing;
@@ -37,7 +37,7 @@ class ClinicQueueService
                 'queue_date'=>$date,'queue_type'=>$type,'ticket_number'=>$prefix.'-'.str_pad($next,3,'0',STR_PAD_LEFT),
                 'patient_account_id'=>$complaint->patient_account_id,'student_complaint_id'=>$complaint->id,
                 'consultation_id'=>$consultationId,'priority'=>strtolower($priority),'status'=>'waiting','position'=>$next,
-                'assigned_staff_id'=>$actorId,'assigned_nurse_id'=>$actorId,
+                'assigned_staff_id'=>$actorId,'assigned_nurse_id'=>$actorId,'assigned_doctor_id'=>$doctorId,
             ]);
             QueueStatusLog::create(['clinic_queue_id'=>$queue->id,'changed_by'=>$actorId,'to_status'=>'waiting','reason'=>'Added to '.$type.' queue.']);
             $notifier=app(ClinicNotificationService::class);

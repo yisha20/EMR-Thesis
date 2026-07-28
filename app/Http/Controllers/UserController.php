@@ -228,6 +228,14 @@ class UserController extends Controller
             'college_department' => $isStudent ? 'required|string|max:255' : 'nullable',
         ]);
 
+        if ($selectedRole && $selectedRole->name === 'Doctor') {
+            $user->doctorProfile()->firstOrCreate([], [
+                'availability' => 'available',
+                'prc_number' => $user->license_number,
+                'signature_status' => 'not_uploaded',
+            ]);
+        }
+
         $userFields = $request->only([
             'role_id',
             'email',

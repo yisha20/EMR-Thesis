@@ -122,6 +122,16 @@ class User extends Authenticatable
         return $this->hasOne(PatientAccount::class);
     }
 
+    public function doctorProfile()
+    {
+        return $this->hasOne(DoctorProfile::class);
+    }
+
+    public function doctorConsultations()
+    {
+        return $this->hasMany(Consultation::class, 'doctor_id');
+    }
+
     public function isPatientPortalUser()
     {
         return $this->patientAccount()->exists() || $this->isStudent();
