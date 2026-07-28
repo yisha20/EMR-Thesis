@@ -69,6 +69,26 @@ class PatientPortalExpansionTest extends TestCase
         }
     }
 
+    public function test_dependent_registration_preserves_type_and_links_verified_sponsor()
+    {
+        [$sponsorUser, , $sponsorAccount] = $this->patientUser('faculty', 'dependent-sponsor');
+        $email = 'dependent-'.uniqid().'@example.test';
+        $this->post(route('student.register.store'), [
+            'account_type' => 'dependent',
+            'sponsor_email' => $sponsorUser->email,
+            'dependent_relationship' => 'Child',
+            'first_name' => 'Portal', 'last_name' => 'Dependent',
+            'email' => $email, 'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'college_department' => 'Dependent', 'contact_number' => '09170000000',
+        ])->assertRedirect(route('login'));
+
+        $account = User::where('email', $email)->firstOrFail()->patientAccount;
+        $this->assertSame('dependent', $account->patient_type);
+        $this->assertSame($sponsorAccount->id, $account->sponsor_patient_account_id);
+        $this->assertSame('pending_verification', $account->verification_status);
+    }
+
     public function test_unified_login_ignores_client_account_type_and_uses_stored_account_type()
     {
         [$user]=$this->patientUser('faculty');

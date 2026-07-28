@@ -7,7 +7,7 @@
             <div class="login-card-header">
                 <p class="eyebrow">Clinic patient portal</p>
                 <h1>Create your clinic account</h1>
-                <span>Register as a student or faculty/employee.</span>
+                <span>Register as a student, faculty/employee, or authorized dependent.</span>
             </div>
 
             <form method="POST" action="{{ route('student.register.store') }}" class="student-register-form">
@@ -22,8 +22,19 @@
                         <select id="account_type" name="account_type" class="form-control @error('account_type') is-invalid @enderror" required>
                             <option value="student" {{ old('account_type', 'student') === 'student' ? 'selected' : '' }}>Student</option>
                             <option value="faculty" {{ old('account_type') === 'faculty' ? 'selected' : '' }}>Faculty / Employee</option>
+                            <option value="dependent" {{ old('account_type') === 'dependent' ? 'selected' : '' }}>Dependent</option>
                         </select>
                         @error('account_type')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="sponsor_email">Sponsor Account Email (Dependents)</label>
+                        <input id="sponsor_email" type="email" name="sponsor_email" value="{{ old('sponsor_email') }}" class="form-control @error('sponsor_email') is-invalid @enderror">
+                        @error('sponsor_email')<span class="invalid-feedback">{{ $message }}</span>@enderror
+                    </div>
+                    <div class="form-group">
+                        <label for="dependent_relationship">Relationship to Sponsor (Dependents)</label>
+                        <input id="dependent_relationship" name="dependent_relationship" value="{{ old('dependent_relationship') }}" class="form-control @error('dependent_relationship') is-invalid @enderror">
+                        @error('dependent_relationship')<span class="invalid-feedback">{{ $message }}</span>@enderror
                     </div>
                     <div class="form-group">
                         <label for="student_id_number">Student ID Number</label>

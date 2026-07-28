@@ -28,9 +28,11 @@ class StudentAuthController extends Controller
     {
         $request->merge(['account_type' => $request->input('account_type', 'student')]);
         $data = $request->validate([
-            'account_type' => 'required|in:student,faculty',
+            'account_type' => 'required|in:student,faculty,dependent',
             'student_id_number' => 'required_if:account_type,student|nullable|string|max:50|unique:students,student_id_number|unique:patient_accounts,student_id_number',
             'faculty_id_number' => 'required_if:account_type,faculty|nullable|string|max:50|unique:patient_accounts,faculty_id_number',
+            'sponsor_email' => 'required_if:account_type,dependent|nullable|email|max:255',
+            'dependent_relationship' => 'required_if:account_type,dependent|nullable|string|max:100',
             'first_name' => 'required|string|max:100',
             'middle_name' => 'nullable|string|max:100',
             'last_name' => 'required|string|max:100',
@@ -53,7 +55,17 @@ class StudentAuthController extends Controller
         try {
             DB::transaction(function () use ($data) {
                 $studentRole = Role::whereRaw('LOWER(name) = ?', ['student'])->firstOrFail();
-                $identifier = $data['account_type'] === 'student' ? $data['student_id_number'] : $data['faculty_id_number'];
+                $identifier = $data['account_type'] === 'student'
+                    ? $data['student_id_number']
+                    : ($data['account_type'] === 'faculty'
+                        ? $data['faculty_id_number']
+                        : 'DEP-'.strtoupper(substr(sha1($data['email']), 0, 16)));
+                $sponsor = null;
+                if ($data['account_type'] === 'dependent') {
+                    $sponsor = PatientAccount::whereHas('user', function ($query) use ($data) {
+                        $query->where('email', $data['sponsor_email'])->where('status', 'Active');
+                    })->where('verification_status', 'verified')->firstOrFail();
+                }
                 $fullName = trim(implode(' ', array_filter([
                     $data['first_name'],
                     $data['middle_name'] ?? null,
@@ -103,7 +115,9 @@ class StudentAuthController extends Controller
                     'patient_type' => $data['account_type'],
                     'student_id_number' => $data['account_type'] === 'student' ? $identifier : null,
                     'faculty_id_number' => $data['account_type'] === 'faculty' ? $identifier : null,
-                    'verification_status' => 'verified',
+                    'sponsor_patient_account_id' => optional($sponsor)->id,
+                    'dependent_relationship' => $data['dependent_relationship'] ?? null,
+                    'verification_status' => $data['account_type'] === 'dependent' ? 'pending_verification' : 'verified',
                     'health_assessment_status' => 'not_started',
                 ]);
 
