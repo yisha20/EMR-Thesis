@@ -58,6 +58,7 @@ class PrescriptionController extends Controller
         $this->authorizeAccess($request, $prescription);
         $this->authorizeExport($request);
         abort_unless($prescription->pdf_path && Storage::disk('local')->exists($prescription->pdf_path), 404);
+        ActivityLogger::log('downloaded prescription', $prescription->prescription_number);
 
         return response()->download(Storage::disk('local')->path($prescription->pdf_path), $prescription->prescription_number . '.pdf');
     }
