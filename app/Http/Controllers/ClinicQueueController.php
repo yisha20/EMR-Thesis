@@ -50,6 +50,11 @@ class ClinicQueueController extends Controller
                 $complaint->status='Forwarded';
             } elseif ($data['queue_type'] === 'consultation') {
                 abort_unless(in_array($consultation->status, ['Pending Consultation', 'Called'], true), 422);
+                if ($consultation->doctor_id && (int) $consultation->doctor_id !== (int) $doctor->id) {
+                    throw ValidationException::withMessages([
+                        'assigned_doctor_id' => 'This consultation is already assigned. Use the audited reassignment action.',
+                    ]);
+                }
                 $consultation->update(['doctor_id' => $doctor->id, 'priority' => ucfirst($data['priority'])]);
             }
             $complaint->triage_priority=$data['priority'];$complaint->save();
