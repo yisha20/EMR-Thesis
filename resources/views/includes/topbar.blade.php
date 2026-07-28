@@ -171,6 +171,8 @@ $topbarUnreadCount = $showClinicNotifications
         count.textContent = data.unread_count;
         count.classList.toggle('is-empty', data.unread_count === 0);
         list.innerHTML = '';
+        var oldOverflow = stack && stack.querySelector('.clinic-toast-overflow');
+        if (oldOverflow) oldOverflow.remove();
         if (!data.notifications.length) {
             var empty = document.createElement('p');
             empty.className = 'clinic-notification-empty';
@@ -196,6 +198,13 @@ $topbarUnreadCount = $showClinicNotifications
 
             showToast(notification);
         });
+        if (stack && data.notifications.filter(function (item) { return !item.is_read; }).length > 4) {
+            var overflow = document.createElement('a');
+            overflow.className = 'clinic-toast-overflow';
+            overflow.href = '{{ route('notifications.index') }}';
+            overflow.textContent = (data.notifications.filter(function (item) { return !item.is_read; }).length - 4) + ' more notifications';
+            stack.appendChild(overflow);
+        }
     }
 
     function poll() {

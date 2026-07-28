@@ -83,6 +83,8 @@ class ClinicNotificationService
             'queue_id'=>$queue->id,'complaint_id'=>$queue->student_complaint_id,
             'patient_id'=>optional($queue->complaint)->patient_id,'consultation_id'=>$queue->consultation_id,
             'action_url'=>route('student.dashboard'),
+            'priority'=>in_array($type, ['patient_next_in_queue','patient_called','patient_recalled'], true)
+                ? 'persistent' : 'routine',
         ],$event);
     }
 
