@@ -25,7 +25,7 @@ Route::view('/about', 'about');
 
 Route::view('/forgot-password', 'auth.forgot_password')->name('auth.forgot_password');
 
-Route::post('/forgot-password', 'ForgotPasswordController@send')->name('auth.send_code');
+Route::post('/forgot-password', 'ForgotPasswordController@send')->middleware('throttle:5,1')->name('auth.send_code');
 Route::get('/forgot-password/verify/{email}', 'ForgotPasswordController@verify')->name('auth.verify');
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', 'NotificationController@index')->name('notifications.index');

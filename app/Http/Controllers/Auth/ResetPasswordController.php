@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\ResetsPasswords;
 use Illuminate\Http\Request;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\Auth;
 
 class ResetPasswordController extends Controller
 {
@@ -23,22 +27,41 @@ class ResetPasswordController extends Controller
 
     protected function redirectTo()
     {
-        $user = auth()->user();
+        return route('login');
+    }
 
-        return $user && $user->isStudent()
-            ? route('student.dashboard')
-            : route('dashboard');
+    protected function rules()
+    {
+        return [
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|confirmed|min:8',
+        ];
+    }
+
+    protected function resetPassword($user, $password)
+    {
+        $user->forceFill([
+            'password' => Hash::make($password),
+            'remember_token' => null,
+            'first_login' => false,
+            'must_change_password' => false,
+        ])->save();
+
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'Password successfully reset',
+            'description' => 'Password reset completed; persistent login token invalidated.',
+        ]);
+        event(new PasswordReset($user));
     }
 
     protected function sendResetResponse(Request $request, $response)
     {
-        if ($request->user()) {
-            $request->user()->forceFill([
-                'first_login' => false,
-                'must_change_password' => false,
-            ])->save();
-        }
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
-        return parent::sendResetResponse($request, $response);
+        return redirect()->route('login')->with('status', trans($response));
     }
 }

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use App\Models\ActivityLog;
 
 class LoginController extends Controller
@@ -20,20 +19,12 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
-        $account = $user->ensurePatientAccount();
-        $actual = optional($account)->patient_type;
-        $selected = $request->input('account_type', $actual ?: 'staff');
-        if (($actual && $selected !== $actual) || (! $actual && $selected !== 'staff')) {
-            Auth::logout();
-            throw ValidationException::withMessages([
-                'account_type' => ['The selected account type does not match this registered account.'],
-            ]);
-        }
+        $user->ensurePatientAccount();
         $user->forceFill(['last_login_at' => now()])->save();
         ActivityLog::create([
             'user_id'=>$user->id,
-            'action'=>'Account type selected',
-            'description'=>'Authenticated through the '.($actual ?: 'staff').' account workflow.',
+            'action'=>'User logged in',
+            'description'=>'Authenticated through the unified login.',
         ]);
     }
 

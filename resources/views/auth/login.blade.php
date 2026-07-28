@@ -25,18 +25,6 @@
             @csrf
 
             <div class="form-group">
-                <label for="account_type">Account Type</label>
-                <select id="account_type" name="account_type" class="form-control @error('account_type') is-invalid @enderror" required>
-                    <option value="">Select account type</option>
-                    <option value="student" {{ old('account_type') === 'student' ? 'selected' : '' }}>Student</option>
-                    <option value="faculty" {{ old('account_type') === 'faculty' ? 'selected' : '' }}>Faculty / Employee</option>
-                    <option value="dependent" {{ old('account_type') === 'dependent' ? 'selected' : '' }}>Dependent</option>
-                    <option value="staff" {{ old('account_type') === 'staff' ? 'selected' : '' }}>Clinic Staff</option>
-                </select>
-                @error('account_type')<span class="invalid-feedback d-block"><strong>{{ $message }}</strong></span>@enderror
-            </div>
-
-            <div class="form-group">
                 <label for="email">{{ __('Email Address') }}</label>
                 <div class="input-icon">
                     <i class="fa fa-envelope-o"></i>
@@ -72,6 +60,7 @@
                     <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
                     <label class="form-check-label" for="remember">{{ __('Remember Me') }}</label>
                 </div>
+                <a href="{{ route('auth.forgot_password') }}">Forgot Password?</a>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block login-submit">

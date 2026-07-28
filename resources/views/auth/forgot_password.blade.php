@@ -14,12 +14,12 @@
                 @endif
 
                 <div class="card-body">
-                    <form method="POST" action="{{ route('auth.forgot_password') }}">
+                    <form method="POST" action="{{ route('auth.send_code') }}">
                         @csrf
 
                         <div class="jumbotron text-center">
                             <h1>Forgot Password</h1>
-                            <p>We will send a verification code to your email address.</p>
+                            <p>Enter your email address and we will send a time-limited password reset link.</p>
                         </div>
                     <div class="form-group row">
                         <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label>

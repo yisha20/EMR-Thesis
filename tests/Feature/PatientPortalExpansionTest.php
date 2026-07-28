@@ -39,12 +39,13 @@ class PatientPortalExpansionTest extends TestCase
         }
     }
 
-    public function test_selected_login_type_must_match_database_account_type()
+    public function test_unified_login_ignores_client_account_type_and_uses_stored_account_type()
     {
         [$user]=$this->patientUser('faculty');
         $this->post(route('login'),['account_type'=>'student','email'=>$user->email,'password'=>'password123'])
-            ->assertSessionHasErrors('account_type');
-        $this->assertGuest();
+            ->assertRedirect(route('patient.assessment.edit'));
+        $this->assertAuthenticatedAs($user);
+        $this->assertSame('faculty', $user->fresh()->patientAccount->patient_type);
     }
 
     public function test_complaint_has_optional_details_and_patient_cannot_assign_priority()
