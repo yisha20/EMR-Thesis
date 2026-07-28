@@ -73,6 +73,9 @@ class PrescriptionController extends Controller
         }
 
         abort_unless(in_array($roleName, ['Administrator', 'Doctor', 'Nurse', 'Staff'], true), 403);
+        if ($roleName === 'Doctor') {
+            abort_unless((int) $prescription->doctor_id === (int) $request->user()->id, 403);
+        }
     }
 
     private function authorizeExport(Request $request)

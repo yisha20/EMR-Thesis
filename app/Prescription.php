@@ -8,7 +8,7 @@ class Prescription extends Model
 {
     protected $guarded = [];
 
-    protected $casts = ['medications' => 'array'];
+    protected $casts = ['medications' => 'array', 'template_snapshot' => 'array'];
     protected $dates = ['follow_up_date'];
 
     public function consultation() { return $this->belongsTo(Consultation::class); }

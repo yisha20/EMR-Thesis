@@ -10,9 +10,19 @@ class PrescriptionPdfService
 {
     public function generate(Prescription $prescription)
     {
-        $prescription->loadMissing(['patient', 'doctor', 'consultation.complaint']);
+        $prescription->loadMissing(['patient', 'doctor.doctorProfile', 'consultation.complaint']);
         $path = 'prescriptions/' . $prescription->created_at->format('Y') . '/' . $prescription->prescription_number . '.pdf';
-        $pdf = Pdf::loadView('prescriptions.pdf', compact('prescription'))->setPaper('a4', 'portrait');
+        $signatureData = null;
+        $profile = optional($prescription->doctor)->doctorProfile;
+        if ($profile && $profile->signature_status === 'verified'
+            && (int) $profile->signature_version === (int) $prescription->signature_version
+            && $profile->signature_path && Storage::disk('local')->exists($profile->signature_path)) {
+            $extension = pathinfo($profile->signature_path, PATHINFO_EXTENSION) ?: 'png';
+            $signatureData = 'data:image/'.$extension.';base64,'.base64_encode(
+                Storage::disk('local')->get($profile->signature_path)
+            );
+        }
+        $pdf = Pdf::loadView('prescriptions.pdf', compact('prescription', 'signatureData'))->setPaper('a4', 'portrait');
         Storage::disk('local')->put($path, $pdf->output());
         $prescription->update(['pdf_path' => $path]);
 
