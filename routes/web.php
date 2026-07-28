@@ -76,6 +76,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/clinic-queues/live', 'ClinicQueueController@live')->name('clinic-queues.live');
     Route::post('/clinic-queues/{queue}/transfer', 'ClinicQueueController@transfer')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.transfer');
     Route::post('/clinic-queues/{queue}/requeue', 'ClinicQueueController@requeue')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.requeue');
+    Route::post('/nurse/queue/{queue}/start-counter-service', 'CounterServiceController@start')->middleware('role:Administrator,Nurse,Staff')->name('counter-services.start');
+    Route::get('/nurse/counter-services/{queue}', 'CounterServiceController@show')->middleware('role:Administrator,Nurse,Staff')->name('counter-services.show');
+    Route::post('/nurse/counter-services/{queue}/complete', 'CounterServiceController@complete')->middleware('role:Administrator,Nurse,Staff')->name('counter-services.complete');
     Route::patch('/patient-dependents/{dependent}/verify', 'PatientDependentController@verify')->middleware('role:Administrator,Nurse')->name('patient-dependents.verify');
     Route::get('dashboard', 'DashboardController@index')->name('dashboard');
     Route::get('/activity-logs', 'ActivityLogController@index')->name('activity.logs');

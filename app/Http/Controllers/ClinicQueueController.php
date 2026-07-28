@@ -118,23 +118,43 @@ class ClinicQueueController extends Controller
 
     public function transfer(Request $request, ClinicQueue $queue, ClinicQueueService $service)
     {
-        $data=$request->validate(['queue_type'=>'required|in:counter,consultation','reason'=>'required|string|max:1000']);
+        $data=$request->validate([
+            'queue_type'=>'required|in:counter,consultation',
+            'reason'=>'required|string|max:1000',
+            'assigned_doctor_id'=>'required_if:queue_type,consultation|nullable|integer|exists:users,id',
+        ]);
         abort_if($data['queue_type']===$queue->queue_type,422,'Select a different destination queue.');
         $new=DB::transaction(function() use ($queue,$data,$request,$service) {
             $queue=ClinicQueue::whereKey($queue->id)->lockForUpdate()->firstOrFail();
             abort_unless(in_array($queue->status,['waiting','called'],true),422,'This queue entry cannot be transferred.');
             $complaint=StudentComplaint::whereKey($queue->student_complaint_id)->lockForUpdate()->firstOrFail();
             $consultation=$complaint->consultation;
+            $doctor = null;
+            if ($data['queue_type'] === 'consultation') {
+                $doctor = User::whereKey($data['assigned_doctor_id'])->where('status', 'Active')
+                    ->whereNull('deleted_at')
+                    ->whereHas('role', function ($query) { $query->where('name', 'Doctor'); })
+                    ->whereHas('doctorProfile', function ($query) { $query->where('availability', 'available'); })
+                    ->lockForUpdate()->first();
+                if (! $doctor) {
+                    throw ValidationException::withMessages([
+                        'assigned_doctor_id' => 'The selected doctor is no longer available. Please select another doctor.',
+                    ]);
+                }
+            }
             if ($data['queue_type']==='consultation' && ! $consultation) {
                 abort_unless($complaint->patient_id,422,'Link the patient record before consultation transfer.');
                 $consultation=Consultation::create(['student_complaint_id'=>$complaint->id,'patient_id'=>$complaint->patient_id,
                     'service_needed'=>'Medical Consultation','priority'=>ucfirst($queue->priority),
-                    'forwarded_by'=>$request->user()->id,'forwarded_at'=>now(),'status'=>'Pending Consultation']);
+                    'forwarded_by'=>$request->user()->id,'forwarded_at'=>now(),'status'=>'Pending Consultation',
+                    'doctor_id'=>$doctor->id]);
                 $complaint->update(['status'=>'Forwarded']);
+            } elseif ($doctor) {
+                $consultation->update(['doctor_id' => $doctor->id, 'status' => 'Pending Consultation']);
             }
             $service->transition($queue,'transferred',$request->user()->id,$data['reason']);
             $new=$service->enqueue($complaint,$data['queue_type'],$queue->priority,$request->user()->id,
-                $data['queue_type']==='consultation'?optional($consultation)->id:null);
+                $data['queue_type']==='consultation'?optional($consultation)->id:null, optional($doctor)->id);
             $new->update(['transferred_from_queue_id'=>$queue->id]);
             return $new;
         });

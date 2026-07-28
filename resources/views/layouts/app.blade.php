@@ -285,6 +285,18 @@
                 }
             });
         })();
+
+        document.addEventListener('submit', function (event) {
+            var button = event.submitter || event.target.querySelector('[type="submit"], button:not([type])');
+            if (!button) return;
+            var loading = button.getAttribute('data-submit-loading');
+            if (!loading) return;
+            window.setTimeout(function () {
+                button.disabled = true;
+                button.textContent = loading;
+                button.setAttribute('aria-busy', 'true');
+            }, 0);
+        });
     </script>
     @stack('js')
 </body>
