@@ -27,6 +27,7 @@ class NotificationController extends Controller
                 'notification_type'=>$notification->notification_type ?: $notification->type,
                 'view_queue_url' => $notification->action_url ?: $this->defaultAction($notification),
                 'read_url' => route('notifications.read', $notification),
+                'priority' => $notification->priority ?: 'routine',
             ];
         });
 

@@ -127,6 +127,7 @@ $topbarUnreadCount = $showClinicNotifications
 @endif
 
 @if ($showClinicNotifications)
+<div class="clinic-toast-stack" data-toast-stack aria-live="polite" aria-atomic="false"></div>
 <script>
 (function () {
     var menu = document.querySelector('[data-notification-menu]');
@@ -134,6 +135,37 @@ $topbarUnreadCount = $showClinicNotifications
     var count = menu.querySelector('[data-notification-count]');
     var list = menu.querySelector('[data-notification-list]');
     var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    var stack = document.querySelector('[data-toast-stack]');
+
+    function showToast(notification) {
+        var seenKey = 'clinic-notification-seen-' + notification.id;
+        if (!stack || notification.is_read || sessionStorage.getItem(seenKey)) return;
+        var toast = document.createElement('aside');
+        toast.className = 'clinic-stack-toast priority-' + notification.priority;
+        toast.dataset.notificationId = notification.id;
+        toast.innerHTML = '<div><strong></strong><p></p><a></a></div><button type="button" aria-label="Dismiss notification">&times;</button>';
+        toast.querySelector('strong').textContent = notification.title;
+        toast.querySelector('p').textContent = notification.message;
+        toast.querySelector('a').href = notification.view_queue_url;
+        toast.querySelector('a').textContent = 'Open';
+        toast.querySelector('button').addEventListener('click', function () {
+            toast.classList.remove('is-visible');
+            window.setTimeout(function () { toast.remove(); }, 250);
+        });
+        var visible = stack.querySelectorAll('.clinic-stack-toast');
+        if (visible.length >= 4) visible[0].remove();
+        stack.appendChild(toast);
+        window.requestAnimationFrame(function () { toast.classList.add('is-visible'); });
+        sessionStorage.setItem(seenKey, '1');
+        if (notification.priority !== 'persistent') {
+            window.setTimeout(function () {
+                if (toast.parentNode) {
+                    toast.classList.remove('is-visible');
+                    window.setTimeout(function () { toast.remove(); }, 250);
+                }
+            }, 10000);
+        }
+    }
 
     function render(data) {
         count.textContent = data.unread_count;
@@ -162,15 +194,7 @@ $topbarUnreadCount = $showClinicNotifications
             }
             actions.appendChild(queue); item.append(copy, actions); list.appendChild(item);
 
-            var toast = document.querySelector('[data-consultation-toast]');
-            var seenKey = 'clinic-notification-seen-' + notification.id;
-            if (toast && !notification.is_read && !sessionStorage.getItem(seenKey)) {
-                toast.querySelector('[data-toast-title]').textContent = notification.title;
-                toast.querySelector('[data-toast-message]').textContent = notification.message;
-                toast.querySelector('[data-toast-queue]').href = notification.view_queue_url;
-                toast.classList.add('is-visible');
-                sessionStorage.setItem(seenKey, '1');
-            }
+            showToast(notification);
         });
     }
 
@@ -185,9 +209,6 @@ $topbarUnreadCount = $showClinicNotifications
         var button = event.target.closest('[data-read-url]');
         if (!button) return;
         fetch(button.dataset.readUrl, { method: 'POST', credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf } }).then(poll);
-    });
-    document.addEventListener('click', function (event) {
-        if (event.target.closest('[data-toast-close]')) document.querySelector('[data-consultation-toast]').classList.remove('is-visible');
     });
     poll();
     window.setInterval(function () { if (!document.hidden) poll(); }, {{ config('clinic_queue.staff_poll_seconds',30) * 1000 }});

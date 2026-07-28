@@ -32,6 +32,8 @@ class ClinicNotificationService
             'related_queue_id'=>$context['queue_id'] ?? null,
             'related_consultation_id'=>$context['consultation_id'] ?? null,
             'action_url'=>$context['action_url'] ?? null,'is_read'=>false,'delivered_at'=>now(),
+            'priority'=>$context['priority'] ?? 'routine',
+            'display_until'=>$context['display_until'] ?? null,
         ]);
     }
 
@@ -61,7 +63,8 @@ class ClinicNotificationService
             .($forwardedBy?' · Forwarded by: '.$forwardedBy:'').'.';
         $context=['queue_id'=>$queue->id,'complaint_id'=>$queue->student_complaint_id,
             'patient_id'=>optional($queue->complaint)->patient_id,'consultation_id'=>$queue->consultation_id,
-            'action_url'=>route('dashboard')];
+            'action_url'=>route('dashboard'),
+            'priority'=>in_array($queue->priority, ['urgent','high']) ? 'persistent' : 'routine'];
         if ($queue->assigned_doctor_id) {
             $this->sendToUser($queue->assigned_doctor_id,'patient_forwarded_to_consultation','New Consultation in Queue',$message,$context);
         } else {

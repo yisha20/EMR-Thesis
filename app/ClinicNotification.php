@@ -10,7 +10,7 @@ class ClinicNotification extends Model
     protected $table = 'notifications';
     protected $guarded = [];
     protected $casts = ['is_read' => 'boolean'];
-    protected $dates = ['read_at', 'delivered_at'];
+    protected $dates = ['read_at', 'delivered_at', 'display_until', 'acknowledged_at'];
 
     public function user() { return $this->belongsTo(User::class); }
     public function consultation() { return $this->belongsTo(Consultation::class, 'related_consultation_id'); }

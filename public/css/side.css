@@ -12610,6 +12610,45 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   }
 }
 
+.clinic-toast-stack {
+  display: grid;
+  gap: 0.75rem;
+  position: fixed;
+  right: 1rem;
+  top: 76px;
+  width: min(380px, calc(100vw - 2rem));
+  z-index: 1090;
+}
+
+.clinic-stack-toast {
+  align-items: flex-start;
+  background: #fff;
+  border: 1px solid var(--emr-line);
+  border-left: 4px solid var(--emr-primary);
+  border-radius: 12px;
+  box-shadow: 0 14px 38px rgba(20, 75, 110, 0.2);
+  display: flex;
+  gap: 0.75rem;
+  opacity: 0;
+  padding: 0.9rem 1rem;
+  transform: translateX(24px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.clinic-stack-toast.is-visible { opacity: 1; transform: translateX(0); }
+.clinic-stack-toast.priority-persistent { border-left-color: var(--emr-danger); }
+.clinic-stack-toast p { color: var(--emr-muted); font-size: 0.82rem; margin: 0.25rem 0; }
+.clinic-stack-toast a { color: var(--emr-primary); font-size: 0.78rem; font-weight: 800; }
+.clinic-stack-toast > button { background: transparent; border: 0; color: var(--emr-muted); margin-left: auto; }
+
+@media (max-width: 767px) {
+  .clinic-toast-stack { left: 0.75rem; right: 0.75rem; top: 72px; width: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clinic-stack-toast { transition: none; }
+}
+
 .complaint-review-page,
 .assessment-record-page,
 .user-table-card {
