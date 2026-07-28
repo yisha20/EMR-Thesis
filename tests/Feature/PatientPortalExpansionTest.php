@@ -18,10 +18,40 @@ use App\ClinicNotification;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Notification;
 
 class PatientPortalExpansionTest extends TestCase
 {
     use DatabaseTransactions;
+
+    public function test_login_form_is_unified_and_has_recovery_and_remember_controls()
+    {
+        $this->get(route('login'))->assertOk()
+            ->assertDontSee('Account Type')
+            ->assertSee('Remember Me')
+            ->assertSee('Forgot Password?');
+    }
+
+    public function test_password_recovery_response_does_not_disclose_account_existence()
+    {
+        Notification::fake();
+        [$user] = $this->patientUser('student', 'recovery-generic');
+        $message = 'If an account matches that email address, a password reset link has been sent.';
+        $this->post(route('auth.send_code'), ['email' => $user->email])
+            ->assertSessionHas('success', $message);
+        $this->post(route('auth.send_code'), ['email' => 'absent-'.uniqid().'@example.test'])
+            ->assertSessionHas('success', $message);
+    }
+
+    public function test_remember_me_uses_framework_remember_token()
+    {
+        [$user] = $this->patientUser('student', 'remember-user');
+        $user->forceFill(['remember_token' => null])->save();
+        $this->post(route('login'), [
+            'email' => $user->email, 'password' => 'password123', 'remember' => '1',
+        ])->assertRedirect();
+        $this->assertNotEmpty($user->fresh()->remember_token);
+    }
 
     public function test_new_student_and_faculty_accounts_are_gated_by_health_assessment()
     {
