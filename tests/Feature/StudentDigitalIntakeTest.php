@@ -10,6 +10,7 @@ use App\HealthExaminationRecord;
 use App\Student;
 use App\StudentComplaint;
 use App\User;
+use App\ClinicQueue;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -488,6 +489,9 @@ class StudentDigitalIntakeTest extends TestCase
             'user_id' => $unselectedDoctor->id,
             'notification_type' => 'patient_forwarded_to_consultation',
         ]);
+        $ticket = ClinicQueue::where('student_complaint_id', $complaint->id)->value('ticket_number');
+        $this->actingAs($unselectedDoctor)->get(route('dashboard'))->assertOk()->assertDontSee($ticket);
+        $this->actingAs($doctor)->get(route('dashboard'))->assertOk()->assertSee($ticket);
         $this->assertDatabaseHas('medical_records', [
             'id' => $complaint->medical_record_id,
             'record_type' => 'Consultation',
@@ -496,18 +500,34 @@ class StudentDigitalIntakeTest extends TestCase
         ]);
 
         $this->actingAs($nurse)
-            ->post(route('student-complaints.start-consultation', $complaint))
+            ->post(route('doctor.consultations.start', $complaint->consultation))
             ->assertStatus(403);
 
+        $this->actingAs($unselectedDoctor)
+            ->get(route('doctor.patients.health-record', $complaint->patient_id))
+            ->assertStatus(403);
         $this->actingAs($doctor)
-            ->post(route('student-complaints.start-consultation', $complaint))
-            ->assertRedirect();
+            ->get(route('doctor.patients.health-record', $complaint->patient_id))
+            ->assertOk();
+        $this->actingAs($unselectedDoctor)
+            ->post(route('doctor.consultations.start', $complaint->consultation))
+            ->assertStatus(403);
+        $this->actingAs($doctor)
+            ->post(route('doctor.consultations.start', $complaint->consultation))
+            ->assertRedirect(route('student-complaints.show', $complaint));
 
         $this->assertDatabaseHas('consultations', [
             'student_complaint_id' => $complaint->id,
             'status' => 'In Consultation',
             'doctor_id' => $doctor->id,
         ]);
+        $this->assertDatabaseHas('clinic_queues', [
+            'consultation_id' => $complaint->consultation->id,
+            'status' => 'serving',
+        ]);
+        $this->actingAs($doctor)
+            ->post(route('doctor.consultations.start', $complaint->consultation))
+            ->assertStatus(422);
 
         $completionResponse = $this->actingAs($doctor)
             ->post(route('student-complaints.complete-consultation', $complaint), [
@@ -557,6 +577,7 @@ class StudentDigitalIntakeTest extends TestCase
 
         $notification = \App\ClinicNotification::where('user_id', $nurse->id)
             ->where('related_consultation_id', $complaint->consultation->id)
+            ->where('notification_type', 'consultation_completed')
             ->firstOrFail();
         $this->assertSame('consultation_completed', $notification->type);
         $this->assertFalse($notification->is_read);
@@ -570,7 +591,7 @@ class StudentDigitalIntakeTest extends TestCase
         $this->actingAs($nurse)
             ->get(route('notifications.unread'))
             ->assertStatus(200)
-            ->assertJsonPath('unread_count', 1)
+            ->assertJsonPath('unread_count', 2)
             ->assertJsonPath('notifications.0.id', $notification->id);
         $this->actingAs($nurse)->post(route('notifications.read', $notification))->assertRedirect();
         $this->assertDatabaseHas('notifications', ['id' => $notification->id, 'is_read' => true]);
@@ -788,9 +809,8 @@ class StudentDigitalIntakeTest extends TestCase
         $this->actingAs($doctor)
             ->get(route('medical-records.index'))
             ->assertStatus(200)
-            ->assertSee('Patient, Index')
-            ->assertSee('MR-2026-002')
-            ->assertSee('Persistent headache');
+            ->assertSee('Medical Records')
+            ->assertDontSee('Persistent headache');
     }
 
     public function test_student_dashboard_only_shows_current_concern_and_clinic_support()

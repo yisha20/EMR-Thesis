@@ -156,20 +156,67 @@ class PatientPortalExpansionTest extends TestCase
             'type'=>'Student','status'=>'Active','added_by'=>$owner->id]);
         $account->update(['patient_id'=>$patient->id,'health_assessment_status'=>'patient_submitted']);
         $nurse=$this->staffUser('Nurse','queue-router');
+        $doctor=$this->staffUser('Doctor','queue-router-doctor');
         foreach(['counter'=>'C-','consultation'=>'D-'] as $type=>$prefix){
             $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,'patient_id'=>$patient->id,
                 'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,'chief_complaint'=>'Routing test',
                 'symptoms_description'=>'','urgency_level'=>'Unassigned','triage_priority'=>'unassigned','status'=>'Reviewed','submitted_at'=>now()]);
-            $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),['queue_type'=>$type,'priority'=>'high'])->assertRedirect();
+            $payload=['queue_type'=>$type,'priority'=>'high'];
+            if($type==='consultation') {
+                $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),[
+                    'queue_type'=>$type,'priority'=>'high',
+                ])->assertSessionHasErrors('assigned_doctor_id');
+                $payload['assigned_doctor_id']=$doctor->id;
+            }
+            $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),$payload)->assertRedirect();
             $queue=ClinicQueue::where('student_complaint_id',$complaint->id)->firstOrFail();
             $this->assertStringStartsWith($prefix,$queue->ticket_number);
+            $this->actingAs($owner)->get(route('student.complaints.show',$complaint))
+                ->assertOk()->assertSee('High')->assertDontSee('Urgency');
             $this->actingAs($owner)->get(route('student.dashboard'))->assertOk()
                 ->assertSee($queue->ticket_number);
             $this->getJson(route('patient.queue.status'))->assertOk()
                 ->assertJsonFragment(['ticket'=>$queue->ticket_number]);
-            $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),['queue_type'=>$type,'priority'=>'high'])->assertRedirect();
+            $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),$payload)->assertRedirect();
             $this->assertSame(1,ClinicQueue::where('student_complaint_id',$complaint->id)->where('queue_type',$type)->count());
         }
+    }
+
+    public function test_patient_priority_label_distinguishes_pending_triage()
+    {
+        $complaint = new StudentComplaint(['triage_priority' => 'unassigned']);
+        $this->assertSame('Awaiting Nurse Triage', $complaint->triage_priority_label);
+        $complaint->triage_priority = 'moderate';
+        $this->assertSame('Moderate', $complaint->triage_priority_label);
+    }
+
+    public function test_counter_start_redirects_to_workspace_and_completion_updates_history()
+    {
+        [$owner,$student,$account]=$this->patientUser('student','counter-workspace-owner');
+        $nurse=$this->staffUser('Nurse','counter-workspace-nurse');
+        $patient=Patient::create(['id_number'=>$student->student_id_number,'first_name'=>'Counter','last_name'=>'Patient',
+            'type'=>'Student','status'=>'Active','added_by'=>$nurse->id]);
+        $account->update(['patient_id'=>$patient->id]);
+        $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,'patient_id'=>$patient->id,
+            'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,'chief_complaint'=>'Minor wound',
+            'symptoms_description'=>'Small abrasion','urgency_level'=>'Unassigned','triage_priority'=>'low','status'=>'Reviewed','submitted_at'=>now()]);
+        $queue=app(ClinicQueueService::class)->enqueue($complaint,'counter','low',$nurse->id);
+        app(ClinicQueueService::class)->transition($queue,'called',$nurse->id);
+
+        $this->actingAs($nurse)->post(route('counter-services.start',$queue))
+            ->assertRedirect(route('counter-services.show',$queue));
+        $this->assertSame('serving',$queue->fresh()->status);
+        $this->assertSame('Counter Service',$complaint->fresh()->status);
+        $this->get(route('counter-services.show',$queue))->assertOk()
+            ->assertSee('Counter Remedy')->assertSee('Basic Clinic Service')->assertSee('Forward to Doctor Consultation');
+        $this->post(route('counter-services.complete',$queue),[
+            'action_type'=>'counter_remedy','service_provided'=>'Wound cleaning',
+            'nursing_intervention'=>'Cleaned and dressed','outcome'=>'Resolved',
+        ])->assertRedirect(route('dashboard'));
+        $this->assertSame('completed',$queue->fresh()->status);
+        $this->assertDatabaseHas('medical_records',[
+            'student_complaint_id'=>$complaint->id,'record_type'=>'Counter Service','outcome'=>'Resolved',
+        ]);
     }
 
     public function test_pdf_handles_missing_photo_and_enforces_ownership()
@@ -248,8 +295,9 @@ class PatientPortalExpansionTest extends TestCase
         $complaint=StudentComplaint::create(['student_id'=>$student->id,'patient_account_id'=>$account->id,'patient_id'=>$patient->id,
             'student_id_number'=>$student->student_id_number,'student_name'=>$student->full_name,'chief_complaint'=>'Consultation',
             'symptoms_description'=>'','urgency_level'=>'Unassigned','triage_priority'=>'high','status'=>'Reviewed','submitted_at'=>now()]);
-        $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),['queue_type'=>'consultation','priority'=>'high'])->assertRedirect();
-        $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),['queue_type'=>'consultation','priority'=>'high'])->assertRedirect();
+        $payload=['queue_type'=>'consultation','priority'=>'high','assigned_doctor_id'=>$doctor->id];
+        $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),$payload)->assertRedirect();
+        $this->actingAs($nurse)->post(route('clinic-queues.store',$complaint),$payload)->assertRedirect();
         $this->assertSame(1,ClinicNotification::where('user_id',$doctor->id)
             ->where('notification_type','patient_forwarded_to_consultation')
             ->where('related_complaint_id',$complaint->id)->count());
@@ -338,8 +386,10 @@ class PatientPortalExpansionTest extends TestCase
     private function staffUser($roleName,$key)
     {
         $role=Role::firstOrCreate(['name'=>$roleName]);
-        return User::create(['role_id'=>$role->id,'username'=>$key,'name'=>$roleName.' User','status'=>'Active',
+        $user=User::create(['role_id'=>$role->id,'username'=>$key,'name'=>$roleName.' User','status'=>'Active',
             'email'=>$key.'@example.test','password'=>Hash::make('password123'),'first_name'=>$roleName,
             'last_name'=>'User','first_login'=>false,'must_change_password'=>false]);
+        if($roleName==='Doctor') $user->doctorProfile()->create(['availability'=>'available','signature_status'=>'not_uploaded']);
+        return $user;
     }
 }
