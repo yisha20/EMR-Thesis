@@ -10,7 +10,7 @@
         <div><span>Complaint Category</span><strong>{{ $complaint->complaint_category ?: 'General Consultation' }}</strong></div>
         <div><span>Submitted</span><strong>{{ $complaint->submitted_at->format('M j, Y') }} at {{ $complaint->submitted_at->format('g:i A') }}</strong></div>
         <div><span>Status</span><strong><span class="complaint-status status-{{ \Illuminate\Support\Str::slug($complaint->status) }}">{{ $complaint->status }}</span></strong></div>
-        <div><span>Urgency</span><strong><span class="urgency-badge urgency-{{ strtolower($complaint->urgency_level) }}">{{ $complaint->urgency_level }}</span></strong></div>
+        <div><span>Priority</span><strong><span class="urgency-badge urgency-{{ $complaint->triage_priority }}">{{ $complaint->triage_priority_label }}</span></strong></div>
         <div><span>Reviewed</span><strong>{{ $complaint->reviewed_at ? $complaint->reviewed_at->format('M j, Y g:i A') : 'Not reviewed yet' }}</strong></div>
         <div><span>Completed</span><strong>{{ $complaint->completed_at ? $complaint->completed_at->format('M j, Y g:i A') : 'Not completed yet' }}</strong></div>
         <div class="complaint-detail-wide"><span>Chief Complaint</span><strong>{{ $complaint->chief_complaint }}</strong></div>

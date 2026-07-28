@@ -57,4 +57,11 @@ class StudentComplaint extends Model
         return $this->belongsToMany(CommonComplaintOption::class, 'complaint_option_selections');
     }
     public function queues() { return $this->hasMany(ClinicQueue::class); }
+
+    public function getTriagePriorityLabelAttribute()
+    {
+        return in_array($this->triage_priority, ['low', 'moderate', 'high', 'urgent'], true)
+            ? ucfirst($this->triage_priority)
+            : 'Awaiting Nurse Triage';
+    }
 }

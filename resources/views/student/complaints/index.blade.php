@@ -23,13 +23,13 @@
         </div>
         <div class="table-responsive-shell complaint-history-table">
             <table class="table emr-data-table data-table student-complaint-history">
-                <thead><tr><th>Submitted</th><th>Chief Complaint</th><th>Urgency</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Submitted</th><th>Chief Complaint</th><th>Priority</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody>
                     @forelse ($complaints as $complaint)
                         <tr>
                             <td>{{ $complaint->submitted_at->format('M j, Y') }}<small class="d-block text-muted">{{ $complaint->submitted_at->format('g:i A') }}</small></td>
                             <td><strong>{{ $complaint->chief_complaint }}</strong><small class="d-block text-muted">{{ $complaint->complaint_category ?: 'General Consultation' }}</small></td>
-                            <td><span class="urgency-badge urgency-{{ strtolower($complaint->urgency_level) }}">{{ $complaint->urgency_level }}</span></td>
+                            <td><span class="urgency-badge urgency-{{ $complaint->triage_priority }}">{{ $complaint->triage_priority_label }}</span></td>
                             <td><span class="complaint-status status-{{ \Illuminate\Support\Str::slug($complaint->status) }}">{{ $complaint->status }}</span></td>
                             <td class="action-cell"><a href="{{ route('student.complaints.show', $complaint) }}" class="table-action-button" aria-label="View complaint details" title="View complaint details" data-toggle="tooltip"><i class="fa fa-eye"></i></a></td>
                         </tr>
@@ -47,6 +47,7 @@
                 <div><span>Chief complaint</span><strong>{{$complaint->chief_complaint}}</strong></div>
                 <div><span>Category</span><strong>{{$complaint->complaint_category ?: 'General Consultation'}}</strong></div>
                 <div><span>Status</span><strong>{{$complaint->status}}</strong></div>
+                <div><span>Priority</span><strong>{{ $complaint->triage_priority_label }}</strong></div>
                 @if($queueNumber)<div><span>Queue Number</span><strong>{{$queueNumber}}</strong></div>@endif
                 <a href="{{route('student.complaints.show',$complaint)}}" class="btn btn-primary">View Details</a>
             </article>

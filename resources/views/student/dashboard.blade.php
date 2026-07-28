@@ -114,7 +114,7 @@
                         </div>
 
                         <div class="student-concern-info-grid">
-                            <div><i class="fa fa-exclamation-triangle"></i><span>Priority</span><strong>{{ $currentComplaint->urgency_level }}</strong></div>
+                            <div><i class="fa fa-exclamation-triangle"></i><span>Priority</span><strong>{{ $currentComplaint->triage_priority_label }}</strong></div>
                             <div><i class="fa fa-calendar-o"></i><span>Submitted</span><strong>{{ $currentComplaint->submitted_at->format('M j, Y') }}</strong></div>
                             <div><i class="fa fa-stethoscope"></i><span>Category</span><strong>{{ $currentComplaint->complaint_category ?: 'General Consultation' }}</strong></div>
                             <div><i class="fa fa-user-md"></i><span>Physician</span><strong>{{ $currentDoctor ?: 'Not assigned' }}</strong></div>
