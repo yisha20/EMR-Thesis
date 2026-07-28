@@ -8,7 +8,7 @@
             <h1>Health History</h1>
             <span>Workflow-generated counter services and doctor consultations.</span>
         </div>
-        <a href="{{ route('patients.show', $patient) }}" class="btn btn-light"><i class="fa fa-arrow-left"></i> Patient Profile</a>
+        <a href="{{ !empty($doctorRecordView) ? route('dashboard') : route('patients.show', $patient) }}" class="btn btn-light"><i class="fa fa-arrow-left"></i> {{ !empty($doctorRecordView) ? 'Back to Consultation Queue' : 'Patient Profile' }}</a>
     </div>
 
     <section class="medical-record-banner">

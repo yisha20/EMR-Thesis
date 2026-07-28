@@ -86,6 +86,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Administrator,Nurse,Staff')->group(function () {
         Route::post('/consultations/{consultation}/call-student', 'ConsultationQueueController@callStudent')->name('consultations.call-student');
     });
+    Route::get('/doctor/patients/{patient}/health-record', 'MedicalRecordController@doctorPatient')
+        ->middleware('role:Doctor')->name('doctor.patients.health-record');
+    Route::post('/doctor/consultations/{consultation}/start', 'ConsultationQueueController@start')
+        ->middleware('role:Doctor')->name('doctor.consultations.start');
 
     Route::get('/student-complaints', 'StudentComplaintQueueController@index')->name('student-complaints.index');
     Route::get('/student-complaints/{complaint}', 'StudentComplaintQueueController@show')->name('student-complaints.show');

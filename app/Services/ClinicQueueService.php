@@ -129,7 +129,7 @@ class ClinicQueueService
                     $isRecall?'recall-'.$queue->recall_count:'initial');
                 if (! $isRecall) $queue->update(['called_notification_sent_at'=>now()]);
                 if ($queue->queue_type==='consultation') {
-                    $notifier->sendToRoles(['Doctor'],'patient_called','Consultation Patient Ready',
+                    $notifier->sendToUser($queue->assigned_doctor_id,'patient_called','Consultation Patient Ready',
                         'Queue '.$queue->ticket_number.' has been called and is ready for consultation.',
                         ['queue_id'=>$queue->id,'consultation_id'=>$queue->consultation_id,'action_url'=>route('dashboard')],
                         $isRecall?'recall-'.$queue->recall_count:'initial');

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Helpers\ActivityLogger;
 use App\MedicalRecord;
 use App\Patient;
+use App\Consultation;
 use Illuminate\Http\Request;
 use Illuminate\Http\File;
 use Illuminate\Support\Facades\Storage;
@@ -67,6 +68,23 @@ class MedicalRecordController extends Controller
 			'patient' => $patient
 		]);
 	}
+
+    public function doctorPatient(Request $request, Patient $patient)
+    {
+        $assigned = Consultation::where('patient_id', $patient->id)
+            ->where('doctor_id', $request->user()->id)->exists();
+        abort_unless(optional($request->user()->role)->name === 'Doctor' && $assigned, 403);
+
+        $patient->load([
+            'medicalRecords.counterService.handler',
+            'medicalRecords.consultation.doctor',
+            'medicalRecords.prescription.patient',
+            'medicalRecords.prescription.doctor',
+            'medicalRecords.attendingStaff',
+        ]);
+
+        return view('medicalreport.show', ['patient' => $patient, 'doctorRecordView' => true]);
+    }
 
 	public function store(Request $request)
 	{

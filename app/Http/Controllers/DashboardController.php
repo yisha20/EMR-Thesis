@@ -37,12 +37,26 @@ class DashboardController extends Controller
             ->whereDate('updated_at', $today)
             ->count();
 
+        if ($roleName === 'Doctor') {
+            $pendingConsultations = Consultation::where('doctor_id', $request->user()->id)
+                ->whereIn('status', ['Pending Consultation', 'Called'])->count();
+            $inConsultation = Consultation::where('doctor_id', $request->user()->id)
+                ->where('status', 'In Consultation')->count();
+            $completedToday = Consultation::where('doctor_id', $request->user()->id)
+                ->where('status', 'Completed')->whereDate('completed_at', $today)->count();
+        }
+
         $recentActivityLogs = ActivityLog::latest()->with('user')->take(5)->get();
         $recentConsultations = MedicalRecord::with('patient')
             ->where(function ($query) {
                 $query->whereNull('record_type')->orWhere('record_type', 'Consultation');
             })
             ->orderBy('date_of_consultation', 'desc')
+            ->when($roleName === 'Doctor', function ($query) use ($request) {
+                $query->whereHas('consultation', function ($consultation) use ($request) {
+                    $consultation->where('doctor_id', $request->user()->id);
+                });
+            })
             ->orderBy('time_of_consultation', 'desc')
             ->take(5)
             ->get();
@@ -59,7 +73,7 @@ class DashboardController extends Controller
             'completedToday' => $completedToday,
         ]);
 
-        $analytics = $this->analyticsForRole($roleName);
+        $analytics = $this->analyticsForRole($roleName, $request);
         $nextConsultation = null;
         if (in_array($roleName, ['Nurse', 'Staff'], true)) {
             $nextConsultation = Consultation::with(['complaint', 'patient'])
@@ -72,10 +86,18 @@ class DashboardController extends Controller
         if (in_array($roleName,['Administrator','Nurse','Staff','Doctor'],true)) {
             $queueEntries=ClinicQueue::with(['complaint.student.user','account.user','consultation.forwarder','doctor'])
                 ->where('queue_date',$today)->whereIn('status',['waiting','called','serving','missed'])
-                ->when($roleName==='Doctor',function($query){$query->where('queue_type','consultation');})
+                ->when($roleName==='Doctor',function($query) use ($request) {
+                    $query->where('queue_type','consultation')
+                        ->where('assigned_doctor_id', $request->user()->id)
+                        ->whereHas('consultation', function ($consultation) use ($request) {
+                            $consultation->where('doctor_id', $request->user()->id);
+                        });
+                })
                 ->orderByRaw("CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'moderate' THEN 3 WHEN 'low' THEN 4 ELSE 5 END")
                 ->orderBy('created_at')->get();
-            $nextQueue=app(ClinicQueueService::class)->nextCandidate($today->toDateString());
+            $nextQueue=$roleName === 'Doctor'
+                ? $queueEntries->where('status', 'waiting')->first()
+                : app(ClinicQueueService::class)->nextCandidate($today->toDateString());
             $queuePolicy=DB::table('clinic_queue_dispatch_states')->where('queue_date',$today)->value('policy') ?: 'alternating';
         }
 
@@ -117,11 +139,14 @@ class DashboardController extends Controller
         ];
     }
 
-    private function analyticsForRole($roleName)
+    private function analyticsForRole($roleName, Request $request)
     {
         if ($roleName === 'Doctor') {
             $startDate = today()->subDays(6);
             $counts = MedicalRecord::selectRaw('date_of_consultation, COUNT(*) as total')
+                ->whereHas('consultation', function ($consultation) use ($request) {
+                    $consultation->where('doctor_id', $request->user()->id);
+                })
                 ->whereBetween('date_of_consultation', [$startDate, today()])
                 ->groupBy('date_of_consultation')
                 ->pluck('total', 'date_of_consultation');

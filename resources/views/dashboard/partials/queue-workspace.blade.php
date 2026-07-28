@@ -4,7 +4,7 @@
 @endphp
 <section class="dashboard-panel queue-workspace" aria-labelledby="queue-operations-title">
     <div class="dashboard-panel-header">
-        <div><p class="eyebrow">Queue operations</p><h2 id="queue-operations-title">Shared Clinic Queue</h2></div>
+        <div><p class="eyebrow">Queue operations</p><h2 id="queue-operations-title">{{ auth()->user()->role->name === 'Doctor' ? 'My Assigned Consultation Queue' : 'Shared Clinic Queue' }}</h2></div>
         @if(auth()->user()->role->name!=='Doctor')
         <form method="POST" action="{{ route('clinic-queues.policy') }}" class="queue-policy-form">@csrf @method('PATCH')
             <label for="queue-policy">Dispatch policy</label>
@@ -35,8 +35,8 @@
             <td><span class="urgency-badge urgency-{{ $entry->priority }}">{{ ucfirst($entry->priority) }}</span></td><td>{{ $entry->created_at->diffForHumans(null,true) }}</td><td>{{ ucfirst($entry->status) }}<br><span class="presence-badge presence-{{ $entry->presence_status }}" data-presence-badge="{{ $entry->id }}">{{ ucwords(str_replace('_',' ',$entry->presence_status)) }}</span></td>
             <td class="queue-actions">
             @if(auth()->user()->role->name==='Doctor')
-                @if($entry->status==='called')<form method="POST" action="{{ route('student-complaints.start-consultation',$entry->complaint) }}">@csrf<button class="btn btn-sm btn-primary">Start Consultation</button></form>@endif
-                <a class="btn btn-sm btn-light" href="{{ route('student-complaints.show',$entry->complaint) }}">View Patient Record</a>
+                @if(in_array($entry->status,['waiting','called'],true))<form method="POST" action="{{ route('doctor.consultations.start',$entry->consultation) }}">@csrf<button class="btn btn-sm btn-primary" data-submit-loading="Starting...">Start Consultation</button></form>@elseif($entry->status==='serving')<a class="btn btn-sm btn-primary" href="{{ route('student-complaints.show',$entry->complaint) }}">Continue Consultation</a>@endif
+                <a class="btn btn-sm btn-light" href="{{ route('doctor.patients.health-record',$entry->consultation->patient_id) }}">View Patient Record</a>
             @else
                 @foreach(['waiting'=>['called'=>'Call'],'called'=>['called'=>'Recall','serving'=>'Start Service','missed'=>'Mark Missed'],'serving'=>['completed'=>'Complete']] [$entry->status] ?? [] as $state=>$label)
                 <form method="POST" action="{{ route('clinic-queues.update',$entry) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="{{ $state }}">@if($state==='missed')<input type="hidden" name="reason" value="Did not respond after recalls and grace period">@endif<button class="btn btn-sm {{ $state==='missed'?'btn-danger':'btn-primary' }}" data-confirm="{{ $state==='missed'?'Mark this patient as missed? The complaint record will remain.':$label.' '.$entry->ticket_number.'?' }}">{{ $label }}</button></form>

@@ -137,10 +137,10 @@
                 @elseif (in_array($complaint->consultation->status, ['Pending Consultation', 'Called'], true))
                     <section class="dashboard-panel doctor-findings-card">
                         <div class="dashboard-panel-header"><div><p class="eyebrow">Ready for consultation</p><h2>Doctor Findings</h2></div></div>
-                        <form method="POST" action="{{ route('student-complaints.start-consultation', $complaint) }}" class="workflow-form compact-workflow-form">
+                        <form method="POST" action="{{ route('doctor.consultations.start', $complaint->consultation) }}" class="workflow-form compact-workflow-form">
                             @csrf
                             <span class="doctor-start-note">Start the consultation before entering clinical findings.</span>
-                            <button class="btn btn-primary"><i class="fa fa-stethoscope"></i> Start Consultation</button>
+                            <button class="btn btn-primary" data-submit-loading="Starting..."><i class="fa fa-stethoscope"></i> Start Consultation</button>
                         </form>
                     </section>
                 @elseif ($complaint->consultation->status === 'In Consultation')

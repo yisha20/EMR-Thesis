@@ -18,6 +18,7 @@ class ClinicNotificationService
         'patient_queue_transferred','consultation_completed','queue_cancelled',
         'patient_temporarily_away','patient_returning','patient_call_acknowledged',
         'consultation_reassigned',
+        'consultation_started',
     ];
 
     public function sendToUser($userId, $type, $title, $message, array $context = [], $event = 'once')
