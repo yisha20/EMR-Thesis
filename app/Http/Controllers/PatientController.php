@@ -303,9 +303,13 @@ class PatientController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $patient = Patient::findOrFail($id);
+        if (optional($request->user()->role)->name === 'Doctor') {
+            abort_unless(\App\Consultation::where('patient_id', $patient->id)
+                ->where('doctor_id', $request->user()->id)->exists(), 403);
+        }
         $this->normalizeHealthExaminationRecord($patient);
          
         return view('patients.show', compact('patient'));

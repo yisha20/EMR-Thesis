@@ -65,8 +65,8 @@ class CounterServiceController extends Controller
             $complaint = $queue->complaint;
             abort_unless($complaint && $complaint->patient_id, 422, 'The complaint has no linked patient record.');
             $notes = collect([
-                $data['medication_name'] ? 'Medication: '.$data['medication_name'] : null,
-                $data['dose'] ? 'Dose: '.$data['dose'] : null,
+                !empty($data['medication_name']) ? 'Medication: '.$data['medication_name'] : null,
+                !empty($data['dose']) ? 'Dose: '.$data['dose'] : null,
                 $data['nursing_intervention'] ?? null,
                 $data['notes'] ?? null,
             ])->filter()->implode("\n");

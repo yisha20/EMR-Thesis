@@ -19,6 +19,11 @@ class MedicalRecordController extends Controller
 		$date = $request->input('date');
 
 		$medicalRecords = MedicalRecord::with(['patient', 'prescription.patient', 'prescription.doctor'])
+            ->when(optional($request->user()->role)->name === 'Doctor', function ($query) use ($request) {
+                $query->whereHas('consultation', function ($consultation) use ($request) {
+                    $consultation->where('doctor_id', $request->user()->id);
+                });
+            })
 			->when($search !== '', function ($query) use ($search) {
 				$query->where(function ($recordQuery) use ($search) {
 					$recordQuery->where('chief_complaint', 'like', '%' . $search . '%')
@@ -54,7 +59,7 @@ class MedicalRecordController extends Controller
 		]);
 	}
 
-	public function show($id)
+	public function show(Request $request, $id)
 	{
 		$patient = Patient::with([
 			'medicalRecords.counterService.handler',
@@ -63,6 +68,10 @@ class MedicalRecordController extends Controller
 			'medicalRecords.prescription.doctor',
 			'medicalRecords.attendingStaff',
 		])->findOrFail($id);
+        if (optional($request->user()->role)->name === 'Doctor') {
+            abort_unless(Consultation::where('patient_id', $patient->id)
+                ->where('doctor_id', $request->user()->id)->exists(), 403);
+        }
 		
 		return view('medicalreport.show', [
 			'patient' => $patient
