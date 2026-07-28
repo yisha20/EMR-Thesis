@@ -79,6 +79,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/patient-dependents/{dependent}/verify', 'PatientDependentController@verify')->middleware('role:Administrator,Nurse')->name('patient-dependents.verify');
     Route::get('dashboard', 'DashboardController@index')->name('dashboard');
     Route::get('/activity-logs', 'ActivityLogController@index')->name('activity.logs');
+    Route::get('/doctors/{doctor}/prescription-profile', 'DoctorProfileController@edit')->middleware('role:Administrator,Doctor')->name('doctor-profile.edit');
+    Route::patch('/doctors/{doctor}/prescription-profile', 'DoctorProfileController@update')->middleware('role:Administrator,Doctor')->name('doctor-profile.update');
+    Route::patch('/doctors/{doctor}/availability', 'DoctorProfileController@availability')->middleware('role:Administrator,Doctor')->name('doctor-profile.availability');
 
     Route::middleware('role:Administrator,Nurse,Staff')->group(function () {
         Route::post('/consultations/{consultation}/call-student', 'ConsultationQueueController@callStudent')->name('consultations.call-student');
@@ -90,6 +93,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/student-complaints/{complaint}/status', 'StudentComplaintQueueController@updateStatus')->middleware('role:Administrator,Nurse,Staff')->name('student-complaints.status');
     Route::post('/student-complaints/{complaint}/resolve-counter', 'StudentComplaintQueueController@resolveCounter')->middleware('role:Administrator,Nurse,Staff')->name('student-complaints.resolve-counter');
     Route::post('/student-complaints/{complaint}/forward', 'StudentComplaintQueueController@forwardConsultation')->middleware('role:Administrator,Nurse,Staff')->name('student-complaints.forward');
+    Route::patch('/consultations/{consultation}/reassign', 'StudentComplaintQueueController@reassignConsultation')->middleware('role:Administrator,Nurse')->name('consultations.reassign');
     Route::post('/student-complaints/{complaint}/start-consultation', 'StudentComplaintQueueController@startConsultation')->middleware('role:Administrator,Doctor')->name('student-complaints.start-consultation');
     Route::post('/student-complaints/{complaint}/complete-consultation', 'StudentComplaintQueueController@completeConsultation')->middleware('role:Administrator,Doctor')->name('student-complaints.complete-consultation');
     Route::patch('/student-complaints/{complaint}/link-record', 'StudentComplaintQueueController@linkRecord')

@@ -91,6 +91,17 @@
                         </div>
                     </div>
                 </section>
+                @if (in_array(auth()->user()->role->name, ['Administrator','Nurse'], true) && in_array($complaint->consultation->status, ['Pending Consultation','Called'], true))
+                    <section class="dashboard-panel mt-3">
+                        <h2>Reassign Waiting Consultation</h2>
+                        <form method="POST" action="{{ route('consultations.reassign', $complaint->consultation) }}" class="workflow-form workflow-form-grid">
+                            @csrf @method('PATCH')
+                            <div class="form-group"><label for="reassign_doctor_id">New Doctor</label><select id="reassign_doctor_id" name="doctor_id" class="form-control" required><option value="">Select an available doctor</option>@foreach($availableDoctors as $doctor)<option value="{{ $doctor->id }}">{{ $doctor->fullName() }} — {{ $doctor->waiting_consultations_count }} waiting</option>@endforeach</select></div>
+                            <div class="form-group"><label for="reassignment_reason">Reason for Reassignment</label><textarea id="reassignment_reason" name="reason" class="form-control" required></textarea></div>
+                            <button class="btn btn-primary">Reassign Consultation</button>
+                        </form>
+                    </section>
+                @endif
 
                 @if ($complaint->consultation->status === 'Completed')
                     <section class="dashboard-panel consultation-summary-card folder-panel {{ $shouldOpenIssuedPrescription ? 'is-open' : '' }}">
@@ -104,8 +115,10 @@
                             <div class="summary-detail-list">
                                 <div><span>Service Needed</span><strong>{{ $complaint->consultation->service_needed }}</strong></div>
                                 <div><span>Priority</span><strong>{{ $complaint->consultation->priority }}</strong></div>
-                                <div class="summary-wide"><span>Diagnosis</span><p>{{ $complaint->consultation->diagnosis ?: $complaint->diagnosis ?: 'No diagnosis recorded.' }}</p></div>
-                                <div class="summary-wide"><span>Treatment</span><p>{{ $complaint->consultation->treatment ?: $complaint->treatment ?: 'No treatment recorded.' }}</p></div>
+                                <div class="summary-wide"><span>S — Subjective</span><p>{{ $complaint->consultation->subjective ?: $complaint->chief_complaint ?: 'No subjective notes recorded.' }}</p></div>
+                                <div class="summary-wide"><span>O — Objective</span><p>{{ $complaint->consultation->objective ?: $complaint->consultation->doctor_notes ?: 'No objective findings recorded.' }}</p></div>
+                                <div class="summary-wide"><span>A — Assessment</span><p>{{ $complaint->consultation->assessment ?: $complaint->consultation->diagnosis ?: $complaint->diagnosis ?: 'No assessment recorded.' }}</p></div>
+                                <div class="summary-wide"><span>P — Plan</span><p>{{ $complaint->consultation->plan ?: $complaint->consultation->treatment ?: $complaint->treatment ?: 'No plan recorded.' }}</p></div>
                                 <div class="summary-wide"><span>Prescription Summary</span><p>{{ $issuedPrescription ? $issuedPrescription->summary : ($complaint->consultation->prescription ?: 'No prescription issued.') }}</p></div>
                                 <div class="summary-wide"><span>Doctor Notes</span><p>{{ $complaint->consultation->doctor_notes ?: 'No doctor notes recorded.' }}</p></div>
                                 <div><span>Completed By</span><strong>{{ optional($complaint->consultation->doctor)->fullName() ?: 'Clinic doctor' }}</strong></div>
@@ -135,10 +148,12 @@
                         <div class="dashboard-panel-header"><div><p class="eyebrow">Clinical documentation</p><h2>Doctor Findings</h2></div></div>
                         <form method="POST" action="{{ route('student-complaints.complete-consultation', $complaint) }}" enctype="multipart/form-data" class="doctor-consultation-form" data-draft-key="doctor-consultation-{{ $complaint->id }}">
                             @csrf
-                            <div class="doctor-findings-grid">
-                                <div class="form-group"><label for="diagnosis">Diagnosis</label><textarea name="diagnosis" id="diagnosis" rows="4" class="form-control" required>{{ old('diagnosis') }}</textarea></div>
-                                <div class="form-group"><label for="treatment">Treatment</label><textarea name="treatment" id="treatment" rows="4" class="form-control" required>{{ old('treatment') }}</textarea></div>
-                                <div class="form-group form-group-wide"><label for="doctor_notes">Doctor Notes</label><textarea name="doctor_notes" id="doctor_notes" rows="3" class="form-control">{{ old('doctor_notes') }}</textarea></div>
+                            <div class="doctor-findings-grid soap-form-grid">
+                                <section class="form-group soap-card"><h3>S — Subjective</h3><label for="subjective">History, symptoms, allergies, medications, and patient statements</label><textarea name="subjective" id="subjective" rows="6" class="form-control" required>{{ old('subjective', trim($complaint->chief_complaint."\n".$complaint->symptoms_description."\n".optional($complaint->consultation)->nurse_notes)) }}</textarea></section>
+                                <section class="form-group soap-card"><h3>O — Objective</h3><label for="objective">Vital signs, examination, observations, and test findings</label><textarea name="objective" id="objective" rows="6" class="form-control" required>{{ old('objective') }}</textarea></section>
+                                <section class="form-group soap-card"><h3>A — Assessment</h3><label for="assessment">Diagnosis, differential, problem list, and clinical impression</label><textarea name="assessment" id="assessment" rows="6" class="form-control" required>{{ old('assessment') }}</textarea></section>
+                                <section class="form-group soap-card"><h3>P — Plan</h3><label for="plan">Treatment, recommendations, education, referral, and return precautions</label><textarea name="plan" id="plan" rows="6" class="form-control" required>{{ old('plan') }}</textarea></section>
+                                <div class="form-group form-group-wide"><label for="doctor_notes">Other Objective Notes (legacy-compatible)</label><textarea name="doctor_notes" id="doctor_notes" rows="3" class="form-control">{{ old('doctor_notes') }}</textarea></div>
                                 <div class="form-group"><label for="follow_up_date">Follow-up Date</label><input type="date" name="follow_up_date" id="follow_up_date" class="form-control" value="{{ old('follow_up_date') }}"></div>
                                 <div class="form-group"><label for="consultation_attachment">Attachment</label><input type="file" name="attachment" id="consultation_attachment" class="form-control-file"></div>
                             </div>
@@ -160,7 +175,6 @@
                                     @endforeach
                                 </div>
                                 @error('medications')<span class="invalid-feedback d-block">{{ $message }}</span>@enderror
-                                <div class="form-group"><label for="additional_instructions">Additional Instructions</label><textarea name="additional_instructions" id="additional_instructions" rows="3" class="form-control" placeholder="Hydration, rest, warning signs, or other advice">{{ old('additional_instructions') }}</textarea></div>
                             </section>
 
                             <div class="doctor-action-bar">
@@ -277,6 +291,7 @@
                         @csrf
                         <div class="form-group"><label for="service_needed">Service needed</label><select name="service_needed" id="service_needed" class="form-control" required>@foreach (['Checkup', 'Medical Consultation', 'Dental Consultation', 'Physical Examination', 'Laboratory Request', 'Other service'] as $service)<option value="{{ $service }}" {{ old('service_needed') === $service ? 'selected' : '' }}>{{ $service === 'Other service' ? 'Other' : $service }}</option>@endforeach</select></div>
                         <div class="form-group"><label for="priority">Staff Triage Priority</label><select name="priority" id="priority" class="form-control" required>@foreach (['Low', 'Moderate', 'High', 'Urgent'] as $priority)<option value="{{ $priority }}" {{ old('priority', ucfirst($complaint->triage_priority === 'unassigned' ? 'low' : $complaint->triage_priority)) === $priority ? 'selected' : '' }}>{{ $priority }}</option>@endforeach</select></div>
+                        <div class="form-group form-group-wide"><label for="doctor_id">Assign Doctor</label><select name="doctor_id" id="doctor_id" class="form-control @error('doctor_id') is-invalid @enderror" required><option value="">Select an available doctor</option>@foreach ($availableDoctors as $doctor)<option value="{{ $doctor->id }}" {{ (int) old('doctor_id') === $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->fullName() }} — {{ optional($doctor->doctorProfile)->specialty ?: 'General Medicine' }} — Available — {{ $doctor->waiting_consultations_count }} waiting</option>@endforeach</select>@error('doctor_id')<span class="invalid-feedback">{{ $message }}</span>@enderror</div>
                         <div class="form-group form-group-wide"><label for="nurse_notes">Nurse notes</label><textarea name="nurse_notes" id="nurse_notes" rows="4" class="form-control">{{ old('nurse_notes') }}</textarea></div>
                         <button class="btn btn-primary"><i class="fa fa-share"></i> Forward to Doctor</button>
                     </form>

@@ -29,8 +29,10 @@ class StudentComplaintQueueController extends Controller
     public function index(Request $request)
     {
         $complaints = StudentComplaint::with(['student.user', 'reviewer'])
-            ->when($request->user()->role->name === 'Doctor', function ($query) {
-                $query->whereHas('consultation');
+            ->when($request->user()->role->name === 'Doctor', function ($query) use ($request) {
+                $query->whereHas('consultation', function ($consultation) use ($request) {
+                    $consultation->where('doctor_id', $request->user()->id);
+                });
             })
             ->when($request->filled('student_id'), function ($query) use ($request) {
                 $query->where('student_id_number', 'LIKE', '%' . $request->student_id . '%');
@@ -52,8 +54,11 @@ class StudentComplaintQueueController extends Controller
         return view('student.staff.queue', compact('complaints', 'searchedStudent'));
     }
 
-    public function show(StudentComplaint $complaint)
+    public function show(Request $request, StudentComplaint $complaint)
     {
+        if ($request->user()->role->name === 'Doctor') {
+            abort_unless((int) optional($complaint->consultation)->doctor_id === (int) $request->user()->id, 403);
+        }
         $complaint->load([
             'student.user', 'reviewer', 'statusLogs.changedBy', 'patient.medicalRecords',
             'medicalRecord', 'counterService.handler', 'consultation.forwarder', 'consultation.doctor', 'consultation.prescription.patient', 'consultation.prescription.doctor',
@@ -63,7 +68,19 @@ class StudentComplaintQueueController extends Controller
         ]);
         $matchingPatients = Patient::where('id_number', $complaint->student_id_number)->get();
 
-        return view('student.staff.show', compact('complaint', 'matchingPatients'));
+        $availableDoctors = User::with('doctorProfile')->where('status', 'Active')
+            ->whereHas('role', function ($query) { $query->where('name', 'Doctor'); })
+            ->whereHas('doctorProfile', function ($query) { $query->where('availability', 'available'); })
+            ->withCount([
+                'doctorConsultations as active_consultations_count' => function ($query) {
+                    $query->where('status', 'In Consultation');
+                },
+                'doctorConsultations as waiting_consultations_count' => function ($query) {
+                    $query->whereIn('status', ['Pending Consultation', 'Called']);
+                },
+            ])->orderBy('last_name')->get();
+
+        return view('student.staff.show', compact('complaint', 'matchingPatients', 'availableDoctors'));
     }
 
     public function updateStatus(Request $request, StudentComplaint $complaint)
@@ -192,6 +209,7 @@ class StudentComplaintQueueController extends Controller
             'service_needed' => 'required|in:Checkup,Medical Consultation,Dental Consultation,Physical Examination,Laboratory Request,Other service',
             'priority' => 'required|in:Low,Moderate,High,Urgent',
             'nurse_notes' => 'nullable|string|max:5000',
+            'doctor_id' => 'required|integer|exists:users,id',
         ]);
 
         abort_unless($complaint->status === 'Reviewed', 422, 'The complaint must be reviewed before forwarding.');
@@ -201,6 +219,15 @@ class StudentComplaintQueueController extends Controller
             abort_unless($complaint->status === 'Reviewed', 422, 'The complaint has already been processed.');
             $patient = $this->syncPatient($complaint, $request, true);
             $forwardedAt = now();
+            $doctor = User::whereKey($data['doctor_id'])->where('status', 'Active')
+                ->whereHas('role', function ($query) { $query->where('name', 'Doctor'); })
+                ->whereHas('doctorProfile', function ($query) { $query->where('availability', 'available'); })
+                ->lockForUpdate()->first();
+            if (! $doctor) {
+                throw ValidationException::withMessages([
+                    'doctor_id' => 'The selected doctor is no longer available. Please select another doctor.',
+                ]);
+            }
 
             $consultation = Consultation::create([
                 'student_complaint_id' => $complaint->id,
@@ -211,6 +238,7 @@ class StudentComplaintQueueController extends Controller
                 'forwarded_by' => $request->user()->id,
                 'forwarded_at' => $forwardedAt,
                 'status' => 'Pending Consultation',
+                'doctor_id' => $doctor->id,
             ]);
 
             $record = MedicalRecord::updateOrCreate(
@@ -247,7 +275,7 @@ class StudentComplaintQueueController extends Controller
                 'status' => 'Forwarded',
                 'triage_priority' => strtolower($data['priority']),
             ]);
-            app(ClinicQueueService::class)->enqueue($complaint, 'consultation', $data['priority'], $request->user()->id, $consultation->id);
+            app(ClinicQueueService::class)->enqueue($complaint, 'consultation', $data['priority'], $request->user()->id, $consultation->id, $doctor->id);
             $this->logStatus($complaint, $request, $fromStatus, 'Forwarded', $data['nurse_notes'] ?? 'Forwarded to doctor consultation queue.');
             ActivityLogger::log('forwarded complaint to consultation (' . $complaint->student_name . ')', $data['service_needed']);
         });
@@ -259,10 +287,12 @@ class StudentComplaintQueueController extends Controller
     {
         DB::transaction(function () use ($request, $complaint) {
             $consultation = Consultation::where('student_complaint_id', $complaint->id)->lockForUpdate()->firstOrFail();
+            abort_unless((int) $consultation->doctor_id === (int) $request->user()->id, 403, 'This consultation is assigned to another doctor.');
             abort_unless(in_array($consultation->status, ['Pending Consultation', 'Called'], true), 422, 'This consultation cannot be started.');
             $startedAt = now();
             $fromStatus = $complaint->status;
             $consultation->update(['status' => 'In Consultation', 'started_at' => $startedAt, 'doctor_id' => $request->user()->id]);
+            optional($request->user()->doctorProfile)->update(['availability' => 'busy']);
             $complaint->update(['status' => 'In Consultation', 'consultation_started_at' => $startedAt]);
             $complaint->medicalRecord()->update([
                 'consultation_status' => 'In Consultation',
@@ -282,11 +312,51 @@ class StudentComplaintQueueController extends Controller
         return redirect()->back()->with('success', 'Consultation started.');
     }
 
+    public function reassignConsultation(Request $request, Consultation $consultation)
+    {
+        $data = $request->validate([
+            'doctor_id' => 'required|integer|exists:users,id',
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        DB::transaction(function () use ($request, $consultation, $data) {
+            $consultation = Consultation::whereKey($consultation->id)->lockForUpdate()->firstOrFail();
+            abort_unless(in_array($consultation->status, ['Pending Consultation', 'Called'], true), 422);
+            $doctor = User::whereKey($data['doctor_id'])->where('status', 'Active')
+                ->whereHas('role', function ($query) { $query->where('name', 'Doctor'); })
+                ->whereHas('doctorProfile', function ($query) { $query->where('availability', 'available'); })
+                ->lockForUpdate()->first();
+            if (! $doctor) {
+                throw ValidationException::withMessages(['doctor_id' => 'Select a currently available doctor.']);
+            }
+            $oldDoctorId = $consultation->doctor_id;
+            $consultation->update(['doctor_id' => $doctor->id]);
+            ClinicQueue::where('consultation_id', $consultation->id)
+                ->whereIn('status', ['waiting', 'called'])->update(['assigned_doctor_id' => $doctor->id]);
+            $context = [
+                'consultation_id' => $consultation->id,
+                'complaint_id' => $consultation->student_complaint_id,
+                'patient_id' => $consultation->patient_id,
+                'action_url' => route('student-complaints.show', $consultation->complaint),
+            ];
+            $notifier = app(ClinicNotificationService::class);
+            $notifier->sendToUser($oldDoctorId, 'consultation_reassigned', 'Consultation Reassigned',
+                'A waiting consultation was reassigned. Reason: '.$data['reason'], $context, 'old-'.$doctor->id);
+            $notifier->sendToUser($doctor->id, 'consultation_reassigned', 'Consultation Assigned',
+                'A waiting consultation was assigned to you.', $context, 'new-'.$oldDoctorId);
+            ActivityLogger::log('changed doctor assignment', 'Reason: '.$data['reason']);
+        });
+
+        return redirect()->back()->with('success', 'Consultation reassigned.');
+    }
+
     public function completeConsultation(Request $request, StudentComplaint $complaint, PrescriptionPdfService $pdfService)
     {
         $data = $request->validate([
-            'diagnosis' => 'required|string|max:5000',
-            'treatment' => 'required|string|max:5000',
+            'subjective' => 'required|string|max:10000',
+            'objective' => 'required|string|max:10000',
+            'assessment' => 'required|string|max:10000',
+            'plan' => 'required|string|max:10000',
             'prescription' => 'nullable|string|max:5000',
             'prescription_type' => 'nullable|in:Medication,Laboratory Request,Medical Certificate,Other',
             'medications' => 'nullable|array|max:20',
@@ -296,7 +366,6 @@ class StudentComplaintQueueController extends Controller
             'medications.*.duration' => 'nullable|string|max:255',
             'medications.*.instruction' => 'nullable|string|max:1000',
             'doctor_notes' => 'nullable|string|max:5000',
-            'additional_instructions' => 'nullable|string|max:5000',
             'follow_up_date' => 'nullable|date|after_or_equal:today',
             'attachment' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
         ]);
@@ -327,14 +396,19 @@ class StudentComplaintQueueController extends Controller
 
         $prescription = DB::transaction(function () use ($request, $complaint, $data, $attachment, $medications, $pdfService) {
             $consultation = Consultation::where('student_complaint_id', $complaint->id)->lockForUpdate()->firstOrFail();
+            abort_unless((int) $consultation->doctor_id === (int) $request->user()->id, 403);
             abort_unless($consultation->status === 'In Consultation', 422, 'Start the consultation before completing it.');
             $completedAt = now();
             $consultation->update([
                 'status' => 'Completed',
                 'completed_at' => $completedAt,
                 'doctor_id' => $request->user()->id,
-                'diagnosis' => $data['diagnosis'],
-                'treatment' => $data['treatment'],
+                'subjective' => $data['subjective'],
+                'objective' => $data['objective'],
+                'assessment' => $data['assessment'],
+                'plan' => $data['plan'],
+                'diagnosis' => $data['assessment'],
+                'treatment' => $data['plan'],
                 'prescription' => $this->prescriptionSummary($data['prescription_type'] ?? null, $medications, $data['prescription'] ?? null),
                 'doctor_notes' => $data['doctor_notes'] ?? null,
                 'follow_up_date' => $data['follow_up_date'] ?? null,
@@ -343,15 +417,15 @@ class StudentComplaintQueueController extends Controller
             $complaint->update([
                 'status' => 'Completed',
                 'completed_at' => $completedAt,
-                'diagnosis' => $data['diagnosis'],
-                'treatment' => $data['treatment'],
+                'diagnosis' => $data['assessment'],
+                'treatment' => $data['plan'],
                 'prescription' => $this->prescriptionSummary($data['prescription_type'] ?? null, $medications, $data['prescription'] ?? null),
             ]);
             $complaint->medicalRecord()->update([
                 'consultation_status' => 'Completed',
                 'outcome' => 'Completed',
-                'diagnosis' => $data['diagnosis'],
-                'recommendation' => $data['additional_instructions'] ?? $data['treatment'],
+                'diagnosis' => $data['assessment'],
+                'recommendation' => $data['plan'],
                 'medication_taken' => $this->prescriptionSummary($data['prescription_type'] ?? null, $medications, $data['prescription'] ?? null),
                 'findings' => $data['doctor_notes'] ?? null,
                 'file' => $attachment ?: optional($complaint->medicalRecord)->file,
@@ -364,7 +438,13 @@ class StudentComplaintQueueController extends Controller
             if ($activeQueue) {
                 app(ClinicQueueService::class)->transition($activeQueue, 'completed', $request->user()->id, 'Doctor consultation completed.');
             }
-            ActivityLogger::log('completed consultation for ' . $complaint->student_name, $data['diagnosis']);
+            ActivityLogger::log('SOAP record saved for ' . $complaint->student_name);
+            ActivityLogger::log('completed consultation for ' . $complaint->student_name);
+            $hasOtherActive = Consultation::where('doctor_id', $request->user()->id)
+                ->where('status', 'In Consultation')->where('id', '<>', $consultation->id)->exists();
+            if (! $hasOtherActive && optional($request->user()->doctorProfile)->availability === 'busy') {
+                $request->user()->doctorProfile->update(['availability' => 'available']);
+            }
 
             app(ClinicNotificationService::class)->sendToRoles(['Nurse','Staff'],'consultation_completed',
                 'Consultation Completed','Consultation queue service has been completed. You may now call the next student.',
@@ -375,6 +455,7 @@ class StudentComplaintQueueController extends Controller
                 return null;
             }
 
+            $profile = $request->user()->doctorProfile;
             $prescription = Prescription::create([
                 'consultation_id' => $consultation->id,
                 'patient_id' => $consultation->patient_id,
@@ -382,8 +463,19 @@ class StudentComplaintQueueController extends Controller
                 'prescription_number' => 'RX-' . $completedAt->format('Y') . '-' . str_pad($consultation->id, 6, '0', STR_PAD_LEFT),
                 'prescription_type' => $data['prescription_type'],
                 'medications' => $medications ?: null,
-                'additional_instructions' => $data['additional_instructions'] ?? null,
                 'follow_up_date' => $data['follow_up_date'] ?? null,
+                'issuing_doctor_name' => $request->user()->fullName(),
+                'issuing_doctor_specialty' => optional($profile)->specialty,
+                'issuing_doctor_prc_number' => optional($profile)->prc_number ?: $request->user()->license_number,
+                'issuing_doctor_ptr_number' => optional($profile)->ptr_number,
+                'issuing_doctor_title' => optional($profile)->professional_title ?: 'Attending Physician',
+                'signature_version' => optional($profile)->signature_status === 'verified' ? optional($profile)->signature_version : null,
+                'template_snapshot' => [
+                    'clinic_designation' => optional($profile)->clinic_designation,
+                    'clinic_address' => optional($profile)->clinic_address,
+                    'footer' => optional($profile)->prescription_footer,
+                    'signature_status' => optional($profile)->signature_status ?: 'not_uploaded',
+                ],
             ]);
 
             $pdfService->generate($prescription);
@@ -399,9 +491,9 @@ class StudentComplaintQueueController extends Controller
                 'date_of_consultation' => $completedAt->toDateString(),
                 'time_of_consultation' => $completedAt->format('H:i:s'),
                 'chief_complaint' => $complaint->chief_complaint,
-                'diagnosis' => $data['diagnosis'],
+                'diagnosis' => $data['assessment'],
                 'medication_taken' => $prescription->summary,
-                'recommendation' => $data['additional_instructions'] ?? null,
+                'recommendation' => $data['plan'],
                 'attending_staff_id' => $request->user()->id,
                 'attending_physician' => $request->user()->fullName(),
                 'created_by' => $request->user()->id,

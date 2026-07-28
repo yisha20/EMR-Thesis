@@ -452,6 +452,7 @@ class StudentDigitalIntakeTest extends TestCase
         $nurse = $this->createStaffUser('Nurse', 'nurse-forward@example.test');
         $counterStaff = $this->createStaffUser('Staff', 'staff-forward@example.test');
         $doctor = $this->createStaffUser('Doctor', 'doctor-intake@example.test');
+        $unselectedDoctor = $this->createStaffUser('Doctor', 'doctor-unselected@example.test');
 
         $this->actingAs($nurse)
             ->patch(route('student-complaints.status', $complaint), ['status' => 'Reviewed'])
@@ -462,6 +463,7 @@ class StudentDigitalIntakeTest extends TestCase
                 'service_needed' => 'Medical Consultation',
                 'priority' => 'High',
                 'nurse_notes' => 'Needs doctor assessment.',
+                'doctor_id' => $doctor->id,
             ])
             ->assertRedirect();
 
@@ -472,6 +474,19 @@ class StudentDigitalIntakeTest extends TestCase
             'priority' => 'High',
             'status' => 'Pending Consultation',
             'forwarded_by' => $nurse->id,
+            'doctor_id' => $doctor->id,
+        ]);
+        $this->assertDatabaseHas('clinic_queues', [
+            'student_complaint_id' => $complaint->id,
+            'assigned_doctor_id' => $doctor->id,
+        ]);
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $doctor->id,
+            'notification_type' => 'patient_forwarded_to_consultation',
+        ]);
+        $this->assertDatabaseMissing('notifications', [
+            'user_id' => $unselectedDoctor->id,
+            'notification_type' => 'patient_forwarded_to_consultation',
         ]);
         $this->assertDatabaseHas('medical_records', [
             'id' => $complaint->medical_record_id,
@@ -496,8 +511,10 @@ class StudentDigitalIntakeTest extends TestCase
 
         $completionResponse = $this->actingAs($doctor)
             ->post(route('student-complaints.complete-consultation', $complaint), [
-                'diagnosis' => 'Migraine',
-                'treatment' => 'Rest and hydration',
+                'subjective' => 'Patient reports a headache since this morning.',
+                'objective' => 'No neurological deficit observed.',
+                'assessment' => 'Migraine',
+                'plan' => 'Rest, hydration, medication, and return precautions.',
                 'prescription_type' => 'Medication',
                 'medications' => [[
                     'medication' => 'Biogesic',
@@ -507,7 +524,6 @@ class StudentDigitalIntakeTest extends TestCase
                     'instruction' => 'Take after meals',
                 ]],
                 'doctor_notes' => 'No neurological deficit.',
-                'additional_instructions' => "Drink plenty of water.\nReturn if symptoms worsen.",
             ]);
 
         $completionResponse->assertSessionHasNoErrors();
@@ -523,6 +539,9 @@ class StudentDigitalIntakeTest extends TestCase
         ]);
         $this->assertSame('Medication', $prescription->prescription_type);
         $this->assertSame('Biogesic', $prescription->medications[0]['medication']);
+        $this->assertSame($doctor->fullName(), $prescription->issuing_doctor_name);
+        $this->assertSame('Migraine', $complaint->consultation->fresh()->assessment);
+        $this->assertSame('not_uploaded', $prescription->template_snapshot['signature_status']);
         Storage::disk('local')->assertExists($prescription->pdf_path);
         $this->assertStringStartsWith('%PDF-', Storage::disk('local')->get($prescription->pdf_path));
         $this->assertDatabaseHas('medical_records', [
@@ -624,6 +643,7 @@ class StudentDigitalIntakeTest extends TestCase
                 'service_needed' => 'Medical Consultation',
                 'priority' => $priority,
                 'nurse_notes' => $priority . ' priority queue test.',
+                'doctor_id' => $doctor->id,
             ])->assertRedirect();
         }
 
@@ -875,7 +895,7 @@ class StudentDigitalIntakeTest extends TestCase
     {
         $role = Role::firstOrCreate(['name' => $roleName]);
 
-        return User::create([
+        $user = User::create([
             'role_id' => $role->id,
             'email' => $email,
             'password' => Hash::make('password123'),
@@ -886,6 +906,13 @@ class StudentDigitalIntakeTest extends TestCase
             'first_login' => false,
             'must_change_password' => false,
         ]);
+        if ($roleName === 'Doctor') {
+            $user->doctorProfile()->create([
+                'availability' => 'available',
+                'signature_status' => 'not_uploaded',
+            ]);
+        }
+        return $user;
     }
 
     private function createComplaint(Student $student)
