@@ -36,11 +36,11 @@ class PatientPortalExpansionTest extends TestCase
     {
         Notification::fake();
         [$user] = $this->patientUser('student', 'recovery-generic');
-        $message = 'If an account matches that email address, a password reset link has been sent.';
-        $this->post(route('auth.send_code'), ['email' => $user->email])
-            ->assertSessionHas('success', $message);
-        $this->post(route('auth.send_code'), ['email' => 'absent-'.uniqid().'@example.test'])
-            ->assertSessionHas('success', $message);
+        $message = 'If an account matches that email address, password reset instructions will be sent.';
+        $this->post(route('password.email'), ['email' => $user->email])
+            ->assertSessionHas('status', $message);
+        $this->post(route('password.email'), ['email' => 'absent-'.uniqid().'@example.test'])
+            ->assertSessionHas('status', $message);
     }
 
     public function test_remember_me_uses_framework_remember_token()
@@ -51,6 +51,7 @@ class PatientPortalExpansionTest extends TestCase
             'email' => $user->email, 'password' => 'password123', 'remember' => '1',
         ])->assertRedirect();
         $this->assertNotEmpty($user->fresh()->remember_token);
+        $this->app['auth']->logout();
     }
 
     public function test_new_student_and_faculty_accounts_are_gated_by_health_assessment()
@@ -60,7 +61,10 @@ class PatientPortalExpansionTest extends TestCase
             $id=$type.'-'.uniqid();
             $payload=['account_type'=>$type,'student_id_number'=>$type==='student'?$id:null,'faculty_id_number'=>$type==='faculty'?$id:null,
                 'first_name'=>'Portal','last_name'=>ucfirst($type),'email'=>$id.'@example.test','password'=>'password123',
-                'password_confirmation'=>'password123','college_department'=>'Clinic Test','contact_number'=>'09170000000'];
+                'password_confirmation'=>'password123','college_department'=>'Clinic Test','contact_number'=>'09170000000',
+                'position_designation'=>$type==='faculty'?'Clinic Employee':null,
+                'gender'=>'Female','birth_date'=>'2000-01-01','civil_status'=>'Single',
+                'home_address'=>'Iligan City','present_address'=>'Iligan City'];
             $this->post(route('student.register.store'),$payload)->assertRedirect(route('login'));
             $user=User::where('email',$payload['email'])->firstOrFail();
             $this->assertSame($type,$user->patientAccount->patient_type);
@@ -75,12 +79,17 @@ class PatientPortalExpansionTest extends TestCase
         $email = 'dependent-'.uniqid().'@example.test';
         $this->post(route('student.register.store'), [
             'account_type' => 'dependent',
+            'sponsor_type' => 'faculty',
+            'sponsor_id_number' => $sponsorAccount->faculty_id_number,
             'sponsor_email' => $sponsorUser->email,
             'dependent_relationship' => 'Child',
             'first_name' => 'Portal', 'last_name' => 'Dependent',
             'email' => $email, 'password' => 'password123',
             'password_confirmation' => 'password123',
             'college_department' => 'Dependent', 'contact_number' => '09170000000',
+            'gender'=>'Female','birth_date'=>'2010-01-01','civil_status'=>'Single',
+            'home_address'=>'Iligan City','present_address'=>'Iligan City',
+            'verification_consent'=>'1',
         ])->assertRedirect(route('login'));
 
         $account = User::where('email', $email)->firstOrFail()->patientAccount;
@@ -369,6 +378,38 @@ class PatientPortalExpansionTest extends TestCase
         try {$service->callNext($owner->id);$this->fail('A second active call was allowed.');}
         catch (ValidationException $exception) {$this->assertStringContainsString('already being called',$exception->errors()['queue'][0]);}
         $this->assertSame(1,ClinicQueue::where('queue_date',now()->toDateString())->where('status','called')->count());
+    }
+
+    public function test_registration_requires_account_type_selection_and_loads_specific_forms()
+    {
+        $this->get(route('patient.register.type'))->assertOk()
+            ->assertSee('Create Your Patient Portal Account')
+            ->assertSee('Faculty / Employee')
+            ->assertSee('Dependent');
+
+        $this->get(route('student.register'))->assertRedirect(route('patient.register.type'));
+        $this->get(route('student.register', ['type' => 'staff']))->assertNotFound();
+        $this->post(route('student.register.store'), ['account_type' => 'doctor'])
+            ->assertSessionHasErrors('account_type');
+
+        $this->get(route('student.register', ['type' => 'student']))->assertOk()
+            ->assertSee('Student ID Number')->assertDontSee('Sponsor ID Number');
+        $this->get(route('student.register', ['type' => 'faculty']))->assertOk()
+            ->assertSee('Faculty / Employee ID Number')->assertSee('Position / Designation');
+        $this->get(route('student.register', ['type' => 'dependent']))->assertOk()
+            ->assertSee('Sponsor ID Number')->assertSee('Relationship to Sponsor');
+    }
+
+    public function test_existing_staff_forced_password_state_cannot_be_bypassed_and_patients_are_unaffected()
+    {
+        $staff = $this->staffUser('Nurse', 'forced-staff-'.uniqid());
+        $staff->update(['must_change_password' => true, 'first_login' => true]);
+        $this->actingAs($staff)->get(route('dashboard'))->assertRedirect(route('password.change'));
+        $this->actingAs($staff)->get(route('password.change'))->assertOk()->assertSee('Logout');
+
+        [$patient] = $this->patientUser('student', 'forced-patient-'.uniqid());
+        $patient->update(['must_change_password' => true, 'first_login' => true]);
+        $this->actingAs($patient)->get(route('patient.assessment.edit'))->assertOk();
     }
 
     private function patientUser($type,$key=null)

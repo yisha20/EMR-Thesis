@@ -9,6 +9,8 @@ use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ResetPasswordController extends Controller
 {
@@ -48,6 +50,9 @@ class ResetPasswordController extends Controller
             'must_change_password' => false,
             'temporary_password_expires_at' => null,
         ])->save();
+        if (Schema::hasTable(config('session.table', 'sessions'))) {
+            DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+        }
 
         ActivityLog::create([
             'user_id' => $user->id,

@@ -4,7 +4,7 @@
 <div class="login-card-modern">
     <div class="login-photo-strip">
         <img src="{{ asset('img/msuiit-clinic.png') }}" alt="MSU-IIT Clinic building">
-        <span><img src="{{ asset('img/msuiit.png') }}" alt="MSU-IIT logo"> MSU-IIT Clinic</span>
+        <span><img src="{{ asset('img/msu-iit-logo.png') }}" alt="MSU-IIT logo"> MSU-IIT Clinic</span>
     </div>
 
     <div class="login-card-body">

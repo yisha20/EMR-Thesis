@@ -2,7 +2,7 @@
 $auth = Auth::user();
 $activeUsers = \App\User::getActive();
 $sidebarRoleName = optional(optional($auth)->role)->name ?? 'EMR';
-$isStudent = $sidebarRoleName === 'Student';
+$isStudent = in_array($sidebarRoleName, ['Student', 'Patient']);
 $homeRoute = $isStudent ? route('student.dashboard') : route('dashboard');
 $showClinicNotifications = (bool) $auth;
 $topbarNotifications = $showClinicNotifications

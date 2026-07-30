@@ -4,7 +4,7 @@
 @if(session('temporary_password'))
     <div class="alert alert-warning"><strong>One-time display:</strong> Temporary credential: <code>{{ session('temporary_password') }}</code>. It expires in {{ config('auth.temporary_password_expire', 60) }} minutes.</div>
 @endif
-@if(auth()->user()->role->name === 'Administrator' && $user->role && !in_array($user->role->name, ['Administrator', 'Student']))
+@if(auth()->user()->role->name === 'Administrator' && $user->role && !in_array($user->role->name, ['Administrator', 'Student', 'Patient']))
     <form method="POST" action="{{ route('users.assisted-password-reset', $user) }}" class="mb-3" onsubmit="return confirm('Generate a random temporary credential and revoke Remember Me for this staff user?')">
         @csrf
         <button type="submit" class="btn btn-warning">Issue Temporary Staff Credential</button>

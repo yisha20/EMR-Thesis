@@ -60,7 +60,7 @@ class LoginController extends Controller
 
         // Reuse the existing forced-change flags for staff only.
         if (($user->first_login || $user->must_change_password)
-            && ! in_array($user->role->name, ['Administrator', 'Student'], true)) {
+            && ! in_array($user->role->name, ['Administrator', 'Student', 'Patient'], true)) {
             return route('password.change');
         }
 

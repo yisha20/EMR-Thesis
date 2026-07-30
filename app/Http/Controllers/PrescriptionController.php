@@ -67,7 +67,7 @@ class PrescriptionController extends Controller
     {
         $prescription->loadMissing('patient');
         $roleName = optional($request->user()->role)->name;
-        if ($roleName === 'Student') {
+        if (in_array($roleName, ['Student', 'Patient'], true)) {
             $student = $request->user()->student;
             abort_unless($student && $prescription->patient && $prescription->patient->id_number === $student->student_id_number, 403);
             return;

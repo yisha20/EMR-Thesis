@@ -72,7 +72,7 @@
     <style id="dynamicPrintPage">@media print { @page { size: A4 portrait; margin: 12mm; } }</style>
 </head>
 <body>
-    @php $canExportPrescription = optional(optional(auth()->user())->role)->name !== 'Student'; @endphp
+    @php $canExportPrescription = !in_array(optional(optional(auth()->user())->role)->name, ['Student', 'Patient']); @endphp
     <nav class="prescription-toolbar" aria-label="Prescription actions">
         <a href="{{ url()->previous() }}" class="btn btn-light">Back</a>
         @if ($canExportPrescription)

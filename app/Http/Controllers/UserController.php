@@ -12,6 +12,8 @@ use Illuminate\Validation\Rule;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class UserController extends Controller
 {
@@ -55,6 +57,9 @@ class UserController extends Controller
             'remember_token' => null,
             'temporary_password_expires_at' => now()->addMinutes((int) config('auth.temporary_password_expire', 60)),
         ])->save();
+        if (Schema::hasTable(config('session.table', 'sessions'))) {
+            DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+        }
 
         ActivityLog::create([
             'user_id' => $request->user()->id,

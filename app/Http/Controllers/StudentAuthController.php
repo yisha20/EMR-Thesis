@@ -80,9 +80,9 @@ class StudentAuthController extends Controller
 
         try {
             DB::transaction(function () use ($data) {
-                // "Student" is the existing patient-portal system role. Patient
-                // account type remains separate in patient_accounts.
-                $studentRole = Role::whereRaw('LOWER(name) = ?', ['student'])->firstOrFail();
+                // All self-registrations receive the non-staff Patient role.
+                // Account type remains separate in patient_accounts.
+                $patientRole = Role::whereRaw('LOWER(name) = ?', ['patient'])->firstOrFail();
                 $identifier = $data['account_type'] === 'student'
                     ? $data['student_id_number']
                     : ($data['account_type'] === 'faculty'
@@ -112,7 +112,7 @@ class StudentAuthController extends Controller
                 ])));
 
                 $user = User::create([
-                    'role_id' => $studentRole->id,
+                    'role_id' => $patientRole->id,
                     'username' => $identifier,
                     'name' => $fullName,
                     'status' => 'Active',

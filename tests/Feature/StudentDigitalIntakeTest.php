@@ -25,6 +25,7 @@ class StudentDigitalIntakeTest extends TestCase
         Role::firstOrCreate(['name' => 'Student']);
 
         $data = [
+            'account_type' => 'student',
             'student_id_number' => '2026-1000',
             'first_name' => 'New',
             'middle_name' => 'IIT',
@@ -43,7 +44,6 @@ class StudentDigitalIntakeTest extends TestCase
         ];
 
         $response = $this->post(route('student.register.store'), $data);
-
         $response->assertRedirect(route('login'));
         $response->assertSessionHas('success');
         $this->assertGuest();
@@ -54,7 +54,7 @@ class StudentDigitalIntakeTest extends TestCase
         $this->assertSame($user->id, $student->user_id);
         $this->assertSame('New IIT Student', $user->name);
         $this->assertSame('Active', $user->status);
-        $this->assertTrue($user->isStudent());
+        $this->assertSame('Patient', $user->role->name);
         $this->assertTrue(Hash::check('password123', $user->password));
 
         $this->assertDatabaseHas('students', [
@@ -953,6 +953,7 @@ class StudentDigitalIntakeTest extends TestCase
     private function registrationData($studentId, $email)
     {
         return [
+            'account_type' => 'student',
             'student_id_number' => $studentId,
             'first_name' => 'Registration',
             'middle_name' => 'Test',

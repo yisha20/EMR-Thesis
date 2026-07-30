@@ -19,7 +19,7 @@ class RedirectIfAuthenticated
     {
         if (Auth::guard($guard)->check()) {
             $user = Auth::guard($guard)->user();
-            return redirect($user->isStudent() ? '/student/dashboard' : '/dashboard');
+            return redirect($user->isPatientPortalUser() ? '/student/dashboard' : '/dashboard');
         }
 
         return $next($request);

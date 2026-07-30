@@ -43,7 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/prescriptions/{prescription}/pdf', 'PrescriptionController@pdf')->name('prescriptions.pdf');
     Route::get('/prescriptions/{prescription}/download', 'PrescriptionController@download')->name('prescriptions.download');
 
-    Route::middleware('role:Student')->group(function () {
+    Route::middleware('role:Student,Patient')->group(function () {
         Route::get('/patient/health-assessment', 'HealthAssessmentController@edit')->name('patient.assessment.edit');
         Route::post('/patient/health-assessment/draft', 'HealthAssessmentController@save')->name('patient.assessment.save');
         Route::post('/patient/health-assessment/submit', 'HealthAssessmentController@submit')->name('patient.assessment.submit');

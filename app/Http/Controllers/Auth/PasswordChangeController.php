@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\ActivityLog;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class PasswordChangeController extends Controller
 {
@@ -28,6 +30,9 @@ class PasswordChangeController extends Controller
         $user->remember_token = null;
         $user->temporary_password_expires_at = null;
         $user->save();
+        if (Schema::hasTable(config('session.table', 'sessions'))) {
+            DB::table(config('session.table', 'sessions'))->where('user_id', $user->id)->delete();
+        }
 
         ActivityLog::create([
             'user_id' => $user->id,

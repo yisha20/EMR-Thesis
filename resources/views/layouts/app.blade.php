@@ -33,7 +33,7 @@
 </head>
 @php
     $layoutRoleName = optional(optional(Auth::user())->role)->name;
-    $layoutBodyClasses = trim('emr-shell sidebar-collapsed ' . ($layoutRoleName === 'Student' ? 'student-portal-shell' : ''));
+    $layoutBodyClasses = trim('emr-shell sidebar-collapsed ' . (in_array($layoutRoleName, ['Student', 'Patient']) ? 'student-portal-shell' : ''));
 @endphp
 <body class="{{ $layoutBodyClasses }}">
     <div id="app" class="emr-app">

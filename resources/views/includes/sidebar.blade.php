@@ -6,7 +6,7 @@ $sidebarGivenName = $auth ? trim(($auth->first_name ?? '') . ' ' . ($auth->middl
 $sidebarLastName = $auth ? trim($auth->last_name ?? '') : '';
 $sidebarGivenName = $sidebarGivenName !== '' ? $sidebarGivenName : $sidebarUserName;
 $sidebarRoleName = optional(optional($auth)->role)->name ?? 'EMR';
-$isStudent = $sidebarRoleName === 'Student';
+$isStudent = in_array($sidebarRoleName, ['Student', 'Patient']);
 $homeRoute = $isStudent ? route('student.dashboard') : route('dashboard');
 $sidebarRoleClass = 'role-badge role-' . \Illuminate\Support\Str::slug($sidebarRoleName);
 if ($sidebarRoleName === 'Administrator') {
