@@ -22,7 +22,12 @@ class PrescriptionPdfService
                 Storage::disk('local')->get($profile->signature_path)
             );
         }
-        $pdf = Pdf::loadView('prescriptions.pdf', compact('prescription', 'signatureData'))->setPaper('a4', 'portrait');
+        $logoPath = public_path('img/msu-iit-logo-print.png');
+        $logoData = is_file($logoPath) && function_exists('imagecreatefrompng')
+            ? 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath))
+            : null;
+        $pdfMode = true;
+        $pdf = Pdf::loadView('prescriptions.pdf', compact('prescription', 'signatureData', 'logoData', 'pdfMode'))->setPaper('a4', 'portrait');
         Storage::disk('local')->put($path, $pdf->output());
         $prescription->update(['pdf_path' => $path]);
 

@@ -7,9 +7,9 @@
         body { color:#123b56; font-family:DejaVu Sans,sans-serif; font-size:12px; }
         .prescription-document { padding:0; }
         .prescription-header { border-bottom:2px solid #2f78a0; height:86px; padding-bottom:14px; text-align:center; }
-        .prescription-logo { background:#2f78a0; border:5px solid #d9eef8; border-radius:50%; color:#fff; float:left; height:58px; line-height:17px; padding-top:10px; text-align:center; width:68px; }
-        .prescription-logo strong,.prescription-logo span { display:block; }
-        .prescription-logo span { background:#fff; border-radius:50%; color:#2f78a0; font-size:16px; font-weight:bold; height:22px; line-height:20px; margin:4px auto 0; width:22px; }
+        .prescription-logo { float:left; height:68px; width:76px; }
+        .prescription-logo img { height:68px; object-fit:contain; width:68px; }
+        .prescription-logo strong { color:#2f78a0; display:block; font-size:12px; margin-top:25px; }
         .prescription-header h1 { font-size:22px; margin:5px 0; }
         .prescription-header span,.prescription-meta span { color:#627f91; font-size:10px; }
         .prescription-meta { border-bottom:1px solid #b7d9ee; padding:18px 0; }

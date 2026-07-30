@@ -13,9 +13,9 @@
         body.paper-letter .prescription-document { max-width:816px; min-height:1056px; }
         body.layout-compact .prescription-document { min-height:0; padding:30px 42px; }
         .prescription-header { align-items:center; border-bottom:2px solid #2f78a0; display:flex; gap:18px; padding-bottom:18px; text-align:center; }
-        .prescription-logo { align-items:center; background:linear-gradient(135deg,#2f78a0,#58a6cf); border:6px solid #d9eef8; border-radius:50%; color:#fff; display:flex; flex-direction:column; height:76px; justify-content:center; line-height:1; overflow:hidden; width:76px; }
-        .prescription-logo strong { font-size:14px; letter-spacing:0; }
-        .prescription-logo span { background:#fff; border-radius:50%; color:#2f78a0; font-size:18px; font-weight:bold; height:26px; line-height:24px; margin-top:3px; text-align:center; width:26px; }
+        .prescription-logo { flex:0 0 76px; width:76px; }
+        .prescription-logo img { display:block; height:76px; object-fit:contain; width:76px; }
+        .prescription-logo > strong { color:#2f78a0; display:block; margin-top:28px; text-align:center; }
         .prescription-header div { flex:1; }
         .prescription-header h1 { font-size:24px; margin:5px 0; }
         .prescription-header span,.prescription-meta span { color:#627f91; font-size:12px; }
