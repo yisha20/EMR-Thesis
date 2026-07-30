@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ request()->routeIs('student.register') ? 'student-registration-page' : '' }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="{{ request()->routeIs('student.register', 'patient.register.type') ? 'student-registration-page' : '' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -11,7 +11,7 @@
         <title>{{config('app.name', 'EMRSYSTEM')}}</title>
 
     </head>
-    <body class="emr-login-page {{ request()->routeIs('student.register') ? 'student-registration-page' : '' }}">
+    <body class="emr-login-page {{ request()->routeIs('student.register', 'patient.register.type') ? 'student-registration-page' : '' }}">
         <div class ="container-fluid login-container">
            @yield('content')
         </div>

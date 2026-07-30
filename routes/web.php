@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 Auth::routes(['register' => false]);
 Route::view('/', 'auth.login');
 
+Route::get('/patient-portal/register', 'StudentAuthController@showAccountTypeSelection')->name('patient.register.type');
 Route::get('/student/register', 'StudentAuthController@showRegistrationForm')->name('student.register');
 Route::post('/student/register', 'StudentAuthController@register')->name('student.register.store');
 
@@ -24,9 +25,6 @@ Route::view('error', 'errors.admin')->name('errors.admin');
 Route::view('/about', 'about');
 
 Route::view('/forgot-password', 'auth.forgot_password')->name('auth.forgot_password');
-
-Route::post('/forgot-password', 'ForgotPasswordController@send')->middleware('throttle:5,1')->name('auth.send_code');
-Route::get('/forgot-password/verify/{email}', 'ForgotPasswordController@verify')->name('auth.verify');
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', 'NotificationController@index')->name('notifications.index');
     Route::get('/notifications/unread', 'NotificationController@unread')->name('notifications.unread');
@@ -120,6 +118,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/complaint-options/{option}', 'CommonComplaintOptionController@update')->name('complaint-options.update');
         Route::resource('users', 'UserController');
         Route::patch('users/{user}/account-type', 'UserController@updateAccountType')->name('users.account-type');
+        Route::post('users/{user}/assisted-password-reset', 'UserController@assistedPasswordReset')->name('users.assisted-password-reset');
         Route::get('users/archive/index', 'UserController@archive')->name('users.archive');
         Route::delete('users/force-delete/{id}', 'UserController@deleteUser')->name('users.delete');
         Route::get('users/restore/{id}', 'UserController@restoreUser')->name('users.restore');

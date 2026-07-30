@@ -66,7 +66,7 @@
             <button type="submit" class="btn btn-primary btn-block login-submit">
                 {{ __('Login') }}
             </button>
-            <a href="{{ route('student.register') }}" class="student-auth-link">Create a patient portal account</a>
+            <a href="{{ route('patient.register.type') }}" class="student-auth-link">Create a Patient Portal Account</a>
         </form>
     </div>
 </div>
