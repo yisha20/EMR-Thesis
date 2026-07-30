@@ -34,6 +34,7 @@ class User extends Authenticatable
         'deleted_at',
         'last_activity',
         'last_login_at',
+        'temporary_password_expires_at',
     ];
 
     protected $with = [
