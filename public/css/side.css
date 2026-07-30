@@ -12605,13 +12605,16 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     overflow-y: auto;
     overscroll-behavior: contain;
     padding-bottom: 10px;
-    scrollbar-color: #9bc5dc transparent;
-    scrollbar-width: thin;
+    -ms-overflow-style: none;
+    scrollbar-color: transparent transparent;
+    scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
 
   body.emr-shell .desktop-sidebar .sidepanel-menu::-webkit-scrollbar {
-    width: 5px;
+    display: none;
+    height: 0;
+    width: 0;
   }
 
   body.emr-shell .desktop-sidebar .sidepanel-menu::-webkit-scrollbar-track {
@@ -12624,14 +12627,16 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   }
 
   body.emr-shell .desktop-sidebar:not(.collapsed) .sidepanel-menu {
-    overflow-y: scroll;
-    scrollbar-color: #4b9ac3 #e5f1f7;
-    scrollbar-gutter: stable;
-    scrollbar-width: auto;
+    overflow-y: auto;
+    scrollbar-color: transparent transparent;
+    scrollbar-gutter: auto;
+    scrollbar-width: none;
   }
 
   body.emr-shell .desktop-sidebar:not(.collapsed) .sidepanel-menu::-webkit-scrollbar {
-    width: 8px;
+    display: none;
+    height: 0;
+    width: 0;
   }
 
   body.emr-shell .desktop-sidebar:not(.collapsed) .sidepanel-menu::-webkit-scrollbar-track {
