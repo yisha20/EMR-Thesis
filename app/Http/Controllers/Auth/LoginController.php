@@ -19,6 +19,17 @@ class LoginController extends Controller
 
     protected function authenticated(Request $request, $user)
     {
+        if ($user->temporary_password_expires_at
+            && $user->temporary_password_expires_at->isPast()
+            && ($user->must_change_password || $user->first_login)
+            && ! $user->isPatientPortalUser()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            return redirect()->route('login')->withErrors([
+                'email' => 'The temporary credential has expired. Contact an authorized administrator.',
+            ]);
+        }
         $user->ensurePatientAccount();
         $user->forceFill(['last_login_at' => now()])->save();
         ActivityLog::create([
@@ -47,8 +58,9 @@ class LoginController extends Controller
                 : route('patient.assessment.edit');
         }
 
-        // Force password change on first login for non-admins.
-        if ($user->first_login && $user->role->name !== 'Administrator') {
+        // Reuse the existing forced-change flags for staff only.
+        if (($user->first_login || $user->must_change_password)
+            && ! in_array($user->role->name, ['Administrator', 'Student'], true)) {
             return route('password.change');
         }
 

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'temporary_password_expire' => env('TEMPORARY_PASSWORD_EXPIRE', 60),
 
     /*
     |--------------------------------------------------------------------------

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Models\ActivityLog;
 
 class PasswordChangeController extends Controller
 {
@@ -24,7 +25,15 @@ class PasswordChangeController extends Controller
         $user->password = Hash::make($request->password);
         $user->first_login = false;
         $user->must_change_password = false;
+        $user->remember_token = null;
+        $user->temporary_password_expires_at = null;
         $user->save();
+
+        ActivityLog::create([
+            'user_id' => $user->id,
+            'action' => 'Forced password change completed',
+            'description' => 'Permanent password created; forced-change state and persistent login token cleared.',
+        ]);
 
         Auth::logout();
         $request->session()->invalidate();

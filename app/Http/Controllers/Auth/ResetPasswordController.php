@@ -46,6 +46,7 @@ class ResetPasswordController extends Controller
             'remember_token' => null,
             'first_login' => false,
             'must_change_password' => false,
+            'temporary_password_expires_at' => null,
         ])->save();
 
         ActivityLog::create([

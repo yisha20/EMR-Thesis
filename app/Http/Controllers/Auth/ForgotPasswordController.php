@@ -34,8 +34,10 @@ class ForgotPasswordController extends Controller
     {
         $request->validate(['email' => 'required|email']);
         $user = User::where('email', $request->email)->first();
+        // Always invoke the broker so token generation, hashing and expiry
+        // remain under Laravel's established reset implementation.
+        Password::sendResetLink($request->only('email'));
         if ($user) {
-            Password::sendResetLink($request->only('email'));
             ActivityLog::create([
                 'user_id' => $user->id,
                 'action' => 'Password reset requested',
@@ -44,7 +46,7 @@ class ForgotPasswordController extends Controller
         }
         return back()->with(
             'status',
-            'If an account matches that email address, a password reset link has been sent.'
+            'If an account matches that email address, password reset instructions will be sent.'
         );
     }
 }

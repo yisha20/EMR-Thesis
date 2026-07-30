@@ -10,6 +10,8 @@ use Illuminate\Http\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -38,6 +40,32 @@ class UserController extends Controller
         ActivityLog::create(['user_id'=>$request->user()->id,'action'=>'Patient account type changed',
             'description'=>'User #'.$user->id.' changed from '.$old.' to '.$data['patient_type'].'.']);
         return redirect()->back()->with('success','Account type updated.');
+    }
+
+    public function assistedPasswordReset(Request $request, User $user)
+    {
+        abort_if($user->isPatientPortalUser() || ! $user->role || $user->role->name === 'Administrator', 422,
+            'Admin-assisted temporary passwords are available only for staff accounts.');
+
+        $temporaryPassword = Str::random(20);
+        $user->forceFill([
+            'password' => Hash::make($temporaryPassword),
+            'must_change_password' => true,
+            'first_login' => true,
+            'remember_token' => null,
+            'temporary_password_expires_at' => now()->addMinutes((int) config('auth.temporary_password_expire', 60)),
+        ])->save();
+
+        ActivityLog::create([
+            'user_id' => $request->user()->id,
+            'action' => 'Admin-assisted staff password reset',
+            'description' => 'Temporary credential issued for staff user #' . $user->id
+                . '; forced-change state activated and persistent login revoked.',
+        ]);
+
+        return back()
+            ->with('success', 'Temporary credential generated. Share it using the clinic-approved verified channel.')
+            ->with('temporary_password', $temporaryPassword);
     }
 
     /**
