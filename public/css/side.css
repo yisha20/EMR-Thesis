@@ -13526,3 +13526,138 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     width: 100%;
   }
 }
+.portal-auth-shell {
+  box-sizing: border-box;
+  margin: 0 auto;
+  max-width: 1120px;
+  padding: 28px 16px 48px;
+  width: 100%;
+}
+.portal-auth-compact { max-width: 520px; }
+.portal-brand {
+  align-items: center;
+  color: #123b56;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin: 0 auto 18px;
+}
+.portal-brand img,
+.assessment-brand-header img {
+  height: 62px;
+  object-fit: contain;
+  width: 62px;
+}
+.portal-brand strong,
+.portal-brand span,
+.assessment-brand-header strong,
+.assessment-brand-header span { display: block; }
+.portal-brand strong { font-size: 18px; }
+.portal-brand span { color: #627f91; font-size: 13px; }
+.account-type-card { max-width: 980px; }
+.account-type-grid {
+  border: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  margin: 24px 0;
+  padding: 0;
+}
+.account-type-option { cursor: pointer; margin: 0; }
+.account-type-option > input {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+.account-type-option-body {
+  background: #fff;
+  border: 2px solid #d9e8f0;
+  border-radius: 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 210px;
+  padding: 22px;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.account-type-option-body i { color: #2f78a0; font-size: 28px; margin-bottom: 16px; }
+.account-type-option-body strong { color: #123b56; font-size: 18px; margin-bottom: 8px; }
+.account-type-option-body > span { color: #506f82; line-height: 1.45; }
+.account-type-option-body small { color: #2f78a0; font-weight: 700; margin-top: auto; padding-top: 18px; }
+.account-type-option input:checked + .account-type-option-body,
+.account-type-option input:focus + .account-type-option-body {
+  border-color: #2f78a0;
+  box-shadow: 0 0 0 3px rgba(47,120,160,.16);
+  transform: translateY(-2px);
+}
+.registration-progress {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(5, 1fr);
+  list-style: none;
+  margin: 24px 0 30px;
+  padding: 0;
+}
+.registration-progress li {
+  align-items: center;
+  color: #718897;
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  gap: 5px;
+  text-align: center;
+}
+.registration-progress li span {
+  align-items: center;
+  background: #e6eff4;
+  border-radius: 50%;
+  display: flex;
+  font-weight: 700;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+}
+.registration-progress li.active,
+.registration-progress li.complete { color: #1f668d; font-weight: 700; }
+.registration-progress li.active span,
+.registration-progress li.complete span { background: #2f78a0; color: #fff; }
+.registration-step { display: none; }
+.registration-step.active { display: block; }
+.registration-step h2 { color: #123b56; font-size: 19px; margin: 0 0 18px; }
+.registration-actions {
+  border-top: 1px solid #d9e8f0;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 18px;
+}
+.registration-actions .btn { min-height: 44px; min-width: 110px; }
+.verification-consent { align-items: flex-start; display: flex; gap: 9px; line-height: 1.45; }
+.verification-consent input { height: 18px; margin-top: 2px; width: 18px; }
+.password-guidance,
+.portal-help-note { color: #627f91; font-size: 12px; line-height: 1.5; }
+.portal-help-note { border-top: 1px solid #d9e8f0; margin: 22px 0 0; padding-top: 16px; text-align: center; }
+.assessment-brand-header {
+  align-items: center;
+  color: #123b56;
+  display: flex;
+  gap: 12px;
+  margin: 0 0 18px;
+}
+@media (max-width: 760px) {
+  .account-type-grid,
+  .student-register-grid { grid-template-columns: 1fr !important; }
+  .account-type-option-body { min-height: 170px; }
+  .portal-auth-shell { padding: 16px 8px 32px; }
+  .registration-progress li { font-size: 9px; }
+  .student-register-card .login-card-body { padding: 22px 16px; }
+  .registration-actions { position: sticky; bottom: 0; background: #fff; padding-bottom: 8px; }
+  .registration-actions .btn { flex: 1; }
+}
+@media print {
+  .topbar, .sidebar, .sidepanel, .action-controls, .mobile-drawer,
+  .toast, .toast-container, .registration-actions { display: none !important; }
+}

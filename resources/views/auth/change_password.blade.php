@@ -1,49 +1,20 @@
-@extends('layouts.app')
+@extends('layouts.loginlayout')
 
 @section('content')
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-lg border-0 rounded-4">
-                <div class="card-header text-center bg-primary text-white rounded-top-4">
-                    <h4>Change Password</h4>
-                </div>
-                <div class="card-body p-4">
-                    @if (session('error'))
-                        <div class="alert alert-danger">{{ session('error') }}</div>
-                    @endif
-                    @if (session('success'))
-                        <div class="alert alert-success">{{ session('success') }}</div>
-                    @endif
-
-                    <form method="POST" action="{{ route('password.change.update') }}">
-                        @csrf
-
-                        <div class="mb-3">
-                            <label for="password" class="form-label">New Password</label>
-                            <input id="password" type="password" 
-                                   class="form-control @error('password') is-invalid @enderror" 
-                                   name="password" required autocomplete="new-password">
-                            @error('password')
-                                <span class="invalid-feedback" role="alert">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="password-confirm" class="form-label">Confirm New Password</label>
-                            <input id="password-confirm" type="password" class="form-control" 
-                                   name="password_confirmation" required autocomplete="new-password">
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">
-                                Change Password
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+<main class="portal-auth-shell portal-auth-compact">
+    <div class="portal-brand"><img src="{{ asset('img/msu-iit-logo.png') }}" alt="MSU-IIT seal"><div><strong>MSU-IIT Clinic</strong><span>Electronic Medical Record System</span></div></div>
+    <section class="login-card-modern">
+        <div class="login-card-body">
+            <div class="login-card-header"><p class="eyebrow">Staff account security</p><h1>Change Temporary Password</h1><span>Create your private permanent password before continuing.</span></div>
+            <form method="POST" action="{{ route('password.change.update') }}">
+                @csrf
+                <div class="form-group"><label for="password">New Password</label><input id="password" type="password" name="password" class="form-control @error('password') is-invalid @enderror" required autocomplete="new-password">@error('password')<span class="invalid-feedback">{{ $message }}</span>@enderror</div>
+                <div class="form-group"><label for="password-confirm">Confirm New Password</label><input id="password-confirm" type="password" name="password_confirmation" class="form-control" required autocomplete="new-password"></div>
+                <p class="password-guidance">Use at least 8 characters. Your temporary credential stops working after this change.</p>
+                <button type="submit" class="btn btn-primary btn-block">Set Permanent Password</button>
+            </form>
+            <form method="POST" action="{{ route('logout') }}">@csrf<button type="submit" class="btn btn-link student-auth-link">Logout</button></form>
         </div>
-    </div>
-</div>
+    </section>
+</main>
 @endsection

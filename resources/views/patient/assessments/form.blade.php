@@ -1,5 +1,6 @@
 @extends('layouts.app')
 @section('content')
+<div class="assessment-brand-header"><img src="{{ asset('img/msu-iit-logo.png') }}" alt="MSU-IIT seal"><div><strong>MSU-IIT Clinic</strong><span>Health Assessment</span></div></div>
 @php
     $personal = optional($assessment)->personal_information ?: [];
     $social = optional($assessment)->social_history ?: [];
