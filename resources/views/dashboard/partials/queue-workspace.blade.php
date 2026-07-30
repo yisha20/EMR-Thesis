@@ -8,7 +8,7 @@
         @if(auth()->user()->role->name!=='Doctor')
         <form method="POST" action="{{ route('clinic-queues.policy') }}" class="queue-policy-form">@csrf @method('PATCH')
             <label for="queue-policy">Dispatch policy</label>
-            <select id="queue-policy" name="policy" onchange="this.form.submit()">
+            <select id="queue-policy" name="policy" class="custom-select" onchange="this.form.submit()">
                 <option value="alternating" {{ $queuePolicy==='alternating'?'selected':'' }}>Alternating queues</option>
                 <option value="strict_priority" {{ $queuePolicy==='strict_priority'?'selected':'' }}>Strict priority then oldest</option>
                 <option value="manual" {{ $queuePolicy==='manual'?'selected':'' }}>Manual selection</option>

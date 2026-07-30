@@ -8,6 +8,7 @@ use App\Patient;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class HealthAssessmentController extends Controller
 {
@@ -44,7 +45,9 @@ class HealthAssessmentController extends Controller
         $account = $request->user()->patientAccount;
         abort_unless($account, 403);
         $required = $submit ? 'required' : 'nullable';
+        $photoRequired = $submit && ! $request->user()->avatar ? 'required' : 'nullable';
         $rules = [
+            'formal_photo'=>$photoRequired.'|image|mimes:jpg,jpeg,png|max:4096',
             'opd_number'=>'nullable|string|max:50','examination_date'=>$required.'|date',
             'college_department'=>$required.'|string|max:255','last_name'=>$required.'|string|max:100',
             'first_name'=>$required.'|string|max:100','middle_name'=>'nullable|string|max:100','suffix'=>'nullable|string|max:20',
@@ -54,9 +57,12 @@ class HealthAssessmentController extends Controller
             'medical_conditions'=>'array','medical_conditions.*'=>'in:'.implode(',', self::MEDICAL_CONDITIONS),
             'medical_details'=>'array','other_medical_condition'=>'nullable|string|max:500',
             'family_conditions'=>'array','family_conditions.*'=>'in:'.implode(',', self::FAMILY_CONDITIONS),
-            'family_details'=>'array','smoking_status'=>$required.'|in:Never,Current smoker,Former smoker',
+            'family_details'=>'array','other_family_condition'=>'nullable|string|max:255',
+            'smoking_status'=>$required.'|in:Never,Current smoker,Former smoker',
+            'smoking_packs'=>($submit ? 'required_if:smoking_status,Current smoker' : 'nullable').'|numeric|min:0|max:100',
             'drinks_alcohol'=>$required.'|in:No,Yes','alcohol_type'=>'nullable|required_if:drinks_alcohol,Yes|string|max:100',
-            'alcohol_frequency'=>'nullable|required_if:drinks_alcohol,Yes|string|max:50',
+            'alcohol_frequency'=>'nullable|required_if:drinks_alcohol,Yes|in:Occasional,Seldom',
+            'takes_medications'=>$required.'|in:No,Yes',
             'medications'=>'array','medications.*'=>'nullable|string|max:255',
             'last_menstrual_period'=>'nullable|date','menstrual_pattern'=>'nullable|in:Regular,Irregular,Prefer not to answer',
         ];
@@ -64,8 +70,21 @@ class HealthAssessmentController extends Controller
         if ($submit && in_array('Other', $data['medical_conditions'] ?? [], true)) {
             $request->validate(['other_medical_condition'=>'required|string|max:500']);
         }
+        if ($submit && in_array('Other hereditary disease', $data['family_conditions'] ?? [], true)) {
+            $request->validate(['other_family_condition'=>'required|string|max:255']);
+        }
+        if ($submit && ($data['takes_medications'] ?? 'No') === 'Yes'
+            && empty(array_filter($data['medications'] ?? []))) {
+            $request->validate(['medications.0'=>'required|string|max:255']);
+        }
 
-        DB::transaction(function () use ($request, $account, $data, $submit) {
+        $photoUrl = null;
+        if ($request->hasFile('formal_photo') && $request->file('formal_photo')->isValid()) {
+            $photoPath = Storage::disk('public')->putFile('avatars', $request->file('formal_photo'), 'public');
+            $photoUrl = Storage::disk('public')->url($photoPath);
+        }
+
+        DB::transaction(function () use ($request, $account, $data, $submit, $photoUrl) {
             $assessment = $account->latestAssessment()->first();
             if (! $assessment || in_array($assessment->status, ['patient_submitted','under_review','clinically_completed'], true)) {
                 $assessment = new HealthAssessment(['version'=>($assessment ? $assessment->version + 1 : 1)]);
@@ -79,7 +98,7 @@ class HealthAssessmentController extends Controller
                 'status'=>$submit ? 'patient_submitted' : 'draft',
                 'submitted_at'=>$submit ? now() : null, 'personal_information'=>$personal,
                 'womens_health'=>collect($data)->only(['last_menstrual_period','menstrual_pattern'])->all(),
-                'social_history'=>collect($data)->only(['smoking_status','drinks_alcohol','alcohol_type','alcohol_frequency'])->all(),
+                'social_history'=>collect($data)->only(['smoking_status','smoking_packs','drinks_alcohol','alcohol_type','alcohol_frequency','takes_medications'])->all(),
             ])->save();
 
             $assessment->medicalHistories()->delete();
@@ -94,7 +113,13 @@ class HealthAssessmentController extends Controller
             $assessment->familyHistories()->delete();
             foreach ($data['family_conditions'] ?? [] as $condition) {
                 $details = $data['family_details'][$condition] ?? [];
-                $assessment->familyHistories()->create(['condition'=>$condition,'relationship'=>$details['relationship'] ?? null,'details'=>$details['details'] ?? null]);
+                $assessment->familyHistories()->create([
+                    'condition'=>$condition,
+                    'relationship'=>$details['relationship'] ?? null,
+                    'details'=>$condition === 'Other hereditary disease'
+                        ? ($data['other_family_condition'] ?? null)
+                        : ($details['details'] ?? null),
+                ]);
             }
             $assessment->medications()->delete();
             foreach (array_filter($data['medications'] ?? []) as $order=>$medication) {
@@ -106,11 +131,18 @@ class HealthAssessmentController extends Controller
                     'last_name'=>$personal['last_name'],'gender'=>$personal['sex'],'phone_number'=>$personal['mobile_number'],
                     'college_department'=>$personal['college_department'],'type'=>ucfirst($account->patient_type),'status'=>'Active',
                     'home_address'=>$personal['home_address'],'present_address'=>$personal['present_address'],'age'=>$personal['age'],
-                    'birthdate'=>$personal['birth_date'],'added_by'=>$request->user()->id,
+                    'birthdate'=>$personal['birth_date'],'avatar'=>$photoUrl ?: $request->user()->avatar,
+                    'added_by'=>$request->user()->id,
                 ]);
                 $account->patient_id = $patient->id;
                 $assessment->patient_id = $patient->id;
                 $assessment->save();
+            }
+            if ($photoUrl) {
+                $request->user()->update(['avatar'=>$photoUrl]);
+                if ($account->patient_id) {
+                    Patient::whereKey($account->patient_id)->update(['avatar'=>$photoUrl]);
+                }
             }
             $account->update(['health_assessment_status'=>$assessment->status,'health_assessment_completed_at'=>$submit ? now() : null]);
             ActivityLog::create(['user_id'=>$request->user()->id,'action'=>$submit ? 'Health assessment submitted' : 'Health assessment draft saved','description'=>'Assessment #'.$assessment->id.'; clinical content omitted.']);

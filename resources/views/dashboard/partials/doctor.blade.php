@@ -50,7 +50,7 @@
             </div>
         </article>
 
-        <aside class="dashboard-panel doctor-analytics-card" hidden aria-hidden="true">
+        <aside class="dashboard-panel doctor-analytics-card">
             <div class="dashboard-panel-header">
                 <div>
                     <p class="eyebrow">At a glance</p>
@@ -67,9 +67,19 @@
                     $y = 125 - (($item['value'] / $lineMax) * 95);
                     return round($x, 1) . ',' . round($y, 1);
                 })->implode(' ');
+                $lineTotal = (int) $lineItems->sum('value');
+                $lineAverage = $lineItems->count() ? round($lineTotal / $lineItems->count(), 1) : 0;
+                $linePeak = (int) $lineItems->max('value');
             @endphp
+            <div class="doctor-trend-summary" aria-label="Seven-day consultation summary">
+                <span><strong>{{ number_format($lineTotal) }}</strong>Total</span>
+                <span><strong>{{ number_format($lineAverage, 1) }}</strong>Daily average</span>
+                <span><strong>{{ number_format($linePeak) }}</strong>Peak day</span>
+            </div>
             <div class="dashboard-line-chart doctor-line-chart" role="img" aria-label="Daily consultation trend for the last seven days">
                 <svg viewBox="0 0 300 150" preserveAspectRatio="none" aria-hidden="true">
+                    <line x1="20" y1="30" x2="280" y2="30" class="chart-gridline"></line>
+                    <line x1="20" y1="77.5" x2="280" y2="77.5" class="chart-gridline"></line>
                     <line x1="20" y1="125" x2="280" y2="125" class="chart-axis"></line>
                     <polyline points="{{ $linePoints }}" class="chart-line"></polyline>
                     @foreach ($lineItems as $index => $item)

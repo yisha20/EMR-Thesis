@@ -52,9 +52,6 @@ class CounterServiceController extends Controller
             'action_type' => 'required|in:counter_remedy,basic_service',
             'service_provided' => 'required|string|max:5000',
             'quantity' => 'nullable|string|max:100',
-            'medication_name' => 'nullable|string|max:255',
-            'dose' => 'nullable|string|max:255',
-            'nursing_intervention' => 'nullable|string|max:5000',
             'notes' => 'nullable|string|max:5000',
             'outcome' => 'required|string|max:255',
         ]);
@@ -64,12 +61,7 @@ class CounterServiceController extends Controller
             abort_unless($queue->queue_type === 'counter' && $queue->status === 'serving', 422);
             $complaint = $queue->complaint;
             abort_unless($complaint && $complaint->patient_id, 422, 'The complaint has no linked patient record.');
-            $notes = collect([
-                !empty($data['medication_name']) ? 'Medication: '.$data['medication_name'] : null,
-                !empty($data['dose']) ? 'Dose: '.$data['dose'] : null,
-                $data['nursing_intervention'] ?? null,
-                $data['notes'] ?? null,
-            ])->filter()->implode("\n");
+            $notes = $data['notes'] ?? null;
             $service = CounterService::updateOrCreate(
                 ['student_complaint_id' => $complaint->id],
                 [

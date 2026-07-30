@@ -6,6 +6,8 @@
     $women = optional($assessment)->womens_health ?: [];
     $selectedMedical = optional($assessment)->medicalHistories ? $assessment->medicalHistories->pluck('condition')->all() : [];
     $selectedFamily = optional($assessment)->familyHistories ? $assessment->familyHistories->pluck('condition')->all() : [];
+    $otherFamilyHistory = optional($assessment)->familyHistories ? optional($assessment->familyHistories->firstWhere('condition', 'Other hereditary disease'))->details : null;
+    $hasMedications = optional($assessment)->medications && optional($assessment)->medications->isNotEmpty();
 @endphp
 <div class="assessment-page">
     <div class="assessment-heading">
@@ -14,11 +16,22 @@
         <span class="badge badge-info">{{ ucfirst($account->patient_type) }}</span>
     </div>
     @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
-    <form method="POST" class="assessment-form" data-assessment-form>
+    <form method="POST" enctype="multipart/form-data" class="assessment-form" data-assessment-form>
         @csrf
-        <div class="assessment-progress" aria-label="Form progress"><span class="active">1 Personal</span><span>2 Medical</span><span>3 Family &amp; Social</span><span>4 Review</span></div>
+        <div class="assessment-progress" aria-label="Form progress"><span class="active">A Personal</span><span>B Medical</span><span>C Family &amp; Social</span><span>D Review</span></div>
         <section class="assessment-step active" data-step="0">
             <h2>Personal and Identification Information</h2>
+            <div class="assessment-photo-field">
+                <div class="assessment-photo-preview">
+                    <img data-formal-photo-preview src="{{ optional($account->user)->avatar ?: asset('img/no_avatar.jpg') }}" alt="Formal photo preview">
+                </div>
+                <label for="formal_photo">
+                    Formal 1×1 photo
+                    <small>Upload a recent, clear, front-facing formal photo with a plain background. It will automatically appear in the 1×1 photo area of your Health Assessment Record.</small>
+                    <input id="formal_photo" type="file" name="formal_photo" class="form-control-file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" {{ optional($account->user)->avatar ? '' : 'required' }}>
+                    @if(optional($account->user)->avatar)<small class="text-success">A photo is already on file. Upload a new one only if it needs replacing.</small>@endif
+                </label>
+            </div>
             <div class="assessment-grid">
                 <label>Applicant type<input class="form-control" value="{{ ucfirst($account->patient_type) }}" disabled></label>
                 <label>OPD/ID Number<input name="opd_number" class="form-control" value="{{ old('opd_number', $personal['opd_number'] ?? $account->identifier) }}"></label>
@@ -52,16 +65,28 @@
         </section>
         <section class="assessment-step" data-step="2">
             <h2>Family and Social History</h2>
-            <div class="check-card-grid">@foreach($familyConditions as $condition)<label class="check-card"><input type="checkbox" name="family_conditions[]" value="{{ $condition }}" {{ in_array($condition,old('family_conditions',$selectedFamily),true)?'checked':'' }}> <span>{{ $condition }}</span></label>@endforeach</div>
-            <div class="assessment-grid">
-                <label>Do you smoke?<select name="smoking_status" class="form-control" required>@foreach(['Never','Current smoker','Former smoker'] as $v)<option {{ old('smoking_status',$social['smoking_status'] ?? 'Never')===$v?'selected':'' }}>{{ $v }}</option>@endforeach</select></label>
+            <div class="assessment-history-block">
+                <h3>Family History</h3>
+                <p>Do you have a close relative (parent, grandparent, or sibling) diagnosed with any of the following?</p>
+                <div class="check-card-grid">@foreach($familyConditions as $condition)<label class="check-card"><input type="checkbox" name="family_conditions[]" value="{{ $condition }}" {{ in_array($condition,old('family_conditions',$selectedFamily),true)?'checked':'' }}> <span>{{ $condition }}</span></label>@endforeach</div>
+                <label>Other hereditary disease<input name="other_family_condition" class="form-control" value="{{ old('other_family_condition', $otherFamilyHistory) }}" placeholder="Please specify"></label>
+            </div>
+            <div class="assessment-history-block">
+                <h3>Social History</h3>
+                <div class="assessment-grid">
+                <label>Do you smoke?<select name="smoking_status" class="form-control" required><option value="Never" {{ old('smoking_status',$social['smoking_status'] ?? 'Never')==='Never'?'selected':'' }}>No</option><option value="Current smoker" {{ old('smoking_status',$social['smoking_status'] ?? 'Never')==='Current smoker'?'selected':'' }}>Yes</option><option value="Former smoker" {{ old('smoking_status',$social['smoking_status'] ?? 'Never')==='Former smoker'?'selected':'' }}>Former smoker</option></select></label>
+                <label>If yes, how many packs per day?<input type="number" name="smoking_packs" class="form-control" min="0" max="100" step="0.1" inputmode="decimal" value="{{ old('smoking_packs',$social['smoking_packs'] ?? '') }}" placeholder="Not applicable"></label>
                 <label>Do you drink alcohol?<select name="drinks_alcohol" class="form-control" required>@foreach(['No','Yes'] as $v)<option {{ old('drinks_alcohol',$social['drinks_alcohol'] ?? 'No')===$v?'selected':'' }}>{{ $v }}</option>@endforeach</select></label>
                 <label>Alcohol type<input name="alcohol_type" class="form-control" value="{{ old('alcohol_type',$social['alcohol_type'] ?? '') }}"></label>
-                <label>Frequency<select name="alcohol_frequency" class="form-control"><option value="">Not applicable</option>@foreach(['Occasional','Seldom','Regular','Other'] as $v)<option {{ old('alcohol_frequency',$social['alcohol_frequency'] ?? '')===$v?'selected':'' }}>{{ $v }}</option>@endforeach</select></label>
+                <label>How frequent?<select name="alcohol_frequency" class="form-control"><option value="">Not applicable</option>@foreach(['Occasional','Seldom'] as $v)<option {{ old('alcohol_frequency',$social['alcohol_frequency'] ?? '')===$v?'selected':'' }}>{{ $v }}</option>@endforeach</select></label>
+                <label>Do you take medications at present?<select name="takes_medications" class="form-control" required data-takes-medications><option value="No" {{ old('takes_medications',$social['takes_medications'] ?? ($hasMedications ? 'Yes' : 'No'))==='No'?'selected':'' }}>No</option><option value="Yes" {{ old('takes_medications',$social['takes_medications'] ?? ($hasMedications ? 'Yes' : 'No'))==='Yes'?'selected':'' }}>Yes</option></select></label>
+                </div>
+                <div data-current-medications>
+                    <h3>Current medications</h3>
+                    <div data-medications>@forelse(optional($assessment)->medications ?: [] as $med)<input name="medications[]" class="form-control medication-row" value="{{ $med->medication }}" placeholder="Medication name">@empty<input name="medications[]" class="form-control medication-row" placeholder="Medication name">@endforelse</div>
+                    <button type="button" class="btn btn-light" data-add-medication>Add medication</button>
+                </div>
             </div>
-            <h3>Current medications</h3>
-            <div data-medications>@forelse(optional($assessment)->medications ?: [] as $med)<input name="medications[]" class="form-control medication-row" value="{{ $med->medication }}">@empty<input name="medications[]" class="form-control medication-row">@endforelse</div>
-            <button type="button" class="btn btn-light" data-add-medication>Add medication</button>
         </section>
         <section class="assessment-step" data-step="3">
             <h2>Review and Submit</h2>
@@ -85,6 +110,8 @@
 function show(n){steps[current].classList.remove('active');current=n;steps[current].classList.add('active');prev.disabled=current===0;next.hidden=current===steps.length-1;submit.hidden=current!==steps.length-1;document.querySelectorAll('.assessment-progress span').forEach(function(x,i){x.classList.toggle('active',i<=current)});window.scrollTo({top:0,behavior:'smooth'});}
 prev.onclick=function(){show(current-1)};next.onclick=function(){var invalid=steps[current].querySelector(':invalid');if(invalid){invalid.reportValidity();invalid.focus();return;}show(current+1)};
 document.querySelector('[data-add-medication]').onclick=function(){var i=document.createElement('input');i.name='medications[]';i.className='form-control medication-row';document.querySelector('[data-medications]').appendChild(i);i.focus();};
+var photo=document.querySelector('#formal_photo'),preview=document.querySelector('[data-formal-photo-preview]');photo.onchange=function(){if(photo.files&&photo.files[0])preview.src=URL.createObjectURL(photo.files[0]);};
+var takes=document.querySelector('[data-takes-medications]'),medications=document.querySelector('[data-current-medications]');function syncMedications(){medications.hidden=takes.value!=='Yes';}takes.onchange=syncMedications;syncMedications();
 @if($errors->any()) var first=document.querySelector(':invalid');if(first){var idx=steps.indexOf(first.closest('[data-step]'));if(idx>=0)show(idx);first.focus();}@endif
 })();</script>
 @endpush
