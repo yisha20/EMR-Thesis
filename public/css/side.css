@@ -11344,39 +11344,24 @@ body.dark-mode .table-action-button.btn:hover {
 }
 
 .prescription-logo {
-  align-items: center;
-  background: linear-gradient(135deg, #2f78a0, #58a6cf);
-  border: 6px solid #d9eef8;
-  border-radius: 50%;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  height: 76px;
-  justify-content: center;
-  line-height: 1;
-  overflow: hidden;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: #2f78a0;
+  flex: 0 0 76px;
+  height: auto;
+  overflow: visible;
   width: 76px;
 }
 
-.prescription-logo strong {
-  font-size: 14px;
-  letter-spacing: 0;
+.prescription-logo img {
+  display: block;
+  height: auto;
+  max-height: 72px;
+  width: 72px;
 }
 
-.prescription-logo span {
-  background: #ffffff;
-  border-radius: 50%;
-  color: #2f78a0;
-  font-size: 18px;
-  font-weight: 800;
-  height: 26px;
-  line-height: 24px;
-  margin-top: 3px;
-  text-align: center;
-  width: 26px;
-}
-
-.prescription-header div {
+.prescription-header > div:not(.prescription-logo) {
   flex: 1;
 }
 

@@ -16,7 +16,7 @@
         .prescription-logo { flex:0 0 76px; width:76px; }
         .prescription-logo img { display:block; height:auto; max-height:72px; width:72px; }
         .prescription-logo > strong { color:#2f78a0; display:block; margin-top:28px; text-align:center; }
-        .prescription-header div { flex:1; }
+        .prescription-header > div:not(.prescription-logo) { flex:1; }
         .prescription-header h1 { font-size:24px; margin:5px 0; }
         .prescription-header span,.prescription-meta span { color:#627f91; font-size:12px; }
         .prescription-meta { border-bottom:1px solid #b7d9ee; display:grid; gap:14px 24px; grid-template-columns:repeat(2,1fr); padding:22px 0; }
