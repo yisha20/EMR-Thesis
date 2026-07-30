@@ -14,7 +14,7 @@
         body.layout-compact .prescription-document { min-height:0; padding:30px 42px; }
         .prescription-header { align-items:center; border-bottom:2px solid #2f78a0; display:flex; gap:18px; padding-bottom:18px; text-align:center; }
         .prescription-logo { flex:0 0 76px; width:76px; }
-        .prescription-logo img { display:block; height:76px; object-fit:contain; width:76px; }
+        .prescription-logo img { display:block; height:auto; max-height:72px; width:72px; }
         .prescription-logo > strong { color:#2f78a0; display:block; margin-top:28px; text-align:center; }
         .prescription-header div { flex:1; }
         .prescription-header h1 { font-size:24px; margin:5px 0; }

@@ -7,7 +7,10 @@
 body { color:#111; font-family:DejaVu Sans,sans-serif; font-size:9.5pt; line-height:1.35; margin:0; }
 .page-footer { bottom:-10mm; color:#555; font-size:8pt; left:0; position:fixed; right:0; text-align:center; }
 .page-footer:after { content:"Page " counter(page); }
-.document-header { border-bottom:2px solid #111; margin-bottom:8px; padding-bottom:7px; text-align:center; }
+.document-header { border-bottom:2px solid #111; margin-bottom:8px; min-height:64px; padding-bottom:7px; text-align:center; }
+.document-logo { float:left; text-align:left; width:72px; }
+.document-logo img { display:block; height:auto; max-height:58px; width:58px; }
+.document-logo strong { color:#7f1d1d; display:block; font-size:8pt; margin-top:22px; }
 .document-header h1 { font-size:15pt; letter-spacing:.4px; margin:3px 0; }
 .document-header h2 { font-size:10.5pt; margin:0; }
 .document-meta { font-size:8.5pt; margin:5px 0 8px; text-align:right; }
@@ -42,6 +45,7 @@ th { background:#f4f4f4; font-size:8.5pt; }
     $photoPath=$avatarPath && strpos($avatarPath,'/storage/')===0 ? public_path(ltrim($avatarPath,'/')) : null;
 @endphp
 <header class="document-header">
+    <div class="document-logo">@if(!empty($logoData))<img src="{{$logoData}}" alt="MSU-IIT seal" width="58">@else<strong>MSU-IIT</strong>@endif</div>
     <h2>MINDANAO STATE UNIVERSITY - ILIGAN INSTITUTE OF TECHNOLOGY</h2>
     <div>MSU-IIT Clinic</div><h1>HEALTH EXAMINATION RECORD</h1>
 </header>

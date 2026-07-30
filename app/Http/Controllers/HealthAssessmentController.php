@@ -158,6 +158,10 @@ class HealthAssessmentController extends Controller
         abort_unless($owns || in_array($role, ['Administrator','Nurse','Doctor','Staff'], true), 403);
         $assessment->load(['account.user','account.sponsor.user','account.dependents','medicalHistories','familyHistories','medications','nursingInterventions']);
         ActivityLog::create(['user_id'=>$request->user()->id,'action'=>'Health assessment PDF downloaded','description'=>'Assessment #'.$assessment->id]);
-        return Pdf::loadView('patient.assessments.pdf', compact('assessment'))->setPaper('a4')->download('health-assessment-'.$assessment->id.'.pdf');
+        $logoPath = public_path('img/msu-iit-logo-print.jpg');
+        $logoData = is_file($logoPath)
+            ? 'data:image/jpeg;base64,'.base64_encode(file_get_contents($logoPath))
+            : null;
+        return Pdf::loadView('patient.assessments.pdf', compact('assessment', 'logoData'))->setPaper('a4')->download('health-assessment-'.$assessment->id.'.pdf');
     }
 }

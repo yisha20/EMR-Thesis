@@ -2,9 +2,9 @@
     <header class="prescription-header" data-print-section="clinic-header">
         <div class="prescription-logo">
             @if(!empty($pdfMode))
-                @if($logoData)<img src="{{ $logoData }}" alt="MSU-IIT seal">@else<strong>MSU-IIT</strong>@endif
+                @if($logoData)<img src="{{ $logoData }}" alt="MSU-IIT seal" width="64">@else<strong>MSU-IIT</strong>@endif
             @else
-                <img src="{{ asset('img/msu-iit-logo-print.png') }}" alt="MSU-IIT seal">
+                <img src="{{ asset('img/msu-iit-logo-print.png') }}" alt="MSU-IIT seal" width="72">
             @endif
         </div>
         <div>
