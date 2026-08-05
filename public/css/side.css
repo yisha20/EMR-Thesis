@@ -13100,8 +13100,13 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 .patient-queue-card {
   align-items: flex-start;
   display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 0;
+  grid-template-columns: minmax(0, 1fr) 70px;
+  row-gap: 10px;
+}
+
+.patient-queue-card .student-update-icon i {
+  font-size: 1.08rem;
 }
 
 .patient-queue-card .patient-presence-controls {
