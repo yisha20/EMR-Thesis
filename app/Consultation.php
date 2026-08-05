@@ -18,4 +18,5 @@ class Consultation extends Model
     public function prescription() { return $this->hasOne(Prescription::class); }
     public function caller() { return $this->belongsTo(User::class, 'called_by'); }
     public function notifications() { return $this->hasMany(ClinicNotification::class, 'related_consultation_id'); }
+    public function medicalCertificates() { return $this->hasMany(MedicalCertificate::class); }
 }

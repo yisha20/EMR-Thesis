@@ -106,6 +106,10 @@ class Patient extends Model
 	{
 		return $this->hasMany(StudentComplaint::class);
 	}
+
+    public function emergencyEncounters(){return $this->hasMany(EmergencyEncounter::class);}
+    public function dentalReferrals(){return $this->hasMany(DentalReferral::class);}
+    public function medicalCertificates(){return $this->hasMany(MedicalCertificate::class);}
 	
 	/**
 	 * This patient has a health examination record.
