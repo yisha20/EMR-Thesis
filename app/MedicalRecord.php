@@ -79,6 +79,11 @@ class MedicalRecord extends Model
         return $this->belongsTo(Consultation::class);
     }
 
+    public function emergencyEncounter()
+    {
+        return $this->belongsTo(EmergencyEncounter::class);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
