@@ -9218,6 +9218,15 @@ body.dark-mode .emr-confirmation-cancel {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.student-status-cards.is-two-card .patient-queue-card {
+  grid-column: span 2;
+}
+
+.student-status-cards > .student-update-card,
+.student-clinic-update-cards > .student-update-card {
+  height: 100%;
+}
+
 .student-update-card {
   background: linear-gradient(135deg, #f7fcff 0%, #edf8ff 100%);
   border: 1px solid #b7d9ee;
@@ -9420,6 +9429,10 @@ body.dark-mode .student-concern-description {
   .student-updates-list,
   .student-update-cards {
     grid-template-columns: 1fr;
+  }
+
+  .student-status-cards.is-two-card .patient-queue-card {
+    grid-column: 1 / -1;
   }
 
   .student-concern-modern-header {

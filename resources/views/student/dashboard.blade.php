@@ -43,7 +43,7 @@
                 <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#studentConcernModal"><i class="fa fa-plus"></i> Submit New Concern</button>
             </section>
 
-            <section class="student-update-cards" aria-label="Patient status">
+            <section class="student-update-cards student-status-cards {{ $account->patient_type === 'faculty' ? 'is-three-card' : 'is-two-card' }}" aria-label="Patient status">
                 <article class="student-update-card"><div class="student-update-copy"><strong>Health Assessment</strong><small>{{ str_replace('_',' ',ucfirst($account->health_assessment_status)) }}</small>@if($assessment)<a href="{{ route('health-assessments.pdf',$assessment) }}">Download PDF</a>@endif</div><span class="student-update-icon"><i class="fa fa-file-text-o"></i></span></article>
                 <article class="student-update-card patient-queue-card" id="patientLiveQueueCard" data-queue-url="{{ route('patient.queue.status') }}" data-presence-template="{{ url('/patient/queue/__QUEUE__/presence') }}" data-ack-template="{{ url('/patient/queue/__QUEUE__/acknowledge') }}">
                     <div class="student-update-copy"><strong>Queue Status</strong>@if($activeQueue)<small>Your Queue Number: <b>{{ $activeQueue->ticket_number }}</b></small><b>{{ ucfirst($activeQueue->status) }}</b>@else<small>No active queue number</small>@endif</div>
@@ -57,7 +57,7 @@
                 @if($account->patient_type==='faculty')<article class="student-update-card"><div class="student-update-copy"><strong>Registered Dependents</strong><small>{{ $dependents->count() }} registered</small><a href="{{ route('patient.dependents.index') }}">Manage dependents</a></div><span class="student-update-icon"><i class="fa fa-user-plus"></i></span></article>@endif
             </section>
 
-            <section class="student-update-cards" aria-label="Clinic updates">
+            <section class="student-update-cards student-clinic-update-cards" aria-label="Clinic updates">
                 <article class="student-update-card">
                     <div class="student-update-copy">
                         <span class="student-update-dot"></span>
