@@ -147,6 +147,17 @@
         </main>
 
         <aside class="student-side-stack">
+            <section class="dashboard-panel student-information-card">
+                <div class="dashboard-panel-header">
+                    <div><p class="eyebrow">Before your visit</p><h2>Important Information</h2></div>
+                    <span class="student-information-icon" aria-hidden="true"><i class="fa fa-info"></i></span>
+                </div>
+                <div class="student-information-body">
+                    <p>Bring your university ID when visiting the clinic.</p>
+                    <p>For severe or life-threatening symptoms, contact emergency services immediately.</p>
+                </div>
+            </section>
+
             <section class="dashboard-panel">
                 <div class="dashboard-panel-header">
                     <div><p class="eyebrow">Clinic team</p><h2>Available Clinic Staff</h2></div>
@@ -188,10 +199,6 @@
                 </div>
             </section>
 
-            <section class="dashboard-panel">
-                <div class="dashboard-panel-header"><div><p class="eyebrow">Before your visit</p><h2>Important Information</h2></div></div>
-                <p class="mb-0">Bring your university ID when visiting the clinic. For severe or life-threatening symptoms, contact emergency services immediately.</p>
-            </section>
         </aside>
     </div>
 

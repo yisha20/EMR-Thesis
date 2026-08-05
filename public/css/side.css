@@ -10778,6 +10778,35 @@ body.student-registration-page {
   min-width: 0;
 }
 
+.student-information-card .dashboard-panel-header {
+  gap: 1rem;
+}
+
+.student-information-icon {
+  align-items: center;
+  background: #e8f7ff;
+  border-radius: 50%;
+  color: #1688b8;
+  display: inline-flex;
+  flex: 0 0 36px;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.student-information-body {
+  color: var(--emr-text);
+  display: grid;
+  gap: 0.7rem;
+  line-height: 1.55;
+  padding: 1rem 1.1rem 1.15rem;
+}
+
+.student-information-body p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .patient-table-identity > div {
   overflow: hidden;
 }
