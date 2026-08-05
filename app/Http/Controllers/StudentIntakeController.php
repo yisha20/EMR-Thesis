@@ -38,7 +38,7 @@ class StudentIntakeController extends Controller
         $activeQueue = $account ? ClinicQueue::whereIn('patient_account_id', $account->accessibleAccountIds())
             ->whereIn('status', ['waiting','called','serving'])->latest('id')->first() : null;
         $assessment = $account ? $account->latestAssessment()->first() : null;
-        $dependents = $account && in_array($account->patient_type, ['student','faculty']) ? $account->dependents()->latest()->get() : collect();
+        $dependents = $account && $account->patient_type === 'faculty' ? $account->dependents()->latest()->get() : collect();
         $complaintOptions = CommonComplaintOption::where('is_active', true)->orderBy('category')->orderBy('display_order')->get()->groupBy('category');
 
         return view('student.dashboard', compact('student', 'currentComplaint', 'clinicStaff', 'services', 'account', 'activeQueue', 'assessment', 'dependents', 'complaintOptions'));
@@ -52,7 +52,8 @@ class StudentIntakeController extends Controller
             ->paginate(10);
 
         $complaintOptions = CommonComplaintOption::where('is_active', true)->orderBy('category')->orderBy('display_order')->get()->groupBy('category');
-        $dependents = $request->user()->patientAccount ? $request->user()->patientAccount->dependents()->where('verification_status', 'verified')->get() : collect();
+        $account = $request->user()->patientAccount;
+        $dependents = $account && $account->patient_type === 'faculty' ? $account->dependents()->where('verification_status', 'verified')->get() : collect();
         return view('student.complaints.index', compact('student', 'complaints', 'complaintOptions', 'dependents'));
     }
 
@@ -108,6 +109,7 @@ class StudentIntakeController extends Controller
         $account = $request->user()->patientAccount;
         $dependent = null;
         if (! empty($data['dependent_id'])) {
+            abort_unless($account && $account->patient_type === 'faculty', 403);
             $dependent = $account->dependents()->whereKey($data['dependent_id'])->where('verification_status', 'verified')->firstOrFail();
         }
 

@@ -15,7 +15,7 @@ use Throwable;
 class StudentAuthController extends Controller
 {
     private const ACCOUNT_TYPES = ['student', 'faculty', 'dependent'];
-    private const RELATIONSHIPS = ['Spouse', 'Child', 'Parent', 'Sibling', 'Legal Guardian', 'Other Immediate Family'];
+    private const RELATIONSHIPS = ['Spouse', 'Child', 'Parent', 'Sibling', 'Legal dependent', 'Other approved family dependent'];
 
     public function __construct()
     {
@@ -47,11 +47,11 @@ class StudentAuthController extends Controller
             'account_type' => 'required|in:student,faculty,dependent',
             'student_id_number' => 'required_if:account_type,student|nullable|string|max:50|unique:students,student_id_number|unique:patient_accounts,student_id_number',
             'faculty_id_number' => 'required_if:account_type,faculty|nullable|string|max:50|unique:patient_accounts,faculty_id_number',
-            'sponsor_type' => 'required_if:account_type,dependent|nullable|in:student,faculty',
+            'sponsor_type' => 'required_if:account_type,dependent|nullable|in:faculty',
             'sponsor_id_number' => 'required_if:account_type,dependent|nullable|string|max:50',
             'sponsor_email' => 'required_if:account_type,dependent|nullable|email|max:255',
             'dependent_relationship' => 'required_if:account_type,dependent|nullable|in:'.implode(',', self::RELATIONSHIPS),
-            'dependent_relationship_details' => 'required_if:dependent_relationship,Other Immediate Family|nullable|string|max:100',
+            'dependent_relationship_details' => 'required_if:dependent_relationship,Other approved family dependent|nullable|string|max:100',
             'verification_consent' => $request->input('account_type') === 'dependent'
                 ? 'required|accepted'
                 : 'nullable',
@@ -92,11 +92,8 @@ class StudentAuthController extends Controller
                 if ($data['account_type'] === 'dependent') {
                     $sponsor = PatientAccount::whereHas('user', function ($query) use ($data) {
                         $query->where('email', $data['sponsor_email'])->where('status', 'Active');
-                    })->where('patient_type', $data['sponsor_type'])
-                        ->where(function ($query) use ($data) {
-                            $query->where('student_id_number', $data['sponsor_id_number'])
-                                ->orWhere('faculty_id_number', $data['sponsor_id_number']);
-                        })
+                    })->where('patient_type', 'faculty')
+                        ->where('faculty_id_number', $data['sponsor_id_number'])
                         ->where('verification_status', 'verified')->first();
                     if (! $sponsor) {
                         throw \Illuminate\Validation\ValidationException::withMessages([

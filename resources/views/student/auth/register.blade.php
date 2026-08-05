@@ -79,11 +79,11 @@
                             @include('student.auth.partials.field', ['name' => 'position_designation', 'label' => 'Position / Designation', 'required' => true])
                             @include('student.auth.partials.field', ['name' => 'employment_type', 'label' => 'Employment Type'])
                         @else
+                            <div class="alert alert-info full-width">Dependents must be sponsored by a registered MSU-IIT Faculty or Employee account.</div>
                             <div class="form-group">
                                 <label for="sponsor_type">Sponsor Type <span aria-hidden="true">*</span></label>
                                 <select id="sponsor_type" name="sponsor_type" class="form-control @error('sponsor_type') is-invalid @enderror" required>
                                     <option value="">Select</option>
-                                    <option value="student" {{ old('sponsor_type') === 'student' ? 'selected' : '' }}>Student</option>
                                     <option value="faculty" {{ old('sponsor_type') === 'faculty' ? 'selected' : '' }}>Faculty</option>
                                 </select>
                                 @error('sponsor_type')<span class="invalid-feedback">{{ $message }}</span>@enderror

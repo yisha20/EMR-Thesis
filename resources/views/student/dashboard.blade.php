@@ -54,7 +54,7 @@
                         <button type="button" data-presence="returning">I'm Returning</button>
                     </div>
                 </article>
-                @if(in_array($account->patient_type,['student','faculty']))<article class="student-update-card"><div class="student-update-copy"><strong>Registered Dependents</strong><small>{{ $dependents->count() }} registered</small><a href="{{ route('patient.dependents.index') }}">Manage dependents</a></div><span class="student-update-icon"><i class="fa fa-user-plus"></i></span></article>@endif
+                @if($account->patient_type==='faculty')<article class="student-update-card"><div class="student-update-copy"><strong>Registered Dependents</strong><small>{{ $dependents->count() }} registered</small><a href="{{ route('patient.dependents.index') }}">Manage dependents</a></div><span class="student-update-icon"><i class="fa fa-user-plus"></i></span></article>@endif
             </section>
 
             <section class="student-update-cards" aria-label="Clinic updates">

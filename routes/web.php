@@ -78,6 +78,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/nurse/counter-services/{queue}', 'CounterServiceController@show')->middleware('role:Administrator,Nurse,Staff')->name('counter-services.show');
     Route::post('/nurse/counter-services/{queue}/complete', 'CounterServiceController@complete')->middleware('role:Administrator,Nurse,Staff')->name('counter-services.complete');
     Route::patch('/patient-dependents/{dependent}/verify', 'PatientDependentController@verify')->middleware('role:Administrator,Nurse')->name('patient-dependents.verify');
+    Route::get('/dependent-sponsor-review', 'PatientDependentController@review')->middleware('role:Administrator,Nurse')->name('patient-dependents.review');
+    Route::patch('/dependent-sponsor-review/{dependent}', 'PatientDependentController@resolve')->middleware('role:Administrator,Nurse')->name('patient-dependents.resolve');
     Route::get('dashboard', 'DashboardController@index')->name('dashboard');
     Route::get('/activity-logs', 'ActivityLogController@index')->name('activity.logs');
     Route::get('/doctors/{doctor}/prescription-profile', 'DoctorProfileController@edit')->middleware('role:Administrator,Doctor')->name('doctor-profile.edit');

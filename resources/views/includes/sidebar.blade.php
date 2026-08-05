@@ -64,9 +64,9 @@ if ($sidebarRoleName === 'Administrator') {
                 <i class="fa fa-medkit"></i><span>My Prescriptions</span>
             </a>
             @if(optional($auth->patientAccount)->patient_type !== 'dependent')
-            <a class="sidebar-tooltip-trigger {{ request()->routeIs('patient.dependents.*') ? 'active' : '' }}" href="{{ route('patient.dependents.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="My Dependents" aria-label="My Dependents">
+            @if(optional(auth()->user()->patientAccount)->patient_type === 'faculty')<a class="sidebar-tooltip-trigger {{ request()->routeIs('patient.dependents.*') ? 'active' : '' }}" href="{{ route('patient.dependents.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="My Dependents" aria-label="My Dependents">
                 <i class="fa fa-user-plus"></i><span>My Dependents</span>
-            </a>
+            </a>@endif
             @endif
             <a class="sidebar-tooltip-trigger {{ request()->routeIs('student.profile') ? 'active' : '' }}" href="{{ route('student.profile') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Profile" aria-label="Profile">
                 <i class="fa fa-user-o"></i><span>Profile</span>

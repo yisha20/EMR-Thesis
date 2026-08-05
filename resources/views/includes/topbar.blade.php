@@ -115,7 +115,7 @@ $topbarUnreadCount = $showClinicNotifications
             <a class="{{ request()->routeIs('student.prescriptions.*') ? 'active' : '' }}" href="{{ route('student.prescriptions.index') }}"><i class="fa fa-medkit"></i><span>My Prescriptions</span></a>
             <a class="{{ request()->routeIs('notifications.*') ? 'active' : '' }}" href="{{ route('notifications.index') }}"><i class="fa fa-bell-o"></i><span>Notifications</span>@if($topbarUnreadCount)<strong class="drawer-unread-count">{{ $topbarUnreadCount }}</strong>@endif</a>
             @if(optional(Auth::user()->patientAccount)->patient_type !== 'dependent')
-            <a class="{{ request()->routeIs('patient.dependents.*') ? 'active' : '' }}" href="{{ route('patient.dependents.index') }}"><i class="fa fa-user-plus"></i><span>My Dependents</span></a>
+            @if(optional(auth()->user()->patientAccount)->patient_type === 'faculty')<a class="{{ request()->routeIs('patient.dependents.*') ? 'active' : '' }}" href="{{ route('patient.dependents.index') }}"><i class="fa fa-user-plus"></i><span>My Dependents</span></a>@endif
             @endif
             <a class="{{ request()->routeIs('student.profile') ? 'active' : '' }}" href="{{ route('student.profile') }}"><i class="fa fa-user-o"></i><span>Profile</span></a>
         </div>
