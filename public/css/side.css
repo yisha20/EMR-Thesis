@@ -13674,3 +13674,6 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   .topbar, .sidebar, .sidepanel, .action-controls, .mobile-drawer,
   .toast, .toast-container, .registration-actions { display: none !important; }
 }
+
+.workspace-header-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
+@media (max-width: 600px) { .workspace-header-actions { align-items: flex-end; flex-direction: column; } .workspace-header-actions .btn { width: 100%; } }

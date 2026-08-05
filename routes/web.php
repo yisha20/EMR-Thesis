@@ -73,6 +73,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/nurse/intakes', 'EmergencyIntakeController@store')->middleware('role:Administrator,Nurse,Staff')->name('emergency-intakes.store');
     Route::get('/emergency-intakes/{emergencyIntake}', 'EmergencyIntakeController@show')->name('emergency-intakes.show');
     Route::post('/emergency-intakes/{emergencyIntake}/acknowledge', 'EmergencyIntakeController@acknowledge')->middleware('role:Doctor')->name('emergency-intakes.acknowledge');
+    Route::post('/emergency-intakes/{emergencyIntake}/complete', 'EmergencyIntakeController@complete')->middleware('role:Administrator,Doctor,Nurse,Staff')->name('emergency-intakes.complete');
     Route::get('/patients/{patient}/merge', 'PatientMergeController@create')->middleware('role:Administrator,Nurse')->name('patient-merges.create');
     Route::post('/patients/{patient}/merge', 'PatientMergeController@store')->middleware('role:Administrator,Nurse')->name('patient-merges.store');
     Route::get('/consultations/{consultation}/medical-certificate', 'MedicalCertificateController@create')->middleware('role:Doctor')->name('consultations.medical-certificates.create');
