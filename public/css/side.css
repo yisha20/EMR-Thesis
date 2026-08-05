@@ -9218,6 +9218,33 @@ body.dark-mode .emr-confirmation-cancel {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.student-portal-eyebrow {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.student-account-type {
+  align-items: center;
+  background: var(--emr-accent-soft);
+  border: 1px solid rgba(61, 150, 195, 0.28);
+  border-radius: 999px;
+  color: #176f99;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 800;
+  gap: 0.32rem;
+  letter-spacing: 0.025em;
+  line-height: 1;
+  padding: 0.32rem 0.55rem;
+  white-space: nowrap;
+}
+
+.student-account-type i {
+  font-size: 0.72rem;
+}
+
 .student-status-cards.is-two-card .patient-queue-card {
   grid-column: span 2;
 }

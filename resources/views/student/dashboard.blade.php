@@ -32,7 +32,13 @@
         <main class="student-main-stack">
             <section class="student-hero-card">
                 <div>
-                    <p class="eyebrow">Clinic patient portal <span class="badge badge-light">{{ ucfirst($account->patient_type) }}</span></p>
+                    <p class="eyebrow student-portal-eyebrow">
+                        <span>Clinic patient portal</span>
+                        <span class="student-account-type">
+                            <i class="fa {{ $account->patient_type === 'student' ? 'fa-graduation-cap' : 'fa-id-badge' }}" aria-hidden="true"></i>
+                            {{ ucfirst($account->patient_type) }}
+                        </span>
+                    </p>
                     <h1>Welcome, {{ $student->first_name }}</h1>
                     <p>Manage your clinic concerns, prescriptions, and health records.</p>
                     <div class="student-hero-meta">
