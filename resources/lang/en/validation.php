@@ -130,6 +130,13 @@ return [
     */
 
     'custom' => [
+        'patient_id' => [
+            'required_if' => 'Select an existing patient from the search results.',
+            'exists' => 'The selected patient is no longer available. Search again.',
+        ],
+        'primary_concern' => [
+            'required' => 'Select at least one emergency concern.',
+        ],
         'attribute-name' => [
             'rule-name' => 'custom-message',
         ],
