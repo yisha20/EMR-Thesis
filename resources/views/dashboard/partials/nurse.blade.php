@@ -211,3 +211,4 @@
 })();
 </script>
 @endpush
+<div class="mb-3"><a href="{{route('emergency-intakes.create')}}" class="btn btn-danger btn-lg" onclick="return confirm('Open the dedicated Emergency / Walk-in Intake page?')">Start Emergency Intake</a> <a href="{{route('emergency-intakes.create')}}" class="btn btn-primary">Add Walk-in Patient</a> <a href="{{route('patients.index')}}" class="btn btn-outline-primary">Search Patient</a> <a href="{{route('dental-referrals.index')}}" class="btn btn-outline-primary">View Dental Referrals</a></div>

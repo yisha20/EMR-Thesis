@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\ClinicQueue;
 use App\Services\ClinicQueueService;
+use App\EmergencyEncounter;
 
 class DashboardController extends Controller
 {
@@ -83,7 +84,11 @@ class DashboardController extends Controller
                 ->first();
         }
         $queueEntries=collect(); $nextQueue=null; $queuePolicy='alternating';
+        $emergencyEncounters=collect();
         if (in_array($roleName,['Administrator','Nurse','Staff','Doctor'],true)) {
+            $emergencyEncounters=EmergencyEncounter::with(['patient','doctor'])->whereIn('status',['active','waiting'])
+                ->when($roleName==='Doctor',function($q)use($request){$q->where('assigned_doctor_id',$request->user()->id);})
+                ->orderByRaw("CASE triage_priority WHEN 'emergency' THEN 1 WHEN 'high' THEN 2 WHEN 'moderate' THEN 3 ELSE 4 END")->orderBy('arrival_at')->get();
             $queueEntries=ClinicQueue::with(['complaint.student.user','account.user','consultation.forwarder','doctor'])
                 ->where('queue_date',$today)->whereIn('status',['waiting','called','serving','missed'])
                 ->when($roleName==='Doctor',function($query) use ($request) {
@@ -107,7 +112,7 @@ class DashboardController extends Controller
             'analytics',
             'recentActivityLogs',
             'recentConsultations',
-            'nextConsultation','queueEntries','nextQueue','queuePolicy'
+            'nextConsultation','queueEntries','nextQueue','queuePolicy','emergencyEncounters'
         ));
     }
 

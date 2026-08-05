@@ -25,6 +25,7 @@
             </div>
         @endif
     </div>
+    @if(isset($emergencyEncounters) && $emergencyEncounters->isNotEmpty())<section class="alert alert-danger" aria-live="assertive"><h2>EMERGENCY / PRIORITY INTAKES</h2>@foreach($emergencyEncounters as $emergency)<a class="d-block font-weight-bold" href="{{route('emergency-intakes.show',$emergency)}}">{{strtoupper($emergency->triage_priority)}} · {{$emergency->patient->temporary_identifier?:trim($emergency->patient->first_name.' '.$emergency->patient->last_name)}} · Arrived {{$emergency->arrival_at->format('g:i A')}}</a>@endforeach</section>@endif
 
     @if ($isNurseWorkspace)
         @include('dashboard.partials.nurse')
