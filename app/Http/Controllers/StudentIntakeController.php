@@ -73,6 +73,7 @@ class StudentIntakeController extends Controller
             'medicalRecords.consultation.doctor',
             'medicalRecords.prescription.doctor',
             'medicalRecords.attendingStaff',
+            'emergencyEncounters.doctor','dentalReferrals.nurse','medicalCertificates.doctor',
         ])->where('id_number', $student->student_id_number)->first();
 
         $records = $patient

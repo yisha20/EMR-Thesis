@@ -42,6 +42,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/prescriptions/{prescription}/print', 'PrescriptionController@print')->name('prescriptions.print');
     Route::get('/prescriptions/{prescription}/pdf', 'PrescriptionController@pdf')->name('prescriptions.pdf');
     Route::get('/prescriptions/{prescription}/download', 'PrescriptionController@download')->name('prescriptions.download');
+    Route::get('/medical-certificates/{medicalCertificate}', 'MedicalCertificateController@show')->name('medical-certificates.show');
+    Route::get('/medical-certificates/{medicalCertificate}/pdf', 'MedicalCertificateController@pdf')->name('medical-certificates.pdf');
+    Route::get('/dental-referrals/{dentalReferral}', 'DentalReferralController@show')->name('dental-referrals.show');
 
     Route::middleware('role:Student,Patient')->group(function () {
         Route::get('/patient/health-assessment', 'HealthAssessmentController@edit')->name('patient.assessment.edit');
@@ -68,7 +71,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:Administrator,Doctor,Nurse,Staff')->group(function () {
     Route::get('/dental-referrals', 'DentalReferralController@index')->middleware('role:Administrator,Doctor,Nurse,Staff')->name('dental-referrals.index');
     Route::post('/student-complaints/{complaint}/dental-referral', 'DentalReferralController@store')->middleware('role:Administrator,Nurse,Staff')->name('dental-referrals.store');
-    Route::get('/dental-referrals/{dentalReferral}', 'DentalReferralController@show')->name('dental-referrals.show');
     Route::get('/nurse/intakes/create', 'EmergencyIntakeController@create')->middleware('role:Administrator,Nurse,Staff')->name('emergency-intakes.create');
     Route::get('/nurse/intakes/search', 'EmergencyIntakeController@search')->middleware('role:Administrator,Nurse,Staff')->name('emergency-intakes.search');
     Route::post('/nurse/intakes', 'EmergencyIntakeController@store')->middleware('role:Administrator,Nurse,Staff')->name('emergency-intakes.store');
@@ -81,8 +83,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/medical-certificates/{medicalCertificate}/edit', 'MedicalCertificateController@edit')->middleware('role:Doctor')->name('medical-certificates.edit');
     Route::put('/medical-certificates/{medicalCertificate}', 'MedicalCertificateController@update')->middleware('role:Doctor')->name('medical-certificates.update');
     Route::post('/medical-certificates/{medicalCertificate}/issue', 'MedicalCertificateController@issue')->middleware('role:Doctor')->name('medical-certificates.issue');
-    Route::get('/medical-certificates/{medicalCertificate}', 'MedicalCertificateController@show')->name('medical-certificates.show');
-    Route::get('/medical-certificates/{medicalCertificate}/pdf', 'MedicalCertificateController@pdf')->name('medical-certificates.pdf');
     Route::get('/health-assessments/{assessment}', 'HealthAssessmentController@show')->name('patient.assessment.staff');
     Route::post('/student-complaints/{complaint}/queue', 'ClinicQueueController@store')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.store');
     Route::patch('/clinic-queues/{queue}', 'ClinicQueueController@update')->middleware('role:Administrator,Nurse,Staff')->name('clinic-queues.update');
