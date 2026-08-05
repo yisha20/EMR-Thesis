@@ -36,7 +36,7 @@
     </form>
 </div>
 @endsection
-@push('scripts')<script>
+@push('js')<script>
 (function(){var form=document.getElementById('emergencyIntakeForm');if(!form)return;var panels=[].slice.call(form.querySelectorAll('[data-mode-panel]')),searchTimer=null;
 function mode(){return (form.querySelector('[name="intake_mode"]:checked')||{}).value||'existing'}
 function syncMode(){var selected=mode();panels.forEach(function(p){p.hidden=p.dataset.modePanel!==selected});updateSummary()}

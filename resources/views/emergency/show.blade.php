@@ -16,4 +16,4 @@
     </div>
 </div>
 @endsection
-@push('scripts')<script>(function(){var tabs=[].slice.call(document.querySelectorAll('[data-workspace-tab]')),panels=[].slice.call(document.querySelectorAll('[data-workspace-panel]'));tabs.forEach(function(tab){tab.addEventListener('click',function(){tabs.forEach(function(t){var active=t===tab;t.classList.toggle('active',active);t.setAttribute('aria-selected',active?'true':'false')});panels.forEach(function(p){p.hidden=p.dataset.workspacePanel!==tab.dataset.workspaceTab})})})})();</script>@endpush
+@push('js')<script>(function(){var tabs=[].slice.call(document.querySelectorAll('[data-workspace-tab]')),panels=[].slice.call(document.querySelectorAll('[data-workspace-panel]'));tabs.forEach(function(tab){tab.addEventListener('click',function(){tabs.forEach(function(t){var active=t===tab;t.classList.toggle('active',active);t.setAttribute('aria-selected',active?'true':'false')});panels.forEach(function(p){p.hidden=p.dataset.workspacePanel!==tab.dataset.workspaceTab})})})})();</script>@endpush
