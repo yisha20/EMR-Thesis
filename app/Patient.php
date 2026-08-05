@@ -11,6 +11,7 @@ class Patient extends Model
 	use SoftDeletes, SoftCascadeTrait;
 
 	protected $dates = [
+		'birthdate',
 		'date_registered',
 		'last_reviewed_at',
 		'deleted_at',
@@ -110,6 +111,7 @@ class Patient extends Model
     public function emergencyEncounters(){return $this->hasMany(EmergencyEncounter::class);}
     public function dentalReferrals(){return $this->hasMany(DentalReferral::class);}
     public function medicalCertificates(){return $this->hasMany(MedicalCertificate::class);}
+    public function patientAccount(){return $this->hasOne(PatientAccount::class);}
 	
 	/**
 	 * This patient has a health examination record.
