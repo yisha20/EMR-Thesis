@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class StudentComplaint extends Model
 {
     protected $guarded = [];
+    protected $casts = ['intake_details'=>'array'];
 
     protected $dates = [
         'submitted_at',

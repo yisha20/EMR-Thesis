@@ -14,9 +14,10 @@
                 @csrf
                 <div class="modal-body complaint-modal-body">
                     <div class="student-intake-grid">
-                        @if(isset($dependents) && $dependents->isNotEmpty())
+                        @if(optional(auth()->user()->patientAccount)->patient_type === 'faculty' && isset($dependents) && $dependents->isNotEmpty())
                         <div class="form-group full-width"><label for="dependent_id">Submitting for</label><select id="dependent_id" name="dependent_id" class="form-control"><option value="">Myself</option>@foreach($dependents as $dependent)<option value="{{ $dependent->id }}">{{ $dependent->full_name }} ({{ $dependent->relationship }})</option>@endforeach</select></div>
                         @endif
+                        <fieldset class="form-group full-width"><legend>Dental details (complete only for Dental Services)</legend><textarea name="dental_details" class="form-control" placeholder="Additional dental details"></textarea><input name="pain_duration" class="form-control mt-2" placeholder="Pain duration"><div class="mt-2">@foreach(['swelling'=>'Swelling present','bleeding'=>'Bleeding present','difficulty_eating'=>'Difficulty eating','facial_swelling'=>'Facial swelling','severe_bleeding'=>'Severe bleeding','difficulty_breathing'=>'Difficulty breathing','difficulty_swallowing'=>'Difficulty swallowing','trauma'=>'Trauma','fever'=>'Fever with dental infection','uncontrolled_pain'=>'Uncontrolled pain'] as $v=>$l)<label class="mr-3"><input type="checkbox" name="dental_flags[]" value="{{$v}}"> {{$l}}</label>@endforeach</div><small>Nursing staff determine clinical priority.</small></fieldset>
                         <div class="form-group full-width">
                             <fieldset><legend>Common illnesses and concerns</legend>
                             @foreach($complaintOptions as $category=>$options)

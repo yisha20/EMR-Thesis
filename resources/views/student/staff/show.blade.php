@@ -213,6 +213,8 @@
                     <dt>Family history</dt><dd>{{$healthSummary->familyHistories->pluck('condition')->implode(', ') ?: 'None reported'}}</dd>
                     <dt>Social history</dt><dd>Smoking: {{data_get($healthSummary,'social_history.smoking_status','Not reported')}}; Alcohol: {{data_get($healthSummary,'social_history.drinks_alcohol','Not reported')}}</dd>
                     @if(optional($complaint->patientAccount)->patient_type==='dependent')<dt>Registered dependents</dt><dd>{{optional($complaint->patientAccount)->dependents ? $complaint->patientAccount->dependents->count() : 0}}</dd>@endif
+                    @php($critical=array_intersect((array)data_get($complaint->intake_details,'dental_flags',[]),['facial_swelling','severe_bleeding','difficulty_breathing','difficulty_swallowing','trauma','fever','uncontrolled_pain']))
+                    @if($critical)<div class="alert alert-danger"><strong>Potential urgent dental condition.</strong> Immediate clinical evaluation is recommended. This alert is not a diagnosis.</div>@endif
                 </dl>
                 @else
                     <p class="text-muted mb-0">No digital health assessment is linked to this patient.</p>
@@ -463,3 +465,7 @@
 })();
 </script>
 @endpush
+                @if(stripos($complaint->complaint_category,'dental')!==false && $complaint->patient_id)
+                <form method="POST" action="{{route('dental-referrals.store',$complaint)}}">@csrf<h3>Route to Dental Service</h3><select name="triage_priority" class="form-control" required>@foreach(['emergency','high','moderate','low'] as $p)<option value="{{$p}}">{{ucfirst($p)}}</option>@endforeach</select><input name="referral_destination" value="MSU-IIT Dental Service" class="form-control"><textarea name="preliminary_action" class="form-control" placeholder="Initial action provided"></textarea><textarea name="dental_notes" class="form-control" placeholder="Referral notes"></textarea><button class="btn btn-primary">Create Dental Referral</button></form>
+                @endif
+                @if(optional($complaint->consultation)->completed_at && optional($complaint->consultation)->doctor_id===auth()->id())<a class="btn btn-primary" href="{{route('consultations.medical-certificates.create',$complaint->consultation)}}">Generate Medical Certificate</a>@endif

@@ -99,6 +99,10 @@ class StudentIntakeController extends Controller
             'other_complaint' => 'nullable|string|max:1000',
             'symptoms_description' => 'nullable|string|max:5000',
             'dependent_id' => 'nullable|integer',
+            'dental_details' => 'nullable|string|max:2000',
+            'pain_duration' => 'nullable|string|max:100',
+            'dental_flags' => 'nullable|array',
+            'dental_flags.*' => 'in:swelling,bleeding,difficulty_eating,facial_swelling,severe_bleeding,difficulty_breathing,difficulty_swallowing,trauma,fever,uncontrolled_pain',
             'attachment' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
         ]);
         $options = CommonComplaintOption::whereIn('id', $data['complaint_options'])->where('is_active', true)->get();
@@ -128,6 +132,7 @@ class StudentIntakeController extends Controller
             'complaint_category' => $options->pluck('category')->unique()->implode(', '),
             'chief_complaint' => $options->pluck('name')->implode(', '),
             'other_complaint' => $data['other_complaint'] ?? null,
+            'intake_details' => ['dental_details'=>$data['dental_details']??null,'pain_duration'=>$data['pain_duration']??null,'dental_flags'=>$data['dental_flags']??[]],
             'symptoms_description' => $data['symptoms_description'] ?? '',
             'urgency_level' => 'Unassigned',
             'triage_priority' => 'unassigned',
