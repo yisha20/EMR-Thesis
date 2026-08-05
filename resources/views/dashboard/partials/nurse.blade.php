@@ -48,6 +48,21 @@
     </aside>
 
     <section class="nurse-dashboard-shortcuts shortcut-stack" aria-label="Quick actions">
+        <a href="{{ route('emergency-intakes.create') }}" class="shortcut-dashboard-card emergency-shortcut-card" onclick="return confirm('Open the dedicated Emergency Intake page?')">
+            <span class="shortcut-card-media"><img src="{{ asset('img/shortcut-intake.svg') }}" alt="Start Emergency Intake"></span>
+            <div><h3 class="shortcut-card-title">Start Emergency Intake</h3><p class="shortcut-card-description">Open a rapid intake for urgent or unidentified patients.</p></div>
+            <span class="shortcut-card-action"><i class="fa fa-angle-right"></i></span>
+        </a>
+        <a href="{{ route('emergency-intakes.create') }}" class="shortcut-dashboard-card">
+            <span class="shortcut-card-media"><img src="{{ asset('img/shortcut-patients.svg') }}" alt="Add Walk-in Patient"></span>
+            <div><h3 class="shortcut-card-title">Add Walk-in Patient</h3><p class="shortcut-card-description">Register or locate a patient without portal intake.</p></div>
+            <span class="shortcut-card-action"><i class="fa fa-angle-right"></i></span>
+        </a>
+        <a href="{{ route('dental-referrals.index') }}" class="shortcut-dashboard-card">
+            <span class="shortcut-card-media"><img src="{{ asset('img/shortcut-services.svg') }}" alt="View Dental Referrals"></span>
+            <div><h3 class="shortcut-card-title">Dental Referrals</h3><p class="shortcut-card-description">Review referrals routed through the main clinic.</p></div>
+            <span class="shortcut-card-action"><i class="fa fa-angle-right"></i></span>
+        </a>
         <a href="{{ route('patients.index') }}" class="shortcut-dashboard-card">
             <span class="shortcut-card-media">
                 <img src="{{ asset('img/shortcut-patients.svg') }}" alt="Manage Patients">
@@ -211,4 +226,3 @@
 })();
 </script>
 @endpush
-<div class="mb-3"><a href="{{route('emergency-intakes.create')}}" class="btn btn-danger btn-lg" onclick="return confirm('Open the dedicated Emergency / Walk-in Intake page?')">Start Emergency Intake</a> <a href="{{route('emergency-intakes.create')}}" class="btn btn-primary">Add Walk-in Patient</a> <a href="{{route('patients.index')}}" class="btn btn-outline-primary">Search Patient</a> <a href="{{route('dental-referrals.index')}}" class="btn btn-outline-primary">View Dental Referrals</a></div>

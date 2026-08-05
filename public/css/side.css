@@ -5741,6 +5741,20 @@ body.dark-mode .sidepanel-footer {
   width: min(390px, 92vw);
 }
 
+.emergency-shortcut-card {
+  background: linear-gradient(135deg, rgba(255, 248, 248, 0.98), rgba(255, 231, 231, 0.82));
+  border-color: rgba(204, 63, 68, 0.38);
+}
+
+.emergency-shortcut-card .shortcut-card-media {
+  background: linear-gradient(135deg, #fff4f4, #ffdede);
+  border-color: rgba(204, 63, 68, 0.28);
+}
+
+.emergency-shortcut-card .shortcut-card-title {
+  color: #b4232a;
+}
+
 .clinic-notification-heading {
   align-items: center;
   background: #fff;
