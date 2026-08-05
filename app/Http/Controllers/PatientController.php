@@ -19,7 +19,7 @@ class PatientController extends Controller
      */
     public function index(Request $request)
     {
-        $patients = Patient::query()
+        $patients = Patient::with('patientAccount')
             ->when($request->filled('search'), function ($query) use ($request) {
                 $search = $request->search;
                 $query->where(function ($query) use ($search) {

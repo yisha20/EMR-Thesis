@@ -55,15 +55,26 @@
                 <tbody>
                     @forelse ($patients as $patient)
                         <tr>
-                            <td>
+                            <td title="{{ $patient->last_name }}, {{ $patient->first_name }}">
                                 <div class="patient-table-identity">
                                     <img src="{{ $patient->avatar ?? asset('img/no_avatar.jpg') }}" alt="" class="patient-table-avatar" onerror="this.onerror=null;this.src='{{ asset('img/no_avatar.jpg') }}';">
                                     <div><strong>{{ $patient->last_name }}, {{ $patient->first_name }}</strong><span>{{ $patient->gender ?: 'Gender not set' }}</span></div>
                                 </div>
                             </td>
-                            <td>{{ $patient->id_number ?: 'Not assigned' }}</td>
-                            <td>{{ $patient->college_department ?: 'Not specified' }}</td>
-                            <td><span class="emr-status-badge {{ strtolower($patient->status ?: 'active') }}">{{ $patient->status ?: 'Active' }}</span></td>
+                            <td title="{{ $patient->id_number ?: 'Not assigned' }}">{{ $patient->id_number ?: 'Not assigned' }}</td>
+                            <td title="{{ $patient->college_department ?: 'Not specified' }}">{{ $patient->college_department ?: 'Not specified' }}</td>
+                            <td>
+                                <div class="patient-status-stack">
+                                    <span class="emr-status-badge {{ strtolower($patient->status ?: 'active') }}">{{ $patient->status ?: 'Active' }}</span>
+                                    @if ($patient->profile_status === 'provisional')
+                                        <span class="patient-record-label provisional" title="Identity details can be completed without creating a patient portal account.">Provisional</span>
+                                    @elseif (!$patient->patientAccount)
+                                        <span class="patient-record-label" title="This medical record is managed by the clinic and has no patient portal account.">Clinic only</span>
+                                    @else
+                                        <span class="patient-record-label linked">Portal linked</span>
+                                    @endif
+                                </div>
+                            </td>
                             <td>{{ optional($patient->date_registered ?: $patient->created_at)->format('M j, Y') }}</td>
                             <td>{{ $patient->updated_at->format('M j, Y') }}</td>
                             <td class="action-cell">

@@ -10747,6 +10747,58 @@ body.student-registration-page {
   width: 132px;
 }
 
+/* Keep long emergency identifiers and patient names inside their own columns. */
+.patient-data-table.is-wide {
+  min-width: 1080px;
+}
+
+.patient-data-table td:not(.action-cell) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.patient-table-identity,
+.patient-table-identity > div,
+.patient-table-identity strong,
+.patient-table-identity span {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.patient-table-identity > div {
+  overflow: hidden;
+}
+
+.patient-table-identity strong,
+.patient-table-identity span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.patient-status-stack {
+  align-items: flex-start;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.patient-record-label {
+  color: var(--emr-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.patient-record-label.provisional {
+  color: #a33a45;
+}
+
+.patient-record-label.linked {
+  color: #167b65;
+}
+
 .user-data-table th:nth-child(1),
 .user-data-table td:nth-child(1) {
   width: 9%;
