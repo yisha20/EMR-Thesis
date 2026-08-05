@@ -13803,3 +13803,217 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 
 .workspace-header-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 9px; justify-content: flex-end; }
 @media (max-width: 600px) { .workspace-header-actions { align-items: flex-end; flex-direction: column; } .workspace-header-actions .btn { width: 100%; } }
+
+/* Final phone treatment for the patient portal. Keep isolated from staff workspaces. */
+@media (max-width: 767.98px) {
+  body.student-portal-shell {
+    background: var(--emr-bg);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body.student-portal-shell .emr-navbar {
+    min-height: 62px;
+    padding-bottom: 0;
+    padding-top: 0;
+    z-index: 1030;
+  }
+
+  body.student-portal-shell .emr-navbar .container-fluid {
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  body.student-portal-shell .navbar-brand {
+    flex: 1 1 auto;
+    font-size: 1.05rem;
+    gap: 0.55rem;
+    overflow: hidden;
+  }
+
+  body.student-portal-shell .mobile-menu-btn,
+  body.student-portal-shell .mobile-patient-notifications {
+    flex: 0 0 44px;
+    height: 44px;
+    justify-content: center;
+    margin: 0;
+    width: 44px;
+  }
+
+  body.student-portal-shell .mobile-patient-notifications {
+    border-radius: 10px;
+  }
+
+  body.student-portal-shell .mobile-drawer {
+    gap: 0.8rem;
+    max-width: 340px;
+    padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+    width: min(88vw, 340px);
+  }
+
+  body.student-portal-shell .mobile-drawer-links {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  body.student-portal-shell .mobile-drawer-links a,
+  body.student-portal-shell .mobile-drawer-logout {
+    min-height: 48px;
+  }
+
+  body.student-portal-shell .emr-main,
+  body.student-portal-shell .student-dashboard,
+  body.student-portal-shell .student-portal-page,
+  body.student-portal-shell .dashboard-wrap,
+  body.student-portal-shell .profile-page-shell,
+  body.student-portal-shell .medical-record-canvas {
+    overflow-wrap: break-word;
+  }
+
+  body.student-portal-shell .student-main-stack,
+  body.student-portal-shell .student-side-stack {
+    gap: 14px;
+  }
+
+  body.student-portal-shell .student-hero-card {
+    padding: 18px;
+  }
+
+  body.student-portal-shell .student-hero-card h1,
+  body.student-portal-shell .dashboard-heading h1,
+  body.student-portal-shell .health-history-header h1,
+  body.student-portal-shell .profile-page-heading h1 {
+    font-size: clamp(1.65rem, 7.5vw, 2rem);
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+  }
+
+  body.student-portal-shell .student-update-card {
+    grid-template-columns: minmax(0, 1fr) 70px;
+    min-height: 112px;
+    padding: 0 !important;
+  }
+
+  body.student-portal-shell .student-update-copy {
+    padding: 0.9rem 0.75rem 0.85rem 0.9rem;
+  }
+
+  body.student-portal-shell .student-dashboard .dashboard-panel {
+    padding: 0 !important;
+  }
+
+  body.student-portal-shell .dashboard-panel-header,
+  body.student-portal-shell .health-history-header,
+  body.student-portal-shell .profile-details-header {
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+  }
+
+  body.student-portal-shell .student-information-body,
+  body.student-portal-shell .profile-details-card,
+  body.student-portal-shell .health-timeline-card,
+  body.student-portal-shell .prescription-summary-body {
+    padding: 1rem;
+  }
+
+  body.student-portal-shell .student-staff-list article,
+  body.student-portal-shell .student-service-list article {
+    gap: 0.65rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  body.student-portal-shell .student-action-card,
+  body.student-portal-shell .prescription-history-actions .btn,
+  body.student-portal-shell .health-timeline-actions .btn,
+  body.student-portal-shell .pagination .page-link {
+    min-height: 44px;
+  }
+
+  body.student-portal-shell .student-action-card {
+    padding: 0.9rem;
+  }
+
+  body.student-portal-shell .prescription-history-card-heading {
+    gap: 0.75rem;
+    min-width: 0;
+  }
+
+  body.student-portal-shell .form-control,
+  body.student-portal-shell input[type="text"],
+  body.student-portal-shell input[type="email"],
+  body.student-portal-shell input[type="tel"],
+  body.student-portal-shell input[type="number"],
+  body.student-portal-shell input[type="password"],
+  body.student-portal-shell input[type="date"],
+  body.student-portal-shell select,
+  body.student-portal-shell textarea {
+    font-size: 16px;
+    max-width: 100%;
+  }
+
+  body.student-portal-shell .btn,
+  body.student-portal-shell button,
+  body.student-portal-shell select,
+  body.student-portal-shell input.form-control {
+    min-height: 44px;
+  }
+
+  body.student-portal-shell .table-responsive-shell,
+  body.student-portal-shell .table-responsive {
+    border-radius: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.student-portal-shell .clinic-toast-stack {
+    left: 12px;
+    right: 12px;
+    top: 72px;
+    width: auto;
+  }
+}
+
+@media (max-width: 430px) {
+  body.student-portal-shell .page-content,
+  body.student-portal-shell .emr-page-container {
+    padding: 12px !important;
+  }
+
+  body.student-portal-shell .student-portal-eyebrow {
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  body.student-portal-shell .student-hero-meta {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  body.student-portal-shell .student-hero-meta span {
+    width: 100%;
+  }
+
+  body.student-portal-shell .patient-presence-controls,
+  body.student-portal-shell .complaint-modal-footer,
+  body.student-portal-shell .prescription-history-card .prescription-summary-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  body.student-portal-shell .prescription-history-card-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  body.student-portal-shell .complaint-modal-footer .btn,
+  body.student-portal-shell .assessment-actions .btn,
+  body.student-portal-shell .registration-actions .btn {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  body.student-portal-shell .queue-turn-banner {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
+}
