@@ -44,7 +44,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/prescriptions/{prescription}/download', 'PrescriptionController@download')->name('prescriptions.download');
     Route::get('/medical-certificates/{medicalCertificate}', 'MedicalCertificateController@show')->name('medical-certificates.show');
     Route::get('/medical-certificates/{medicalCertificate}/pdf', 'MedicalCertificateController@pdf')->name('medical-certificates.pdf');
-    Route::get('/dental-referrals/{dentalReferral}', 'DentalReferralController@show')->name('dental-referrals.show');
 
     Route::middleware('role:Student,Patient')->group(function () {
         Route::get('/patient/health-assessment', 'HealthAssessmentController@edit')->name('patient.assessment.edit');
@@ -69,8 +68,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/student/complaints/{complaint}/attachment', 'StudentIntakeController@attachment')->name('student.complaints.attachment');
 
     Route::middleware('role:Administrator,Doctor,Nurse,Staff')->group(function () {
-    Route::get('/dental-referrals', 'DentalReferralController@index')->middleware('role:Administrator,Doctor,Nurse,Staff')->name('dental-referrals.index');
-    Route::post('/student-complaints/{complaint}/dental-referral', 'DentalReferralController@store')->middleware('role:Administrator,Nurse,Staff')->name('dental-referrals.store');
     Route::get('/nurse/intakes/create', 'EmergencyIntakeController@create')->middleware('role:Administrator,Nurse,Staff')->name('emergency-intakes.create');
     Route::get('/nurse/intakes/search', 'EmergencyIntakeController@search')->middleware('role:Administrator,Nurse,Staff')->name('emergency-intakes.search');
     Route::post('/nurse/intakes', 'EmergencyIntakeController@store')->middleware('role:Administrator,Nurse,Staff')->name('emergency-intakes.store');

@@ -6,6 +6,8 @@
     <div class="dashboard-panel-header">
         <div><p class="eyebrow">Queue operations</p><h2 id="queue-operations-title">{{ auth()->user()->role->name === 'Doctor' ? 'My Assigned Consultation Queue' : 'Shared Clinic Queue' }}</h2></div>
         @if(auth()->user()->role->name!=='Doctor')
+        <div class="queue-header-actions">
+        <a href="{{ route('emergency-intakes.create') }}" class="btn queue-intake-button" data-confirm="Open the intake workspace for a walk-in or emergency patient?" data-confirm-title="New Walk-in / Emergency Intake"><i class="fa fa-plus-circle" aria-hidden="true"></i> New Walk-in / Emergency Intake</a>
         <form method="POST" action="{{ route('clinic-queues.policy') }}" class="queue-policy-form">@csrf @method('PATCH')
             <label for="queue-policy">Dispatch policy</label>
             <select id="queue-policy" name="policy" class="custom-select" onchange="this.form.submit()">
@@ -14,6 +16,7 @@
                 <option value="manual" {{ $queuePolicy==='manual'?'selected':'' }}>Manual selection</option>
             </select>
         </form>
+        </div>
         @endif
     </div>
     <div class="queue-focus-grid">

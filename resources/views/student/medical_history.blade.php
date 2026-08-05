@@ -8,7 +8,6 @@
     </div>
     @include('medicalreport.timeline', ['records' => $records, 'studentView' => true])
     @if($patient)@foreach($patient->emergencyEncounters->sortByDesc('arrival_at') as $item)<article class="card card-body mb-3"><strong>{{ $item->encounter_type==='emergency'?'Emergency Encounter':'Walk-in Visit' }}</strong><span>{{$item->arrival_at}} · {{ucfirst($item->triage_priority)}} · {{$item->primary_concern}} · {{str_replace('_',' ',$item->status)}}</span></article>@endforeach
-    @foreach($patient->dentalReferrals->sortByDesc('referred_at') as $item)<article class="card card-body mb-3"><strong>Dental Referral</strong><span>{{$item->referred_at}} · {{$item->dental_concern}} · {{ucfirst($item->triage_priority)}} · {{str_replace('_',' ',$item->status)}}</span><a href="{{route('dental-referrals.show',$item)}}">View referral</a></article>@endforeach
     @foreach($patient->medicalCertificates->where('status','issued')->sortByDesc('issued_at') as $item)<article class="card card-body mb-3"><strong>Medical Certificate Issued</strong><span>{{$item->issued_at}} · {{str_replace('_',' ',$item->purpose)}} · {{str_replace('_',' ',$item->fitness_status)}} · {{$item->doctor_name_snapshot}}</span><a href="{{route('medical-certificates.show',$item)}}">View Certificate</a> <a href="{{route('medical-certificates.pdf',$item)}}">Download PDF</a></article>@endforeach @endif
 </div>
 @endsection

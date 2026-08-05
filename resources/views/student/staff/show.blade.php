@@ -465,7 +465,4 @@
 })();
 </script>
 @endpush
-                @if(stripos($complaint->complaint_category,'dental')!==false && $complaint->patient_id)
-                <form method="POST" action="{{route('dental-referrals.store',$complaint)}}">@csrf<h3>Route to Dental Service</h3><select name="triage_priority" class="form-control" required>@foreach(['emergency','high','moderate','low'] as $p)<option value="{{$p}}">{{ucfirst($p)}}</option>@endforeach</select><input name="referral_destination" value="MSU-IIT Dental Service" class="form-control"><textarea name="preliminary_action" class="form-control" placeholder="Initial action provided"></textarea><textarea name="dental_notes" class="form-control" placeholder="Referral notes"></textarea><button class="btn btn-primary">Create Dental Referral</button></form>
-                @endif
                 @if(optional($complaint->consultation)->completed_at && optional($complaint->consultation)->doctor_id===auth()->id())<a class="btn btn-primary" href="{{route('consultations.medical-certificates.create',$complaint->consultation)}}">Generate Medical Certificate</a>@endif

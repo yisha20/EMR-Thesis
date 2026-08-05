@@ -5741,19 +5741,9 @@ body.dark-mode .sidepanel-footer {
   width: min(390px, 92vw);
 }
 
-.emergency-shortcut-card {
-  background: linear-gradient(135deg, rgba(255, 248, 248, 0.98), rgba(255, 231, 231, 0.82));
-  border-color: rgba(204, 63, 68, 0.38);
-}
-
-.emergency-shortcut-card .shortcut-card-media {
-  background: linear-gradient(135deg, #fff4f4, #ffdede);
-  border-color: rgba(204, 63, 68, 0.28);
-}
-
-.emergency-shortcut-card .shortcut-card-title {
-  color: #b4232a;
-}
+.queue-header-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 0.65rem; justify-content: flex-end; }
+.queue-intake-button { align-items: center; background: var(--emr-primary); border: 1px solid var(--emr-primary); border-radius: var(--emr-radius-sm); color: #fff; display: inline-flex; font-size: 0.82rem; font-weight: 800; gap: 0.45rem; min-height: 48px; padding: 0.6rem 0.9rem; }
+.queue-intake-button:hover, .queue-intake-button:focus { background: var(--emr-primary-dark, #176f9e); border-color: var(--emr-primary-dark, #176f9e); color: #fff; }
 
 .clinic-notification-heading {
   align-items: center;
@@ -13290,6 +13280,16 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   .queue-policy-form .custom-select {
     min-width: 0;
     width: 100%;
+  }
+
+  .queue-header-actions,
+  .queue-intake-button,
+  .queue-policy-form {
+    width: 100%;
+  }
+
+  .queue-intake-button {
+    justify-content: center;
   }
 }
 
