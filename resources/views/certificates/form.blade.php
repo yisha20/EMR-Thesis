@@ -27,7 +27,12 @@
         <div><small>Age / Sex</small><strong>{{ optional($patient)->age ?? '—' }} / {{ optional($patient)->gender ?: '—' }}</strong></div>
         <div><small>Consultation completed</small><strong>{{ optional($consultation->completed_at)->format('M j, Y · g:i A') ?: '—' }}</strong></div>
         <div><small>Attending physician</small><strong>{{ auth()->user()->fullName() }}</strong></div>
+        <div><small>Certificate number</small><strong>{{ $certificate->certificate_number ?: 'Assigned after saving' }}</strong></div>
+        <div><small>Issue date</small><strong>{{ optional($certificate->issue_date)->format('M j, Y') ?: now()->format('M j, Y') }}</strong></div>
+        <div><small>Residence</small><strong>{{ optional($patient)->present_address ?: (optional($patient)->home_address ?: 'Not provided') }}</strong></div>
     </section>
+
+    <p class="certificate-statement-preview">This is to certify that <strong>{{ trim(optional($patient)->first_name.' '.optional($patient)->middle_name.' '.optional($patient)->last_name) }}</strong>, <strong>{{ optional($patient)->age ?? '—' }}</strong> years old, <strong>{{ optional($patient)->gender ?: '—' }}</strong>, a resident of <strong>{{ optional($patient)->present_address ?: (optional($patient)->home_address ?: 'Not provided') }}</strong>, was seen and evaluated at the MSU-IIT Clinic.</p>
 
     <form method="POST" action="{{ $isExisting ? route('medical-certificates.update', $certificate) : route('consultations.medical-certificates.store', $consultation) }}" class="certificate-editor-card">
         @csrf
@@ -55,14 +60,14 @@
         <section class="certificate-form-section">
             <div class="certificate-section-heading"><span>2</span><div><h2>Fitness determination</h2><p>Select the outcome and document any restrictions.</p></div></div>
             <div class="certificate-form-grid">
-                <label class="certificate-field">Fitness Assessment <span>*</span>
-                    <select name="fitness_status" class="form-control @error('fitness_status') is-invalid @enderror" required>
-                        @foreach(['physically_fit'=>'Physically Fit','physically_unfit'=>'Physically Unfit','fit_with_restrictions'=>'Fit with Restrictions','not_assessed'=>'Not Assessed','other'=>'Other'] as $value=>$label)
-                            <option value="{{ $value }}" {{ old('fitness_status', $certificate->fitness_status ?: 'not_assessed') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="certificate-field">Fitness Details
+                <fieldset class="certificate-option-group is-full @error('fitness_status') is-invalid @enderror">
+                    <legend>Fitness Assessment <span>*</span></legend>
+                    @foreach(['physically_fit'=>'Physically Fit','physically_unfit'=>'Physically Unfit','fit_with_restrictions'=>'Fit with Restrictions','other'=>'Other'] as $value=>$label)
+                        <label><input type="radio" name="fitness_status" value="{{ $value }}" {{ old('fitness_status', $certificate->fitness_status ?: 'physically_fit') === $value ? 'checked' : '' }} required> {{ $label }}</label>
+                    @endforeach
+                    @error('fitness_status')<small class="invalid-feedback d-block">{{ $message }}</small>@enderror
+                </fieldset>
+                <label class="certificate-field is-full" data-fitness-details>Restriction / Other Fitness Details
                     <textarea name="fitness_details" class="form-control @error('fitness_details') is-invalid @enderror" rows="3" placeholder="Required for restrictions or Other">{{ old('fitness_details', $certificate->fitness_details) }}</textarea>
                     @error('fitness_details')<small class="invalid-feedback">{{ $message }}</small>@enderror
                 </label>
@@ -72,14 +77,14 @@
         <section class="certificate-form-section">
             <div class="certificate-section-heading"><span>3</span><div><h2>Purpose and validity</h2><p>Define why the certificate is requested and its applicable dates.</p></div></div>
             <div class="certificate-form-grid">
-                <label class="certificate-field">Purpose <span>*</span>
-                    <select name="purpose" class="form-control @error('purpose') is-invalid @enderror" required>
-                        @foreach(['ojt'=>'OJT','scholarship_application'=>'Scholarship Application','employment'=>'Employment','school_requirement'=>'School Requirement','sports_activity'=>'Sports Activity','return_to_school'=>'Return to School','other'=>'Other'] as $value=>$label)
-                            <option value="{{ $value }}" {{ old('purpose', $certificate->purpose ?: 'school_requirement') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </label>
-                <label class="certificate-field">Other Purpose
+                <fieldset class="certificate-option-group is-full @error('purpose') is-invalid @enderror">
+                    <legend>Purpose <span>*</span></legend>
+                    @foreach(['ojt'=>'OJT','scholarship_application'=>'Scholarship Application','employment'=>'Employment','school_requirement'=>'School Requirement','sports_activity'=>'Sports Participation','return_to_school'=>'Return to School','travel_requirement'=>'Travel Requirement','other'=>'Other'] as $value=>$label)
+                        <label><input type="radio" name="purpose" value="{{ $value }}" {{ old('purpose', $certificate->purpose ?: 'school_requirement') === $value ? 'checked' : '' }} required> {{ $label }}</label>
+                    @endforeach
+                    @error('purpose')<small class="invalid-feedback d-block">{{ $message }}</small>@enderror
+                </fieldset>
+                <label class="certificate-field is-full" data-other-purpose>Other Purpose
                     <input name="purpose_other" class="form-control @error('purpose_other') is-invalid @enderror" value="{{ old('purpose_other', $certificate->purpose_other) }}" placeholder="Required when purpose is Other">
                     @error('purpose_other')<small class="invalid-feedback">{{ $message }}</small>@enderror
                 </label>
@@ -99,13 +104,16 @@
 
         <footer class="certificate-form-actions">
             <a href="{{ url()->previous() }}" class="btn btn-light">Cancel</a>
+            @if($isExisting)<a href="{{ route('medical-certificates.show', $certificate) }}" class="btn btn-outline-primary"><i class="fa fa-eye"></i> Preview Certificate</a>@endif
             <button type="submit" class="btn btn-secondary"><i class="fa fa-save"></i> {{ $isExisting ? 'Save Changes' : 'Save Draft' }}</button>
         </footer>
     </form>
 
     @if($isExisting)
         <section class="certificate-issue-card">
-            <div><h2>Ready to issue?</h2><p>Issuing finalizes the certificate. It can no longer be edited afterward.</p></div>
+            <div><h2>Ready to issue?</h2><p>Issuing finalizes the certificate. It can no longer be edited afterward.</p>
+                <dl class="certificate-issue-summary"><dt>Patient</dt><dd>{{ $certificate->patient_name_snapshot }}</dd><dt>Fitness</dt><dd>{{ ucwords(str_replace('_',' ',$certificate->fitness_status)) }}</dd><dt>Purpose</dt><dd>{{ $certificate->purpose === 'ojt' ? 'OJT' : ucwords(str_replace('_',' ',$certificate->purpose)) }}</dd><dt>Doctor</dt><dd>{{ $certificate->doctor_name_snapshot }}</dd><dt>Certificate</dt><dd>{{ $certificate->certificate_number }}</dd></dl>
+            </div>
             <form method="POST" action="{{ route('medical-certificates.issue', $certificate) }}">
                 @csrf
                 <label class="certificate-confirm"><input type="checkbox" name="confirm_issue" value="1" required> I reviewed the information and confirm this clinical determination.</label>
@@ -115,3 +123,19 @@
     @endif
 </div>
 @endsection
+
+@push('js')
+<script>
+(function () {
+    var fitnessDetails = document.querySelector('[data-fitness-details]');
+    var otherPurpose = document.querySelector('[data-other-purpose]');
+    function selected(name) { var input = document.querySelector('input[name="' + name + '"]:checked'); return input ? input.value : ''; }
+    function syncOptions() {
+        if (fitnessDetails) fitnessDetails.hidden = ['fit_with_restrictions', 'other'].indexOf(selected('fitness_status')) === -1;
+        if (otherPurpose) otherPurpose.hidden = selected('purpose') !== 'other';
+    }
+    document.querySelectorAll('input[name="fitness_status"], input[name="purpose"]').forEach(function (input) { input.addEventListener('change', syncOptions); });
+    syncOptions();
+})();
+</script>
+@endpush

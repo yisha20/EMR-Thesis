@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/prescriptions/{prescription}/pdf', 'PrescriptionController@pdf')->name('prescriptions.pdf');
     Route::get('/prescriptions/{prescription}/download', 'PrescriptionController@download')->name('prescriptions.download');
     Route::get('/medical-certificates/{medicalCertificate}', 'MedicalCertificateController@show')->name('medical-certificates.show');
+    Route::get('/medical-certificates/{medicalCertificate}/print', 'MedicalCertificateController@print')->name('medical-certificates.print');
     Route::get('/medical-certificates/{medicalCertificate}/pdf', 'MedicalCertificateController@pdf')->name('medical-certificates.pdf');
 
     Route::middleware('role:Student,Patient')->group(function () {

@@ -13232,11 +13232,26 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 .certificate-checks legend { color: var(--emr-text); font-size: 12px; font-weight: 800; margin-bottom: 8px; }
 .certificate-checks label, .certificate-confirm { align-items: flex-start; color: var(--emr-text); display: flex; font-size: 13px; gap: 8px; }
 .certificate-checks input, .certificate-confirm input { flex: 0 0 auto; height: 17px; margin-top: 2px; width: 17px; }
+.certificate-option-group { border: 1px solid var(--emr-line); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 10px 22px; margin: 0; padding: 13px 14px; }
+.certificate-option-group.is-full { grid-column: 1 / -1; }
+.certificate-option-group legend { color: var(--emr-text); font-size: 12px; font-weight: 800; margin: 0; padding: 0 5px; width: auto; }
+.certificate-option-group legend span { color: #b63d4c; }
+.certificate-option-group label { align-items: center; color: var(--emr-text); display: inline-flex; font-size: 13px; gap: 7px; margin: 0; }
+.certificate-option-group input { height: 17px; margin: 0; width: 17px; }
+.certificate-statement-preview { background: #fff; border-left: 4px solid var(--emr-primary); border-radius: 8px; color: var(--emr-text); font-family: Georgia, "Times New Roman", serif; line-height: 1.7; margin: 0 0 18px; padding: 14px 18px; }
 .certificate-form-actions { background: var(--emr-surface-soft); display: flex; gap: 10px; justify-content: flex-end; padding: 16px 24px; }
 .certificate-issue-card { align-items: center; background: #eef9f5; border: 1px solid #adddca; border-radius: 14px; display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); margin-top: 18px; padding: 20px 24px; }
 .certificate-issue-card h2 { color: #155f45; font-size: 17px; font-weight: 800; margin: 0 0 4px; }
 .certificate-issue-card p { color: #4e7466; font-size: 12px; margin: 0; }
 .certificate-issue-card form { display: grid; gap: 10px; }
+.certificate-issue-summary { display: grid; font-size: 11px; gap: 3px 10px; grid-template-columns: 75px minmax(0, 1fr); margin: 12px 0 0; }
+.certificate-issue-summary dt, .certificate-issue-summary dd { margin: 0; }
+.certificate-issue-summary dt { color: #4e7466; font-weight: 700; }
+.certificate-issue-summary dd { color: #154c3a; }
+.certificate-preview-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 10px; }
+.certificate-print-note { color: var(--emr-muted); font-size: 11px; margin: 0 0 14px; }
+.certificate-sheet-stage { background: #dce5ea; border-radius: 14px; overflow-x: auto; padding: 24px; }
+.certificate-sheet-stage .medical-certificate-sheet { box-shadow: 0 15px 42px rgba(28, 55, 72, .2); }
 .issued-certificate-card { background: #fff; border: 1px solid #cddde6; border-radius: 16px; box-shadow: var(--emr-shadow-soft); margin: 0 auto; max-width: 820px; overflow: hidden; }
 .issued-certificate-card > header { align-items: center; background: #f3f9fc; border-bottom: 3px solid var(--emr-primary); display: flex; gap: 14px; padding: 22px 28px; }
 .issued-certificate-card > header img { height: 54px; object-fit: contain; width: 54px; }
@@ -13265,8 +13280,10 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   .certificate-form-section { padding: 18px 14px; }
   .certificate-form-grid, .issued-certificate-meta { grid-template-columns: minmax(0, 1fr); }
   .certificate-form-actions, .issued-certificate-actions { flex-direction: column; }
-  .certificate-form-actions .btn, .issued-certificate-actions .btn, .certificate-issue-card .btn { width: 100%; }
+  .certificate-form-actions .btn, .issued-certificate-actions .btn, .certificate-issue-card .btn, .certificate-preview-actions .btn { width: 100%; }
   .certificate-issue-card { padding: 18px 14px; }
+  .certificate-option-group { align-items: stretch; flex-direction: column; }
+  .certificate-sheet-stage { padding: 8px; }
   .issued-certificate-card > header, .issued-certificate-meta, .issued-certificate-details { padding-left: 16px; padding-right: 16px; }
   .issued-certificate-details > div { gap: 5px; grid-template-columns: 1fr; }
   .issued-certificate-card > footer { align-items: flex-start; flex-direction: column; gap: 5px; padding: 14px 16px; }
