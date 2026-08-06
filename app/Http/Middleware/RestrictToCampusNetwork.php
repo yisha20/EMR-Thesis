@@ -13,9 +13,9 @@ class RestrictToCampusNetwork
             return $next($request);
         }
 
-        $allowedIps = config('campus.allowed_ips', []);
+        $allowedIps = array_values(array_filter(config('campus.allowed_ips', [])));
 
-        if (empty($allowedIps) || IpUtils::checkIp($request->ip(), $allowedIps)) {
+        if (!empty($allowedIps) && IpUtils::checkIp($request->ip(), $allowedIps)) {
             return $next($request);
         }
 

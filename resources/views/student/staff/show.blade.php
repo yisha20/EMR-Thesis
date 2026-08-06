@@ -40,6 +40,9 @@
     $shouldOpenIssuedPrescription = $issuedPrescription && (int) $openPrescriptionId === (int) $issuedPrescription->id;
     $shouldPrintIssuedPrescription = $issuedPrescription && (int) $printPrescriptionId === (int) $issuedPrescription->id;
     $healthSummary = optional($complaint->patientAccount)->latestAssessment;
+    $medicalCertificate = $complaint->consultation
+        ? $complaint->consultation->medicalCertificates()->whereIn('status', ['draft', 'issued'])->latest('id')->first()
+        : null;
 @endphp
 
 <div class="dashboard-wrap complaint-workflow-page {{ $isDoctorReview ? 'doctor-consultation-review' : '' }}">
@@ -66,7 +69,15 @@
             <a href="{{ route('dashboard') }}" class="btn btn-sm btn-outline-primary ml-2">Open Queue Dashboard</a>
         </div></div></div>
         @endforeach
-        <a href="{{ route('student-complaints.index') }}" class="btn btn-light"><i class="fa fa-arrow-left"></i> Back to Queue</a>
+        <div class="complaint-header-actions">
+            <a href="{{ route('student-complaints.index') }}" class="btn btn-light"><i class="fa fa-arrow-left"></i> Back to Queue</a>
+            @if(optional($complaint->consultation)->completed_at && optional($complaint->consultation)->doctor_id === auth()->id())
+                <a class="btn btn-primary" href="{{ route('consultations.medical-certificates.create', $complaint->consultation) }}">
+                    <i class="fa {{ $medicalCertificate && $medicalCertificate->status === 'issued' ? 'fa-file-text-o' : 'fa-plus-circle' }}"></i>
+                    {{ $medicalCertificate && $medicalCertificate->status === 'issued' ? 'View Medical Certificate' : ($medicalCertificate ? 'Continue Medical Certificate' : 'Generate Medical Certificate') }}
+                </a>
+            @endif
+        </div>
     </section>
 
     @if ($isDoctorReview)
@@ -465,4 +476,3 @@
 })();
 </script>
 @endpush
-                @if(optional($complaint->consultation)->completed_at && optional($complaint->consultation)->doctor_id===auth()->id())<a class="btn btn-primary" href="{{route('consultations.medical-certificates.create',$complaint->consultation)}}">Generate Medical Certificate</a>@endif

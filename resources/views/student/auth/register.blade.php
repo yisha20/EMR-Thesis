@@ -164,7 +164,7 @@
             item.classList.toggle('active', i === current);
             item.classList.toggle('complete', i < current);
         });
-        back.style.visibility = current === 0 ? 'hidden' : 'visible';
+        back.hidden = current === 0;
         next.hidden = current === steps.length - 1;
         submit.hidden = current !== steps.length - 1;
         steps[current].querySelector('input, select, textarea')?.focus();

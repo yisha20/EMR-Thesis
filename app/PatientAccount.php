@@ -33,6 +33,15 @@ class PatientAccount extends Model
         return $this->student_id_number ?: $this->faculty_id_number;
     }
 
+    public function getTypeLabelAttribute()
+    {
+        return [
+            'student' => 'Student',
+            'faculty' => 'Faculty / Employee',
+            'dependent' => 'Dependent',
+        ][$this->patient_type] ?? ucfirst((string) $this->patient_type);
+    }
+
     public function accessibleAccountIds()
     {
         return collect([$this->id])

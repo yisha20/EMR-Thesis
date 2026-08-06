@@ -14,7 +14,7 @@
     <div class="assessment-heading">
         <div><p class="eyebrow">Required onboarding</p><h1>Complete Your Health Assessment</h1>
         <p>Please complete the required Health Assessment Record before accessing the MSU-IIT Clinic Patient Portal.</p></div>
-        <span class="badge badge-info">{{ ucfirst($account->patient_type) }}</span>
+        <span class="badge badge-info">{{ $account->type_label }}</span>
     </div>
     @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
     <form method="POST" enctype="multipart/form-data" class="assessment-form" data-assessment-form>
@@ -34,7 +34,7 @@
                 </label>
             </div>
             <div class="assessment-grid">
-                <label>Applicant type<input class="form-control" value="{{ ucfirst($account->patient_type) }}" disabled></label>
+                <label>Applicant type<input class="form-control" value="{{ $account->type_label }}" disabled></label>
                 <label>OPD/ID Number<input name="opd_number" class="form-control" value="{{ old('opd_number', $personal['opd_number'] ?? $account->identifier) }}"></label>
                 <label>Examination date<input type="date" name="examination_date" class="form-control" required value="{{ old('examination_date', $personal['examination_date'] ?? date('Y-m-d')) }}"></label>
                 <label>College / Department<input name="college_department" class="form-control" required value="{{ old('college_department', $personal['college_department'] ?? optional($account->user->student)->college_department) }}"></label>

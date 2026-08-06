@@ -18,10 +18,10 @@ The app includes an optional web middleware:
 
 ```env
 CAMPUS_NETWORK_RESTRICTION=true
-CAMPUS_ALLOWED_IPS=10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+CAMPUS_ALLOWED_IPS=10.24.0.0/16
 ```
 
-Leave `CAMPUS_NETWORK_RESTRICTION=false` for local development. ICTC should replace `CAMPUS_ALLOWED_IPS` with the actual campus, WiFi, VPN, or intranet ranges if they differ.
+The address above is an example only. Leave `CAMPUS_NETWORK_RESTRICTION=false` for local development. Before enabling it in production, ICTC must replace `CAMPUS_ALLOWED_IPS` with the exact approved campus, WiFi, VPN, or intranet ranges. An enabled restriction with an empty allow-list intentionally denies every request.
 
 ## Laravel production commands
 

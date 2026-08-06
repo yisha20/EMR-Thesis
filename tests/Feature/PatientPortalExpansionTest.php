@@ -73,6 +73,17 @@ class PatientPortalExpansionTest extends TestCase
         }
     }
 
+    public function test_faculty_account_uses_faculty_employee_display_label()
+    {
+        [$user, , $account] = $this->patientUser('faculty', 'faculty-label-'.uniqid());
+
+        $this->assertSame('faculty', $account->patient_type);
+        $this->assertSame('Faculty / Employee', $account->type_label);
+        $this->actingAs($user)->get(route('patient.assessment.edit'))
+            ->assertOk()
+            ->assertSee('Faculty / Employee');
+    }
+
     public function test_dependent_registration_preserves_type_and_links_verified_sponsor()
     {
         [$sponsorUser, , $sponsorAccount] = $this->patientUser('faculty', 'dependent-sponsor');

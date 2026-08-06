@@ -129,7 +129,7 @@ class HealthAssessmentController extends Controller
                 $patient = Patient::create([
                     'id_number'=>$account->identifier,'first_name'=>$personal['first_name'],'middle_name'=>$personal['middle_name'] ?? null,
                     'last_name'=>$personal['last_name'],'gender'=>$personal['sex'],'phone_number'=>$personal['mobile_number'],
-                    'college_department'=>$personal['college_department'],'type'=>ucfirst($account->patient_type),'status'=>'Active',
+                    'college_department'=>$personal['college_department'],'type'=>$account->type_label,'status'=>'Active',
                     'home_address'=>$personal['home_address'],'present_address'=>$personal['present_address'],'age'=>$personal['age'],
                     'birthdate'=>$personal['birth_date'],'avatar'=>$photoUrl ?: $request->user()->avatar,
                     'added_by'=>$request->user()->id,
