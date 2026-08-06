@@ -13203,6 +13203,33 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   color: #fff;
 }
 
+.queue-table .queue-overflow-summary td {
+  background: #f5fafc;
+  border-top: 1px dashed #b7d9e9;
+  padding: 13px 16px;
+  text-align: center;
+}
+
+.queue-overflow-badge {
+  align-items: center;
+  background: #dff1f8;
+  border: 1px solid #b4d9e9;
+  border-radius: 999px;
+  color: #176f99;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  gap: 7px;
+  padding: 7px 12px;
+}
+
+.queue-overflow-summary small {
+  color: var(--emr-muted);
+  display: block;
+  font-size: 10px;
+  margin-top: 5px;
+}
+
 /* Medical certificate editor and issued-document view */
 .medical-certificate-page { margin: 0 auto; max-width: 1080px; }
 .certificate-page-header { align-items: flex-start; display: flex; gap: 20px; justify-content: space-between; margin-bottom: 20px; }

@@ -1,5 +1,9 @@
 @php
     $activeServing=$queueEntries->whereIn('status',['called','serving']);
+    $waitingEntries=$queueEntries->where('status','waiting')->values();
+    $nextWaitingEntries=$waitingEntries->take(3);
+    $visibleQueueEntries=$activeServing->concat($nextWaitingEntries)->unique('id')->values();
+    $remainingWaiting=max(0,$waitingEntries->count()-$nextWaitingEntries->count());
     $patientName=function($entry){ return optional($entry->complaint)->student_name ?: optional(optional($entry->account)->user)->fullName(); };
 @endphp
 <section class="dashboard-panel queue-workspace" aria-labelledby="queue-operations-title">
@@ -31,7 +35,7 @@
     </div>
     <div class="table-responsive-shell">
         <table class="table queue-table"><thead><tr><th>Queue</th><th>Patient</th><th>Type / ID</th><th>Complaint</th><th>Route</th><th>Priority</th><th>Waiting</th><th>Status</th><th>Actions</th></tr></thead>
-        <tbody>@forelse($queueEntries as $entry)<tr>
+        <tbody>@forelse($visibleQueueEntries as $entry)<tr>
             <td><strong>{{ $entry->ticket_number }}</strong></td><td>{{ $patientName($entry) }}</td>
             <td>{{ ucfirst(optional($entry->account)->patient_type ?: 'patient') }}<br><small>{{ optional($entry->complaint)->student_id_number }}</small></td>
             <td>{{ \Illuminate\Support\Str::limit(optional($entry->complaint)->chief_complaint,50) }}</td><td>{{ ucfirst($entry->queue_type) }}</td>
@@ -54,7 +58,16 @@
                 @if(in_array($entry->status,['waiting','called'],true))<form method="POST" action="{{ route('clinic-queues.update',$entry) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="cancelled"><input type="hidden" name="reason" value="Cancelled from queue dashboard"><button class="btn btn-sm btn-outline-danger" data-confirm="Cancel {{ $entry->ticket_number }}?">Cancel</button></form>@endif
             @endif
             </td>
-        </tr>@empty<tr><td colspan="9">No active queue entries today.</td></tr>@endforelse</tbody></table>
+        </tr>@empty<tr><td colspan="9">No patients waiting in line.</td></tr>@endforelse
+        @if($remainingWaiting > 0)
+            <tr class="queue-overflow-summary">
+                <td colspan="9">
+                    <span class="queue-overflow-badge"><i class="fa fa-users" aria-hidden="true"></i> +{{ $remainingWaiting }} more {{ \Illuminate\Support\Str::plural('patient', $remainingWaiting) }} waiting</span>
+                    <small>{{ $waitingEntries->count() }} total patients currently in line</small>
+                </td>
+            </tr>
+        @endif
+        </tbody></table>
     </div>
 </section>
 @push('js')
