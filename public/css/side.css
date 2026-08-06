@@ -13252,6 +13252,23 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 .certificate-print-note { color: var(--emr-muted); font-size: 11px; margin: 0 0 14px; }
 .certificate-sheet-stage { background: #dce5ea; border-radius: 14px; overflow-x: auto; padding: 24px; }
 .certificate-sheet-stage .medical-certificate-sheet { box-shadow: 0 15px 42px rgba(28, 55, 72, .2); }
+.health-certificate-section { margin-top: 22px; }
+.health-certificate-section-header { align-items: flex-end; display: flex; gap: 16px; justify-content: space-between; margin-bottom: 12px; }
+.health-certificate-section-header h2 { color: var(--emr-text); font-size: 1.25rem; font-weight: 800; margin: 2px 0 0; }
+.health-certificate-section-header > span { background: var(--emr-accent-soft); border-radius: 999px; color: var(--emr-primary-dark); font-size: 11px; font-weight: 800; padding: 6px 10px; }
+.health-certificate-list { display: grid; gap: 12px; }
+.health-certificate-card { background: #fff; border: 1px solid #c7dfed; border-radius: 15px; box-shadow: var(--emr-shadow-soft); display: grid; grid-template-columns: 72px minmax(0, 1fr); overflow: hidden; }
+.health-certificate-icon { align-items: center; background: linear-gradient(160deg, #eaf6fc, #d9eef8); border-right: 1px solid #c7dfed; color: var(--emr-primary); display: flex; font-size: 24px; justify-content: center; }
+.health-certificate-content { min-width: 0; padding: 17px 20px; }
+.health-certificate-heading { align-items: flex-start; display: flex; gap: 14px; justify-content: space-between; }
+.health-certificate-heading small { color: var(--emr-primary); display: block; font-size: 10px; font-weight: 800; letter-spacing: .04em; margin-bottom: 2px; text-transform: uppercase; }
+.health-certificate-heading h3 { color: var(--emr-text); font-size: 16px; font-weight: 800; margin: 0; }
+.health-certificate-details { display: grid; gap: 12px 20px; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 16px 0; }
+.health-certificate-details div { min-width: 0; }
+.health-certificate-details dt { color: var(--emr-muted); font-size: 10px; font-weight: 800; letter-spacing: .03em; margin-bottom: 3px; text-transform: uppercase; }
+.health-certificate-details dd { color: var(--emr-text); font-size: 12px; font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.health-certificate-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.health-certificate-actions .btn { min-height: 38px; }
 .issued-certificate-card { background: #fff; border: 1px solid #cddde6; border-radius: 16px; box-shadow: var(--emr-shadow-soft); margin: 0 auto; max-width: 820px; overflow: hidden; }
 .issued-certificate-card > header { align-items: center; background: #f3f9fc; border-bottom: 3px solid var(--emr-primary); display: flex; gap: 14px; padding: 22px 28px; }
 .issued-certificate-card > header img { height: 54px; object-fit: contain; width: 54px; }
@@ -13270,6 +13287,7 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 @media (max-width: 900px) {
   .certificate-patient-card { grid-template-columns: 48px repeat(2, minmax(0, 1fr)); }
   .certificate-issue-card { grid-template-columns: 1fr; }
+  .health-certificate-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 575.98px) {
@@ -13284,6 +13302,12 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   .certificate-issue-card { padding: 18px 14px; }
   .certificate-option-group { align-items: stretch; flex-direction: column; }
   .certificate-sheet-stage { padding: 8px; }
+  .health-certificate-card { grid-template-columns: 48px minmax(0, 1fr); }
+  .health-certificate-icon { align-items: flex-start; font-size: 18px; padding-top: 20px; }
+  .health-certificate-content { padding: 15px 12px; }
+  .health-certificate-details { grid-template-columns: minmax(0, 1fr); }
+  .health-certificate-actions { flex-direction: column; }
+  .health-certificate-actions .btn { width: 100%; }
   .issued-certificate-card > header, .issued-certificate-meta, .issued-certificate-details { padding-left: 16px; padding-right: 16px; }
   .issued-certificate-details > div { gap: 5px; grid-template-columns: 1fr; }
   .issued-certificate-card > footer { align-items: flex-start; flex-direction: column; gap: 5px; padding: 14px 16px; }
