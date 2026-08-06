@@ -79,7 +79,14 @@ class ClinicMonitoringService
         $gd=extension_loaded('gd'); $this->add($checks,'pdf_gd','PDF / GD',$gd?0:1,$gd?'healthy':'warning','medium','pdf',$gd?'PDF image processing is available.':'GD image processing is unavailable.');
         $pdf=class_exists(\Barryvdh\DomPDF\Facade::class) || class_exists(\Dompdf\Dompdf::class); $this->add($checks,'pdf_library','PDF Library',$pdf?0:1,$pdf?'healthy':'critical','high','pdf',$pdf?'PDF generation library is available.':'PDF generation library is unavailable.');
         $this->add($checks,'scheduler','Scheduler',0,app()->environment('local')?'not_configured':'healthy','low','server',app()->environment('local')?'Manual local checks are available.':'Scheduler configuration must be verified by deployment staff.');
-        $this->add($checks,'backup','Backup',0,app()->environment('local')?'not_configured':'warning','low','server',app()->environment('local')?'Local backup is not verified.':'Server backup execution must be verified.');
+        $backupFiles = collect(Storage::disk('local')->allFiles(config('backup.backup.name', config('app.name', 'EMR'))))
+            ->filter(function ($path) { return strtolower(pathinfo($path, PATHINFO_EXTENSION)) === 'zip'; });
+        $newestBackup = $backupFiles->map(function ($path) { return Storage::disk('local')->lastModified($path); })->max();
+        $backupHealthy = $newestBackup && $newestBackup >= now()->subDay()->timestamp;
+        $backupStatus = $backupHealthy ? 'healthy' : ($newestBackup ? 'warning' : 'not_configured');
+        $backupMessage = $backupHealthy ? 'A recent local backup is available and readable.'
+            : ($newestBackup ? 'The newest backup is more than 24 hours old.' : 'No verified backup archive is available.');
+        $this->add($checks,'backup','Backup',$backupHealthy?0:1,$backupStatus,'high','server',$backupMessage);
         $free=@disk_free_space(storage_path()); $warning=$free!==false && $free < 1073741824; $this->add($checks,'disk_space','Disk Space',$warning?1:0,$warning?'warning':'healthy','medium','storage',$warning?'Less than 1 GB of disk space remains.':'Disk space is available.');
     }
 
