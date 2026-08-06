@@ -40,8 +40,14 @@ Route::middleware(['auth', 'can:view-system-monitoring'])->prefix('admin/system-
     Route::get('/', 'SystemMonitoringController@index')->name('admin.monitoring.index');
     Route::post('/run-checks', 'SystemMonitoringController@runChecks')->name('admin.monitoring.run');
     Route::get('/incidents/{incident}', 'SystemMonitoringController@show')->name('admin.monitoring.incidents.show');
+    Route::get('/incidents/{incident}/screenshot', 'SystemMonitoringController@screenshot')->name('admin.monitoring.incidents.screenshot');
     Route::patch('/incidents/{incident}/status', 'SystemMonitoringController@updateStatus')->name('admin.monitoring.incidents.status');
     Route::get('/reports/daily', 'SystemMonitoringController@report')->name('admin.monitoring.reports.daily');
+});
+
+Route::middleware(['auth', 'role:Administrator,Doctor,Nurse,Staff'])->group(function () {
+    Route::get('/support/report-problem', 'ProblemReportController@create')->name('support.problem.create');
+    Route::post('/support/report-problem', 'ProblemReportController@store')->name('support.problem.store');
 });
 
 

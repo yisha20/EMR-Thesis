@@ -47,4 +47,10 @@ class SystemMonitoringController extends Controller
         $path = $monitoring->storeDailyReport($report);
         return response()->download($path, basename($path), ['Content-Type'=>'application/json']);
     }
+
+    public function screenshot(SystemIncident $incident)
+    {
+        abort_unless($incident->screenshot_path && Storage::disk('local')->exists($incident->screenshot_path), 404);
+        return Storage::disk('local')->download($incident->screenshot_path, 'incident-'.$incident->reference_code.'.'.pathinfo($incident->screenshot_path, PATHINFO_EXTENSION));
+    }
 }

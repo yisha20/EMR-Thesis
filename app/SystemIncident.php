@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class SystemIncident extends Model
 {
     protected $guarded = [];
+    protected $casts = ['report_context' => 'array'];
     protected $dates = ['detected_at', 'resolved_at'];
 
     public function user() { return $this->belongsTo(User::class); }

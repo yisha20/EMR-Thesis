@@ -106,6 +106,9 @@ if ($sidebarRoleName === 'Administrator') {
             @endif
 
             <div class="sidepanel-section-label">Support</div>
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('support.problem.*') ? 'active' : '' }}" href="{{ route('support.problem.create') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Report a Problem" aria-label="Report a Problem">
+                <i class="fa fa-exclamation-circle"></i><span>Report a Problem</span>
+            </a>
             <a class="sidebar-tooltip-trigger {{ request()->is('doctors') ? 'active' : '' }}" href="/doctors" data-toggle="tooltip" data-placement="right" data-container="body" title="Clinic Staff" aria-label="Clinic Staff">
                 <i class="fa fa-stethoscope"></i><span>Clinic Staff</span>
             </a>
