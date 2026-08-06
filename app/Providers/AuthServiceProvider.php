@@ -25,6 +25,8 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //
+        Gate::define('view-system-monitoring', function ($user) {
+            return $user->role && strcasecmp($user->role->name, 'Administrator') === 0;
+        });
     }
 }
