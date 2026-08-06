@@ -5,6 +5,8 @@ namespace App\Exceptions;
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class Handler extends ExceptionHandler
@@ -48,10 +50,18 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        $status = $exception instanceof HttpExceptionInterface ? $exception->getStatusCode()
-            : ($exception instanceof AuthorizationException ? 403 : 500);
+        if ($exception instanceof ValidationException) {
+            $status = 422;
+        } elseif ($exception instanceof AuthenticationException) {
+            $status = 401;
+        } elseif ($exception instanceof AuthorizationException) {
+            $status = 403;
+        } else {
+            $prepared = $this->prepareException($exception);
+            $status = $prepared instanceof HttpExceptionInterface ? $prepared->getStatusCode() : 500;
+        }
 
-        if (in_array($status, [403, 404, 419, 500], true)) {
+        if (! app()->environment('testing') && in_array($status, [403, 404, 419, 500], true)) {
             try {
                 $monitor = app(\App\Services\WorkflowMonitor::class);
                 $reference = $request->attributes->get('monitoring_error_reference');

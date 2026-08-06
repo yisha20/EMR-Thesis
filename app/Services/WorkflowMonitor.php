@@ -93,7 +93,9 @@ class WorkflowMonitor
     private function writeAction($action, $result, array $context)
     {
         if (! Schema::hasTable('workflow_action_logs')) return null;
-        return WorkflowActionLog::create(array_merge($this->identity($context), [
+        $identity = $this->identity($context);
+        unset($identity['request_method']);
+        return WorkflowActionLog::create(array_merge($identity, [
             'action_name' => Str::limit($action, 100, ''),
             'result' => $result,
             'error_reference' => $context['error_reference'] ?? null,

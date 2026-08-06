@@ -4,6 +4,9 @@ namespace App\Http\Middleware;
 
 use App\Services\WorkflowMonitor;
 use Closure;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Throwable;
 
 class MonitorWorkflowActions
@@ -61,6 +64,10 @@ class MonitorWorkflowActions
             }
             return $response;
         } catch (Throwable $exception) {
+            if ($exception instanceof ValidationException || $exception instanceof AuthenticationException
+                || ($exception instanceof HttpExceptionInterface && $exception->getStatusCode() < 500)) {
+                throw $exception;
+            }
             $context['duration_ms'] = (int) ((microtime(true) - $started) * 1000);
             $reference = $monitor->failed($action, $exception, $context);
             $request->attributes->set('monitoring_error_reference', $reference);
