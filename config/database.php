@@ -51,6 +51,12 @@ return [
             'database' => env('DB_DATABASE', 'forge'),
             'username' => env('DB_USERNAME', 'forge'),
             'password' => env('DB_PASSWORD', ''),
+            'dump' => [
+                // Directory only; the backup package appends mysqldump.
+                // Leave blank when mysqldump is already available on PATH.
+                'dump_binary_path' => env('MYSQL_DUMP_BINARY_PATH', ''),
+                'use_single_transaction' => true,
+            ],
             'unix_socket' => env('DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
