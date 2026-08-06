@@ -24,7 +24,10 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-    $schedule->command('backup:run')->daily()->at('17:00');
+        $schedule->command('backup:run')->daily()->at('17:00');
+        $schedule->command('clinic:monitor --critical')->everyFifteenMinutes()->withoutOverlapping();
+        $schedule->command('clinic:monitor --full')->hourly()->withoutOverlapping();
+        $schedule->command('clinic:monitor --daily-report')->dailyAt('17:05')->withoutOverlapping();
     }
 
 
