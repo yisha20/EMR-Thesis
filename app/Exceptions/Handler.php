@@ -4,6 +4,8 @@ namespace App\Exceptions;
 
 use Exception;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Auth\Access\AuthorizationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class Handler extends ExceptionHandler
 {
@@ -46,6 +48,34 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
+        $status = $exception instanceof HttpExceptionInterface ? $exception->getStatusCode()
+            : ($exception instanceof AuthorizationException ? 403 : 500);
+
+        if (in_array($status, [403, 404, 419, 500], true)) {
+            try {
+                $monitor = app(\App\Services\WorkflowMonitor::class);
+                $reference = $request->attributes->get('monitoring_error_reference');
+                if (! $reference) {
+                    $incident = $monitor->createIncident([
+                        'severity' => $status >= 500 ? 'high' : ($status === 403 ? 'medium' : 'low'),
+                        'category' => $status === 403 ? 'authorization' : ($status >= 500 ? 'server' : 'workflow'),
+                        'event_type' => 'http_'.$status,
+                        'deduplication_key' => implode(':', ['http', $status, optional($request->route())->getName() ?: 'unnamed', optional($request->user())->id ?: 'guest']),
+                        'route_name' => optional($request->route())->getName(),
+                        'request_method' => $request->method(),
+                        'http_status' => $status,
+                        'safe_message' => $status === 403 ? 'An authorization request was denied.' : 'An application request could not be completed.',
+                        'technical_message' => $monitor->safeTechnicalMessage($exception),
+                    ]);
+                    $reference = optional($incident)->reference_code;
+                }
+                if ($status >= 500 && $reference && ! $request->expectsJson()) {
+                    return response()->view('errors.500', ['errorReference' => $reference], 500);
+                }
+            } catch (\Throwable $monitoringFailure) {
+                // Monitoring must never replace the application's original error response.
+            }
+        }
         return parent::render($request, $exception);
     }
 }

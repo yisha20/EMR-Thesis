@@ -37,6 +37,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\RestrictToCampusNetwork::class,
             \App\Http\Middleware\EnforceForcedPasswordChange::class,
+            \App\Http\Middleware\MonitorWorkflowActions::class,
         ],
 
         'api' => [

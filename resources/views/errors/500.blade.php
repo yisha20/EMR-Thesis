@@ -12,6 +12,9 @@
         <span class="emr-error-code">500</span>
         <h1>Something went wrong</h1>
         <p>The EMR system could not complete the request. Please try again or contact the clinic system administrator.</p>
+        @if (!empty($errorReference))
+            <p><strong>Error Reference:</strong> {{ $errorReference }}</p>
+        @endif
         <a href="{{ url('/') }}">Return to EMR</a>
     </main>
 </body>
