@@ -13211,8 +13211,8 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 .certificate-status { align-items: center; border-radius: 999px; display: inline-flex; flex: 0 0 auto; font-size: 12px; font-weight: 800; gap: 7px; padding: 8px 13px; }
 .certificate-status.is-draft { background: #fff7df; color: #926b0b; }
 .certificate-status.is-issued { background: #e5f8ef; color: #16724b; }
-.certificate-patient-card { background: linear-gradient(135deg, #f5fbff, #edf7fb); border: 1px solid #c8dfec; border-radius: 14px; display: grid; gap: 16px; grid-template-columns: 48px repeat(5, minmax(0, 1fr)); margin-bottom: 18px; padding: 18px; }
-.certificate-patient-avatar { align-items: center; align-self: center; background: var(--emr-primary); border-radius: 12px; color: #fff; display: flex; height: 44px; justify-content: center; width: 44px; }
+.certificate-patient-card { align-items: start; background: linear-gradient(135deg, #f5fbff, #edf7fb); border: 1px solid #c8dfec; border-radius: 14px; display: grid; gap: 18px 24px; grid-template-columns: 48px repeat(4, minmax(0, 1fr)); margin-bottom: 18px; padding: 20px 18px; }
+.certificate-patient-avatar { align-items: center; align-self: start; background: var(--emr-primary); border-radius: 12px; color: #fff; display: flex; grid-row: span 2; height: 44px; justify-content: center; width: 44px; }
 .certificate-patient-card div { min-width: 0; }
 .certificate-patient-card small, .issued-certificate-meta small { color: var(--emr-muted); display: block; font-size: 10px; font-weight: 800; letter-spacing: .04em; margin-bottom: 4px; text-transform: uppercase; }
 .certificate-patient-card strong { color: var(--emr-text); display: block; font-size: 13px; overflow-wrap: anywhere; }
@@ -13286,6 +13286,7 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 
 @media (max-width: 900px) {
   .certificate-patient-card { grid-template-columns: 48px repeat(2, minmax(0, 1fr)); }
+  .certificate-patient-avatar { grid-row: span 4; }
   .certificate-issue-card { grid-template-columns: 1fr; }
   .health-certificate-details { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
