@@ -8,6 +8,6 @@
     </div>
     @include('medicalreport.timeline', ['records' => $records, 'studentView' => true])
     @if($patient)
-    @foreach($patient->medicalCertificates->where('status','issued')->sortByDesc('issued_at') as $item)<article class="card card-body mb-3"><strong>Medical Certificate Issued</strong><span>{{$item->issued_at}} · {{str_replace('_',' ',$item->purpose)}} · {{str_replace('_',' ',$item->fitness_status)}} · {{$item->doctor_name_snapshot}}</span><a href="{{route('medical-certificates.show',$item)}}">View Certificate</a> <a href="{{route('medical-certificates.pdf',$item)}}">Download PDF</a></article>@endforeach @endif
+    @foreach($patient->medicalCertificates->where('status','issued')->sortByDesc('issued_at') as $item)<article class="card card-body mb-3"><strong>Medical Certificate Issued</strong><span>{{$item->issued_at}} · {{$item->purpose_label}} · {{$item->fitness_label}} · {{$item->doctor_name_snapshot}}</span><a href="{{route('medical-certificates.show',$item)}}">View Certificate</a> <a href="{{route('medical-certificates.pdf',$item)}}">Download PDF</a></article>@endforeach @endif
 </div>
 @endsection

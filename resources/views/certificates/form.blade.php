@@ -112,7 +112,7 @@
     @if($isExisting)
         <section class="certificate-issue-card">
             <div><h2>Ready to issue?</h2><p>Issuing finalizes the certificate. It can no longer be edited afterward.</p>
-                <dl class="certificate-issue-summary"><dt>Patient</dt><dd>{{ $certificate->patient_name_snapshot }}</dd><dt>Fitness</dt><dd>{{ ucwords(str_replace('_',' ',$certificate->fitness_status)) }}</dd><dt>Purpose</dt><dd>{{ $certificate->purpose === 'ojt' ? 'OJT' : ucwords(str_replace('_',' ',$certificate->purpose)) }}</dd><dt>Doctor</dt><dd>{{ $certificate->doctor_name_snapshot }}</dd><dt>Certificate</dt><dd>{{ $certificate->certificate_number }}</dd></dl>
+                <dl class="certificate-issue-summary"><dt>Patient</dt><dd>{{ $certificate->patient_name_snapshot }}</dd><dt>Fitness</dt><dd>{{ $certificate->fitness_label }}</dd><dt>Purpose</dt><dd>{{ $certificate->purpose_label }}</dd><dt>Doctor</dt><dd>{{ $certificate->doctor_name_snapshot }}</dd><dt>Certificate</dt><dd>{{ $certificate->certificate_number }}</dd></dl>
             </div>
             <form method="POST" action="{{ route('medical-certificates.issue', $certificate) }}">
                 @csrf

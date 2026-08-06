@@ -1,23 +1,6 @@
 @php
-    $purposeLabels = [
-        'ojt' => 'OJT',
-        'scholarship_application' => 'Scholarship Application',
-        'employment' => 'Employment',
-        'school_requirement' => 'School Requirement',
-        'sports_activity' => 'Sports Participation',
-        'return_to_school' => 'Return to School',
-        'travel_requirement' => 'Travel Requirement',
-        'other' => 'Other',
-    ];
-    $fitnessLabels = [
-        'physically_fit' => 'Physically Fit',
-        'physically_unfit' => 'Physically Unfit',
-        'fit_with_restrictions' => 'Fit with Restrictions',
-        'not_assessed' => 'Other',
-        'other' => 'Other',
-    ];
-    $selectedPurpose = $purposeLabels[$certificate->purpose] ?? 'Other';
-    $selectedFitness = $fitnessLabels[$certificate->fitness_status] ?? 'Other';
+    $selectedPurpose = $certificate->purpose_label;
+    $selectedFitness = $certificate->fitness_label;
 @endphp
 
 <style>
