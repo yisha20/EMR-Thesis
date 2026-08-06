@@ -8,6 +8,7 @@
     </header>
 
     @if(session('success'))<div class="alert alert-success" role="status">{{ session('success') }}</div>@endif
+    @if(session('pdf_error'))<div class="alert alert-danger" role="alert">{{ session('pdf_error') }}</div>@endif
 
     <section class="issued-certificate-card">
         <header><img src="{{ asset('img/msu-iit-logo.png') }}" alt="MSU-IIT seal"><div><strong>MSU-IIT Clinic</strong><span>Official Medical Certificate</span></div></header>
