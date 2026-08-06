@@ -36,6 +36,14 @@ Route::middleware('auth')->group(function () {
         ->name('password.change.update');
 });
 
+Route::middleware(['auth', 'can:view-system-monitoring'])->prefix('admin/system-monitoring')->group(function () {
+    Route::get('/', 'SystemMonitoringController@index')->name('admin.monitoring.index');
+    Route::post('/run-checks', 'SystemMonitoringController@runChecks')->name('admin.monitoring.run');
+    Route::get('/incidents/{incident}', 'SystemMonitoringController@show')->name('admin.monitoring.incidents.show');
+    Route::patch('/incidents/{incident}/status', 'SystemMonitoringController@updateStatus')->name('admin.monitoring.incidents.status');
+    Route::get('/reports/daily', 'SystemMonitoringController@report')->name('admin.monitoring.reports.daily');
+});
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/prescriptions/{prescription}', 'PrescriptionController@show')->name('prescriptions.show');

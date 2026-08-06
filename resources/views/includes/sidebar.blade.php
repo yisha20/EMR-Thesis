@@ -91,6 +91,9 @@ if ($sidebarRoleName === 'Administrator') {
             <a class="sidebar-tooltip-trigger {{ request()->is('users*') ? 'active' : '' }}" href="/users" data-toggle="tooltip" data-placement="right" data-container="body" title="Manage Users" aria-label="Manage Users">
                 <i class="fa fa-id-badge"></i><span>Manage Users</span>
             </a>
+            <a class="sidebar-tooltip-trigger {{ request()->routeIs('admin.monitoring.*') ? 'active' : '' }}" href="{{ route('admin.monitoring.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="System Monitoring" aria-label="System Monitoring">
+                <i class="fa fa-heartbeat"></i><span>System Monitoring</span>
+            </a>
             @endif
             @if ($sidebarRoleName === 'Doctor')
             <a class="sidebar-tooltip-trigger {{ request()->routeIs('medical-records.*') ? 'active' : '' }}" href="{{ route('medical-records.index') }}" data-toggle="tooltip" data-placement="right" data-container="body" title="Medical Records" aria-label="Medical Records">
