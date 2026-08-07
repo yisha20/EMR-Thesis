@@ -66,8 +66,25 @@
 <script>
 (function () {
     var checks = document.querySelectorAll('[name="complaint_options[]"]'), other = document.querySelector('[data-other-complaint]'), input = document.getElementById('other_complaint');
+    var modal = document.getElementById('studentConcernModal');
+    var viewport = window.visualViewport;
     function syncOther(){var required=[].some.call(checks,function(c){return c.checked&&c.dataset.requiresDetails==='true'});if(!other||!input)return;other.hidden=!required;input.required=required;}
+    function syncViewportHeight(){
+        if (!modal || !modal.classList.contains('show') || window.innerWidth > 767) return;
+        document.documentElement.style.setProperty('--mobile-viewport-height', (viewport ? viewport.height : window.innerHeight) + 'px');
+    }
+    function clearViewportHeight(){ document.documentElement.style.removeProperty('--mobile-viewport-height'); }
     checks.forEach(function(c){c.addEventListener('change',syncOther)});syncOther();
+    if (modal && window.jQuery) {
+        $(modal).on('shown.bs.modal', function () {
+            syncViewportHeight();
+            if (viewport) viewport.addEventListener('resize', syncViewportHeight);
+        });
+        $(modal).on('hidden.bs.modal', function () {
+            if (viewport) viewport.removeEventListener('resize', syncViewportHeight);
+            clearViewportHeight();
+        });
+    }
     @if ($errors->any() && (old('complaint_options') || old('other_complaint') || old('symptoms_description')))
         $(function () { $('#studentConcernModal').modal('show'); });
     @endif

@@ -284,6 +284,13 @@
                     setDrawerOpen(false);
                 }
             });
+
+            window.addEventListener('pagehide', function () { setDrawerOpen(false); });
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) setDrawerOpen(false);
+            });
+
+            $('#studentConcernModal').on('show.bs.modal', function () { setDrawerOpen(false); });
         })();
 
         document.addEventListener('submit', function (event) {
