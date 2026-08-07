@@ -12086,7 +12086,13 @@ body.mobile-drawer-open {
 }
 
 @media (max-width: 767.98px) {
-  body.student-portal-shell,
+  body.student-portal-shell {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
+
   body.student-portal-shell .emr-app,
   body.student-portal-shell .app-layout,
   body.student-portal-shell .emr-layout-frame,
@@ -12097,7 +12103,7 @@ body.mobile-drawer-open {
   body.student-portal-shell .emr-main {
     max-width: 100% !important;
     min-width: 0 !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
     width: 100% !important;
   }
 
@@ -12577,7 +12583,7 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 }
 
 @media (max-width:767.98px) {
-  html,body { max-width:100%; overflow-x:hidden; }
+  html,body { max-width:100%; }
   body.student-portal-shell .desktop-sidebar,
   body.student-portal-shell .sidepanel,
   body.student-portal-shell .sidepanel.collapsed {
@@ -13118,13 +13124,20 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 }
 
 @media (max-width: 767.98px) {
-  html,
+  /* The document is the only normal-page vertical scroller on phones. */
+  html {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+    width: 100%;
+  }
+
   body.emr-shell {
     height: auto;
     min-height: 100%;
-    width: 100%;
     overflow-x: hidden;
     overflow-y: auto;
+    width: 100%;
   }
 
   body.emr-shell .emr-app,
@@ -13133,8 +13146,7 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     height: auto;
     min-height: 100vh;
     min-height: 100dvh;
-    overflow-x: hidden;
-    overflow-y: visible;
+    overflow: visible;
     width: 100%;
   }
 
@@ -13150,7 +13162,7 @@ html, body { overflow-x: hidden; overflow-y: auto; }
     height: auto;
     max-width: 100%;
     min-width: 0;
-    overflow-y: visible;
+    overflow: visible;
     width: 100%;
   }
 
