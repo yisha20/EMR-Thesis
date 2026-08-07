@@ -11960,8 +11960,12 @@ body.student-registration-page {
 
 .mobile-drawer-overlay {
   background: rgba(18, 45, 62, 0.46);
+  display: block;
   inset: 0;
+  opacity: 0;
+  pointer-events: none;
   position: fixed;
+  visibility: hidden;
   z-index: 9998;
 }
 
@@ -11976,19 +11980,25 @@ body.student-registration-page {
   max-width: min(86vw, 320px);
   padding: 22px;
   position: fixed;
+  pointer-events: none;
   right: -340px;
   top: 0;
   transition: right 0.25s ease;
+  visibility: hidden;
   width: 300px;
   z-index: 9999;
 }
 
 .mobile-drawer.open {
+  pointer-events: auto;
   right: 0;
+  visibility: visible;
 }
 
 .mobile-drawer-overlay.open {
-  display: block;
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .mobile-drawer-header {
@@ -12679,7 +12689,7 @@ html, body { overflow-x: hidden; overflow-y: auto; }
 .assessment-summary-list{display:grid;grid-template-columns:minmax(150px,.8fr) minmax(0,1.2fr);gap:10px 16px}.assessment-summary-list dt,.assessment-summary-list dd{min-width:0;overflow-wrap:break-word;word-break:normal}.assessment-summary-list dd{margin:0}
 .clinical-alert{display:flex;gap:12px;padding:12px;margin-bottom:16px;border-left:4px solid #dc2626;background:#fff7f7}.clinical-alert span{min-width:0}
 .queue-focus-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:18px}.queue-focus-grid article{display:grid;gap:7px;padding:16px;border:1px solid var(--emr-border,#dbe3ea);border-radius:var(--emr-radius,12px)}.queue-ticket{font-size:1.7rem}.queue-actions{display:flex;flex-wrap:wrap;gap:6px}.queue-actions form{margin:0}.queue-policy-form{display:flex;align-items:center;gap:8px}.assessment-check-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 16px}.assessment-check-grid>div{display:grid;grid-template-columns:auto 1fr;gap:5px}.assessment-check-grid small{grid-column:2}.section-ownership{font-weight:700;padding:8px 12px;border-left:4px solid var(--emr-primary,#1d4ed8)}.assessment-form-section{margin-bottom:16px}.account-filter-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:8px}
-@media(max-width:767px){.sidebar{display:none!important;flex-basis:0!important;width:0!important}.main-workspace{margin-left:0!important;width:100%!important;max-width:100%;overflow-x:clip}.queue-focus-grid,.assessment-summary-list,.account-filter-grid{grid-template-columns:1fr}.assessment-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.queue-policy-form{align-items:stretch;flex-direction:column}.queue-workspace{overflow:hidden}.queue-workspace .table-responsive-shell{overflow-x:auto}}
+@media(max-width:767px){.sidebar{display:none!important;flex-basis:0!important;width:0!important}.main-workspace{margin-left:0!important;width:100%!important;max-width:100%;overflow-x:hidden}.queue-focus-grid,.assessment-summary-list,.account-filter-grid{grid-template-columns:1fr}.assessment-check-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.queue-policy-form{align-items:stretch;flex-direction:column}.queue-workspace{overflow:visible}.queue-workspace .table-responsive-shell{overflow-x:auto}}
 @media(max-width:390px){.assessment-check-grid{grid-template-columns:1fr}}
 
 /* Final themed workflow layer: keep this after legacy compatibility rules. */

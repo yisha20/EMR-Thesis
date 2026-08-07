@@ -261,7 +261,11 @@
                 document.body.classList.toggle('mobile-drawer-open', open);
                 toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
                 drawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+                overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
             }
+
+            // Clear mobile UI state restored by the browser's back-forward cache.
+            setDrawerOpen(false);
 
             toggle.addEventListener('click', function () { setDrawerOpen(true); });
             overlay.addEventListener('click', function () { setDrawerOpen(false); });
@@ -286,6 +290,8 @@
             });
 
             window.addEventListener('pagehide', function () { setDrawerOpen(false); });
+            window.addEventListener('pageshow', function () { setDrawerOpen(false); });
+            window.addEventListener('orientationchange', function () { setDrawerOpen(false); });
             document.addEventListener('visibilitychange', function () {
                 if (document.hidden) setDrawerOpen(false);
             });
