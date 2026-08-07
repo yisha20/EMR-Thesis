@@ -12106,8 +12106,10 @@ body.mobile-drawer-open {
   body.student-portal-shell .main-wrapper,
   body.student-portal-shell .emr-workspace {
     flex: 1 1 100% !important;
-    height: 100% !important;
+    height: auto !important;
     margin-left: 0 !important;
+    min-height: 100dvh !important;
+    overflow-y: visible !important;
     width: 100% !important;
   }
 
@@ -12343,7 +12345,7 @@ body.mobile-drawer-open {
   }
 
   body.student-portal-shell .student-concern-modal .modal-content {
-    max-height: calc(100vh - 1.5rem);
+    max-height: calc(100dvh - 1.5rem);
     overflow: hidden;
   }
 
@@ -13123,13 +13125,70 @@ html, body { overflow-x: hidden; overflow-y: auto; }
   body.emr-shell .emr-layout-frame,
   body.emr-shell .emr-workspace {
     height: auto;
-    min-height: 100vh;
+    min-height: 100dvh;
     overflow: visible;
     width: 100%;
   }
 
   body.emr-shell .emr-workspace {
     margin-left: 0;
+  }
+
+  body.emr-shell .emr-page-container,
+  body.emr-shell .emr-main,
+  body.emr-shell .student-dashboard,
+  body.emr-shell .student-portal-page,
+  body.emr-shell .dashboard-wrap {
+    height: auto;
+    max-width: 100%;
+    min-width: 0;
+    overflow-y: visible;
+    width: 100%;
+  }
+
+  body.emr-shell .student-concern-modal {
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.emr-shell .student-concern-modal .complaint-modal-dialog {
+    height: auto;
+    margin: 8px;
+    max-height: calc(100dvh - 16px);
+    max-width: calc(100% - 16px);
+    min-height: 0;
+    width: calc(100% - 16px);
+  }
+
+  body.emr-shell .student-concern-modal .modal-content,
+  body.emr-shell .student-concern-modal .student-intake-form {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+    min-height: 0;
+  }
+
+  body.emr-shell .student-concern-modal .complaint-modal-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.emr-shell .student-concern-modal .complaint-modal-footer {
+    flex: 0 0 auto;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    position: sticky;
+  }
+
+  body.emr-shell .student-concern-modal input:not([type="checkbox"]):not([type="radio"]),
+  body.emr-shell .student-concern-modal select,
+  body.emr-shell .student-concern-modal textarea {
+    font-size: 16px;
+    max-width: 100%;
   }
 
   .assessment-summary-card .assessment-summary-list,
